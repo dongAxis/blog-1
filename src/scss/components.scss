@@ -1,0 +1,21 @@
+.header {
+}
+
+.post-list {
+  &__header {
+  }
+  &__body {
+  }
+}
+
+.post-list-item {
+  &__link {
+  }
+}
+
+.markdown-content {
+  // deal with markdown translated tags
+  // h1, h2, h3, h4, h5 ...
+  // code (block and inline)
+  // list (ul, li)
+}

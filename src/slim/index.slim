@@ -1,0 +1,17 @@
+html
+  head
+    link rel='stylesheet' href='/index.css'
+  body
+
+    #indexPage
+      #header
+        include header.slim
+      #postList
+        .post-list
+          .post-list__header
+            | Posts
+          .post-list__body
+            .post-list-item
+              - @posts.each do |post|
+                a.post-list-item__link href=post.link_path
+                  = post.meta['title']

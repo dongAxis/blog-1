@@ -1,0 +1,24 @@
+html {
+  height: 100%;
+
+  body {
+    height: 100%;
+    font-size: $fs_m;
+    background-color: $col-lightest;
+  }
+}
+
+#indexPage, #postPage {
+  height: 100%;
+
+  #header {
+  }
+}
+
+#indexPage {
+}
+
+#postPage {
+  #postContent {
+  }
+}
