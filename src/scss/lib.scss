@@ -1,8 +1,19 @@
-// Reset UA //
+// Base //
+* {
+  box-sizing: border-box;
+}
 
-// Mixin //
+html {
+  font-size: 0.625em;
+  height: 100%;
+}
+
+// Mixin (none yet) //
 
 // Global variable //
+
+// font
+$font-primary: 'Lato', 'Helvetica Neue', 'Arial', sans-serif;
 
 // padding
 $pad_s: 0.5rem;
@@ -22,3 +33,20 @@ $col-light:    #636c72;
 $col-lighter:  #eceeef;
 $col-lightest: #f7f7f9;
 
+// breakpoint
+$breakpoints: (
+  'XS' : '(max-width:  479px)',
+   'S' : '(max-width:  767px)',
+   'M' : '(max-width: 1023px)',
+   'L' : '(max-width: 1439px)',
+  'XL' : '(max-width: 1599px)',
+  '2K' : '(max-width: 2047px)',
+  '4K' : '(max-width: 3840px)',
+
+   'S+': '(min-width:  480px)',
+   'M+': '(min-width:  768px)',
+   'L+': '(min-width: 1024px)',
+  'XL+': '(min-width: 1440px)',
+  '2K+': '(min-width: 1600px)',
+  '4K+': '(min-width: 2048px)'
+);
