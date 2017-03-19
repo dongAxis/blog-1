@@ -75,6 +75,11 @@
 - `CompositePart`: extends "Part" having replaceable "Composite" as content (e.g. `SidebarPart`, `PanelPart`)
 - `Composite`: rendered inside of CompositePart (e.g. `ExplorerViewlet`)
 - `Panel`: extends `Composite` for `PanelPart` (e.g. `TerminalPanel`, `OutputPanel`, `BaseEditor`)
+
+    ```
+    some code
+    ```
+
 - `WorkbenchComponent`:  base class `Part` and `Composite` (for book-keeping UI object?)
 
 

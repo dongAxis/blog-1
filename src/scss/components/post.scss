@@ -1,0 +1,32 @@
+.post {
+  margin: 0 $pad-xl;
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    margin: $pad-xxl 0;
+
+    &__title {
+      margin-bottom: $pad-l;
+      font-size: $fs-xxl;
+      font-weight: bold;
+    }
+
+    &__date-and-source {
+      @include reset_a;
+      font-style: italic;
+      text-decoration: underline;
+      color: $col-darker;
+
+      &__source {
+        display: inline;
+        margin-left: $pad-s;
+      }
+    }
+  }
+
+  &__body {
+    margin: $pad-l 0;
+  }
+}

@@ -5,7 +5,7 @@ body {
   height: 100%;
 }
 
-#indexPage {
+#indexPage, #postPage {
   height: 100%;
 
   #headerWrapper {
@@ -16,24 +16,7 @@ body {
     border-bottom: 1px solid $col-lighter;
   }
 
-  #postList {
-    margin: 0 auto;
-    max-width: $page-width;
-  }
-}
-
-#postPage {
-  height: 100%;
-
-  #headerWrapper {
-    #header {
-      margin: 0 auto;
-      max-width: $page-width;
-    }
-    border-bottom: 1px solid $col-lighter;
-  }
-
-  #postContent {
+  #postList, #postContent {
     margin: 0 auto;
     max-width: $page-width;
   }

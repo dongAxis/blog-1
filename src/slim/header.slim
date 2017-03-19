@@ -6,7 +6,7 @@
     a.header__menu__about href='/posts/about.html'
       i.fa.fa-user-circle
     .header__menu__search
-      .header__menu__search__icon data-toggle='dropdown'
+      .header__menu__search__icon data-toggle='dropdown' onclick='this.nextSibling.firstChild.focus()'
         i.fa.fa-search
       form.header__menu__search__form action='https://github.com/hi-ogawa/blog/search' target='_blank'
         input type='text' name='q' placeholder='Search'

@@ -1,16 +1,19 @@
 .header {
   display: flex;
   flex-direction: row;
-  padding: $pad-l;
+  margin: $pad-xl;
 
   &__title {
     flex: 1 0;
-    font-size: $fs-xl;
-    font-weight: bold;
+    font-size: $fs-xxl;
     white-space: nowrap;
 
     &__link {
       @include reset_a;
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 
@@ -75,24 +78,8 @@
   }
 }
 
-.post-list {
-  &__header {
-    &__link {
-      @include reset_a;
-    }
-  }
-  &__body {
-  }
+// Input //
+::-webkit-input-placeholder {
+  color: $col-light;
 }
 
-.post-list-item {
-  &__link {
-  }
-}
-
-.markdown-content {
-  // deal with markdown translated tags
-  // h1, h2, h3, h4, h5 ...
-  // code (block and inline)
-  // list (ul, li)
-}

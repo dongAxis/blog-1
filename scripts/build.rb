@@ -4,6 +4,7 @@ require 'redcarpet'
 require 'sass'
 require 'slim'
 require 'slim/include'
+require 'time'
 
 SRC_DIR = ENV['SRC']
 OUT_DIR = ENV['OUT']
@@ -18,7 +19,7 @@ class Post
   end
 
   def render_html!(slim_template)
-    @md_html_str = Redcarpet::Markdown.new(Redcarpet::Render::HTML).render(@md_str)
+    @md_html_str = Redcarpet::Markdown.new(Redcarpet::Render::HTML, fenced_code_blocks: true, autolink: true).render(@md_str)
     @html_str = Slim::Template.new(slim_template).render(self)
   end
 end

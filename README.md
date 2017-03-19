@@ -22,7 +22,3 @@ $ SRC=../src OUT=../out ./deploy.sh
 - TODO
   - migration from wp.hiogwa.net
     - post and photo assets
-  - design and css
-    - header
-    - index page post list
-    - markdown content

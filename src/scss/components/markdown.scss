@@ -1,0 +1,96 @@
+@mixin section-heading {
+  &::before {
+    content: "§";
+    padding-right: 7px;
+    position: relative;
+    top: -1px;
+  }
+}
+
+.markdown-content {
+  line-height: 1.5;
+
+  // headings //
+  h1 {
+    @include section-heading;
+    font-size: $fs-xl;
+    margin-bottom: $pad-xl;
+  }
+
+  h2 {
+    @include section-heading;
+    font-size: $fs-l;
+    margin-bottom: $pad-l;
+  }
+
+  h3, h4, h5, h6 {
+    @include section-heading;
+    font-size: $fs-m;
+    margin-bottom: $pad-l;
+  }
+
+  // top level tags //
+  & > p, & > ul, & > pre {
+    margin-bottom: $pad-xl;
+  }
+
+  // list //
+  ul {
+    & > li {
+      position: relative;
+      left: $pad-l;
+      width: calc(100% - #{$pad-l});
+
+      &::before {
+        display: block;
+        position: absolute;
+        content: '•';
+        left: -$pad-l;
+      }
+    }
+  }
+
+  // top-level list item //
+  & > ul > li {
+    &:not(:last-of-type) {
+      margin-bottom: $pad-s;
+    }
+  }
+
+  // code //
+  code {
+    font-family: $font-code;
+  }
+
+  // block mode
+  pre {
+    width: 100%;
+    overflow-x: auto;
+    white-space: pre;
+    background-color: $col-y-lighter;
+    border-radius: $pad-s;
+    border: 1px solid $col-y-light;
+    padding: $pad-m;
+  }
+
+  // inline mode
+  :not(pre) > code {
+    background-color: $col-y-lighter;
+    border-bottom: 1px solid $col-y-light;
+    padding: 1px 2px;
+  }
+
+  // modifier //
+  strong {
+    font-weight: bold;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  // a //
+  a {
+    color: inherit;
+  }
+}
