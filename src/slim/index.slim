@@ -1,17 +1,24 @@
+doctype html
 html
   head
-    link rel='stylesheet' href='/index.css'
+    include head.slim
   body
 
     #indexPage
-      #header
-        include header.slim
+      #headerWrapper
+        #header
+          include header.slim
       #postList
         .post-list
           .post-list__header
             | Posts
+            a.post-list__header__link[
+              href='https://github.com/hi-ogawa/blog/tree/master/src/posts'
+              target='_blank'
+            ]
+              i.fa.fa-github
           .post-list__body
             .post-list-item
-              - @posts.each do |post|
+              - @posts.reject{ |p| p.meta['special'] }.each do |post|
                 a.post-list-item__link href=post.link_path
                   = post.meta['title']

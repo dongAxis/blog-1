@@ -1,8 +1,85 @@
 .header {
+  display: flex;
+  flex-direction: row;
+  padding: $pad-l;
+
+  &__title {
+    flex: 1 0;
+    font-size: $fs-xl;
+    font-weight: bold;
+    white-space: nowrap;
+
+    &__link {
+      @include reset_a;
+    }
+  }
+
+  &__menu {
+    display: flex;
+    flex: 0 0;
+    flex-direction: row;
+
+    &__about {
+      @include reset_a;
+      cursor: pointer;
+      font-size: $fs-xl;
+      margin-right: $pad-l;
+    }
+
+    &__search {
+      display: flex;
+      flex-direction: row;
+
+      &__icon {
+        cursor: pointer;
+        font-size: $fs-xl;
+        margin-right: $pad-m;
+      }
+
+      &__form {
+        transition: width 0.2s ease 0s;
+        overflow: hidden;
+        position: relative;
+
+        input {
+          position: absolute;
+          bottom: 0;
+          font-size: $fs-m;
+          border-bottom: 1px dotted $col-lighter;
+        }
+      }
+
+      &:not(.open) > &__form {
+        width: 0px;
+      }
+
+      &.open > &__form {
+        width: 150px;
+      }
+    }
+  }
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column;
+
+    &__title {
+      flex: 1;
+      text-align: center;
+      margin-bottom: $pad-m;
+    }
+
+    &__menu {
+      flex: 1;
+      align-self: center;
+    }
+  }
 }
 
 .post-list {
   &__header {
+    &__link {
+      @include reset_a;
+    }
   }
   &__body {
   }

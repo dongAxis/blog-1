@@ -8,45 +8,40 @@ html {
   height: 100%;
 }
 
-// Mixin (none yet) //
-
 // Global variable //
 
 // font
-$font-primary: 'Lato', 'Helvetica Neue', 'Arial', sans-serif;
+$font-primary: 'Helvetica', 'Arial', sans-serif;
 
 // padding
-$pad_s: 0.5rem;
-$pad_m: 1rem;
-$pad_l: 1.5rem;
+$pad_s:  0.5rem;
+$pad_m:  1rem;
+$pad_l:  1.5rem;
 
 // font size
-$fs_xs: 1.2rem;
-$fs_s:  1.4rem;
-$fs_m:  1.6rem;
-$fs_l:  1.8rem;
+$fs_xs:  1.2rem;
+$fs_s:   1.4rem;
+$fs_m:   1.6rem;
+$fs_l:   1.8rem;
+$fs_xl:  2.0rem;
 
 // color
 $col-dark:     #292b2c;
 $col-darker:   #464a4c;
 $col-light:    #636c72;
-$col-lighter:  #eceeef;
+$col-lighter:  #e2e2e2;
 $col-lightest: #f7f7f9;
 
 // breakpoint
-$breakpoints: (
-  'XS' : '(max-width:  479px)',
-   'S' : '(max-width:  767px)',
-   'M' : '(max-width: 1023px)',
-   'L' : '(max-width: 1439px)',
-  'XL' : '(max-width: 1599px)',
-  '2K' : '(max-width: 2047px)',
-  '4K' : '(max-width: 3840px)',
+$bp-sm: 576px;
+$bp-md: 768px;
+$bp-lg: 992px;
 
-   'S+': '(min-width:  480px)',
-   'M+': '(min-width:  768px)',
-   'L+': '(min-width: 1024px)',
-  'XL+': '(min-width: 1440px)',
-  '2K+': '(min-width: 1600px)',
-  '4K+': '(min-width: 2048px)'
-);
+// app specific
+$page-width: 1000px;
+
+// Mixin //
+@mixin reset_a {
+  color: initial;
+  text-decoration: none;
+}

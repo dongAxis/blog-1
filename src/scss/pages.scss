@@ -1,21 +1,40 @@
 body {
-  height: 100%;
-  font-size: $fs_m;
   background-color: $col-lightest;
   font-family: $font-primary;
-}
-
-#indexPage, #postPage {
+  font-size: $fs_m;
   height: 100%;
-
-  #header {
-  }
 }
 
 #indexPage {
+  height: 100%;
+
+  #headerWrapper {
+    #header {
+      margin: 0 auto;
+      max-width: $page-width;
+    }
+    border-bottom: 1px solid $col-lighter;
+  }
+
+  #postList {
+    margin: 0 auto;
+    max-width: $page-width;
+  }
 }
 
 #postPage {
+  height: 100%;
+
+  #headerWrapper {
+    #header {
+      margin: 0 auto;
+      max-width: $page-width;
+    }
+    border-bottom: 1px solid $col-lighter;
+  }
+
   #postContent {
+    margin: 0 auto;
+    max-width: $page-width;
   }
 }
