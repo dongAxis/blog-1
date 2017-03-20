@@ -77,7 +77,7 @@
 
   @media (max-width: $bp-sm) {
     flex-direction: column;
-    margin: $pad-l;
+    margin: $pad-l 0 $pad-m 0;
 
     &__title {
       flex: 1;
