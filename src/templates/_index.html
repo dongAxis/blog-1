@@ -1,0 +1,28 @@
+<div class="post-list">
+  <div class="post-list__header">
+    <a class="post-list__header__link" href="https://github.com/hi-ogawa/blog/tree/master/src/posts" target="_blank">
+      Posts
+      <div class="post-list__header__link__icon">
+        <i class="fa fa-github"></i>
+      </div>
+    </a>
+  </div>
+  <div class="post-list__body">
+    <% postMetas.forEach(meta => { %>
+      <div class="post-list__body__list-item">
+        <div class="post-list-item">
+          <a class="post-list-item__title" href="<%= meta.link %>" ><%= meta.title %></a>
+          <div class="post-list-item__sub">
+            <div class="post-list-item__sub__date"><%= meta.date.substr(0, 10) %></div>
+            <div
+              class="post-list-item__sub__draft"
+              title="<%= meta.draft ? 'draft' : 'finished' %>"
+            >
+              <i class="fa <%= meta.draft ? 'fa-circle-o' : 'fa-check-circle-o' %>"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+</div>

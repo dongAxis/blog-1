@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hiroshi's Minimal Blog</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="/index.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.0.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.js"></script>
+  </head>
+  <body>
+    <div id="page">
+      <div id="headerWrapper">
+        <div id="header">
+          <div class="header">
+            <div class="header__title">
+              <a class="header__title__link" href="/">Hiroshi's Minimal Blog</a>
+            </div>
+            <div class="header__menu">
+              <a class="header__menu__about" href="/posts/about.html"><i class="fa fa-user-circle"></i></a>
+              <div class="header__menu__search">
+                <div class="header__menu__search__icon" data-toggle="dropdown" onclick="this.nextSibling.firstChild.focus()">
+                  <i class="fa fa-search"></i>
+                </div>
+                <form action="https://github.com/hi-ogawa/blog/search" class="header__menu__search__form" target="_blank">
+                  <input name="q" placeholder="Search" type="text">
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="content">
+        <%= content %>
+      </div>
+    </div>
+  </body>
+</html>
