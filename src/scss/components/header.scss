@@ -26,7 +26,7 @@
       margin-right: $pad-l;
       color: $col-light;
 
-      &:hover {
+      @include hover(true) {
         color: $col-dark;
       }
     }
@@ -41,7 +41,7 @@
         margin-right: $pad-m;
         color: $col-light;
 
-        &:hover {
+        @include hover(true) {
           color: $col-dark;
         }
       }
@@ -77,11 +77,12 @@
 
   @media (max-width: $bp-sm) {
     flex-direction: column;
+    margin: $pad-l;
 
     &__title {
       flex: 1;
       text-align: center;
-      margin-bottom: $pad-m;
+      margin-bottom: $pad-l;
     }
 
     &__menu {
