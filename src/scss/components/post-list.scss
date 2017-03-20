@@ -6,6 +6,7 @@
     margin: $pad-xxl 0;
 
     &__link {
+      @include animate-underline;
       @include reset_a;
       font-size: $fs-xxl;
       font-weight: bold;
@@ -13,10 +14,6 @@
       &__icon {
         display: inline;
         padding-left: $pad-m;
-      }
-
-      &:hover {
-        text-decoration: underline;
       }
     }
   }
@@ -45,28 +42,10 @@
     }
 
     @include reset_a;
+    @include animate-underline;
     font-size: $fs-xl;
     cursor: pointer;
     margin-right: $pad-m;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0; right: 0;
-      bottom: 0;
-      height: 1px;
-      border-bottom: 1px solid $col-light;
-      transition: width 0.4s ease 0s;
-    }
-
-    &:hover::after {
-      width: 100%;
-    }
-
-    &:not(:hover)::after {
-      width: 0;
-    }
   }
 
   &__sub {

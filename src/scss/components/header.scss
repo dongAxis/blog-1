@@ -10,10 +10,7 @@
 
     &__link {
       @include reset_a;
-
-      &:hover {
-        text-decoration: underline;
-      }
+      @include animate-underline;
     }
   }
 
@@ -27,6 +24,11 @@
       cursor: pointer;
       font-size: $fs-xl;
       margin-right: $pad-l;
+      color: $col-light;
+
+      &:hover {
+        color: $col-dark;
+      }
     }
 
     &__search {
@@ -37,6 +39,15 @@
         cursor: pointer;
         font-size: $fs-xl;
         margin-right: $pad-m;
+        color: $col-light;
+
+        &:hover {
+          color: $col-dark;
+        }
+      }
+
+      &.open > &__icon {
+        color: $col-dark;
       }
 
       &__form {
@@ -49,6 +60,8 @@
           bottom: 0;
           font-size: $fs-m;
           border-bottom: 1px dotted $col-lighter;
+          font-family: $font-primary;
+          color: $col-darker;
         }
       }
 
