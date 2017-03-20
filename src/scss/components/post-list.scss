@@ -38,30 +38,48 @@
   flex-wrap: wrap;
   align-items: center;
 
-  &__icon-and-title {
-    margin-right: $pad-m;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    &__icon {
-      font-size: $fs-m;
+  &__title {
+    &::before {
+      content: '‣';
       margin-right: $pad-l;
     }
 
-    &__title {
-      @include reset_a;
-      font-size: $fs-xl;
-      cursor: pointer;
+    @include reset_a;
+    font-size: $fs-xl;
+    cursor: pointer;
+    margin-right: $pad-m;
+    position: relative;
 
-      &:hover {
-        text-decoration: underline;
-      }
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      bottom: 0;
+      height: 1px;
+      border-bottom: 1px solid $col-light;
+      transition: width 0.4s ease 0s;
+    }
+
+    &:hover::after {
+      width: 100%;
+    }
+
+    &:not(:hover)::after {
+      width: 0;
     }
   }
 
-  &__date {
+  &__sub {
     font-size: $fs-m;
     color: $col-darker;
+    display: flex;
+    flex-direction: row;
+
+    &__date {
+      margin-right: $pad-s;
+    }
+
+    &__draft {
+    }
   }
 }

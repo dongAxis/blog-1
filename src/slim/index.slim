@@ -22,15 +22,15 @@ html
             - @posts.reject{ |p| p.meta['special'] }.sort_by{ |p| Time.parse(p.meta['date']) }.reverse.each do |post|
               .post-list__body__list-item
                 .post-list-item
-                  .post-list-item__icon-and-title
-                    .post-list-item__icon-and-title__icon[
+                  a.post-list-item__title href=post.link_path
+                    = post.meta['title']
+
+                  .post-list-item__sub
+                    .post-list-item__sub__date
+                      = post.meta['date'][0, 10]
+                    .post-list-item__sub__draft[
                       title="#{post.meta['draft'] ? 'draft' : 'finished'}"
                     ]
                       i.fa class="#{post.meta['draft'] ? 'fa-circle-o' : 'fa-check-circle-o'}"
 
-                    a.post-list-item__icon-and-title__title href=post.link_path
-                      = post.meta['title']
-
-                  .post-list-item__date
-                    = post.meta['date'][0, 10]
 
