@@ -26,7 +26,8 @@ const processPost = (mdFile) => {
   const mdStr = readFile(mdFile);
   const mdHtml = (new showdown.Converter({
     simplifiedAutoLink: true,
-    excludeTrailingPunctuationFromURLs: true
+    excludeTrailingPunctuationFromURLs: true,
+    disableForced4SpacesIndentedSublists: true,
   })).makeHtml(mdStr);
   const meta = extractMeta(mdFile);
   const contentHtml = template('src/templates/_post.html', { meta, mdHtml });
