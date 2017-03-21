@@ -6,7 +6,7 @@ OUT_POSTS = $(addprefix out/posts/,$(patsubst %.md,%.html,$(_SRC_POSTS)))
 
 posts: $(OUT_POSTS)
 out/posts/%.html: src/posts/%.md $(addprefix src/templates/,_entry.html _post.html)
-	POST_MD=$< POST_HTML=$@ npm run build:post
+	POST_MD=$< npm run build:post
 
 index: out/index.html
 out/index.html: $(addprefix src/templates/,_entry.html _index.html) $(SRC_POSTS)
