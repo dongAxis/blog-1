@@ -17,15 +17,22 @@
   - nodejs impl: (js binding and libuv call?)
   - libuv layer: http://nikhilm.github.io/uvbook/networking.html
   - libuv impl layer: (Linux socket polling)
+ 
+- Follow blink v8 binding example
 
 - Q. Does V8 itself keep event loop for pure javascript things (e.g. Promise) ?
   - if so, how can it integrate with libuv loop ?
+
+- Q. How many V8 instance does blink need ?
+
+- Compare v8 with JSC (JavascriptCore) in terms of interface
+
 
 # Reference
 
 - V8
   - https://chromium.googlesource.com/v8/v8.git
-  - https://github.com/v8/v8/wiki/Getting-Started-with-Embedding
+  - https://github.com/v8/v8/wiki/Embedder's-Guide
 - libuv
   - https://github.com/libuv/libuv
   - http://nikhilm.github.io/uvbook/
