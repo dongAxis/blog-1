@@ -98,4 +98,13 @@
     color: inherit;
     word-break: break-all;
   }
+
+  // centralize
+  p img {
+    display: block;
+    max-width: 80%;
+    left: 50%;
+    position: relative;
+    transform: translateX(-50%);
+  }
 }
