@@ -3,14 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "nf start builder,server",
-    "build:css": "node-sass src/scss/index.scss > out/index.css",
-    "build:post": "node build.js post $POST_MD",
-    "build:index": "node build.js index",
-    "server": "node server.js",
-    "watch": "watch 'make build' src"
-  },
+  "scripts": {},
   "author": "",
   "license": "ISC",
   "devDependencies": {

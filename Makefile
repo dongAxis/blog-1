@@ -1,3 +1,6 @@
+## Nodejs setup ##
+PATH := $(PWD)/node_modules/.bin:$(PATH)
+
 ## Main build dependencies ##
 
 _SRC_POSTS = $(shell ls src/posts)
@@ -6,15 +9,15 @@ OUT_POSTS = $(addprefix out/posts/,$(patsubst %.md,%.html,$(_SRC_POSTS)))
 
 posts: $(OUT_POSTS)
 out/posts/%.html: src/posts/%.md $(addprefix src/templates/,_entry.html _post.html)
-	POST_MD=$< npm run build:post
+	node build.js post $<
 
 index: out/index.html
 out/index.html: $(addprefix src/templates/,_entry.html _index.html) $(SRC_POSTS)
-	npm run build:index
+	node build.js index
 
 css: out/index.css
 out/index.css: $(shell find src/scss -name '*.scss')
-	npm run build:css
+	node-sass src/scss/index.scss > out/index.css
 
 
 ifdef IGNORE_INDEX
@@ -36,7 +39,7 @@ prepare:
 	mkdir -p out/posts
 
 start:
-	npm start
+	nf start builder,server
 
 clean:
 	rm -r out

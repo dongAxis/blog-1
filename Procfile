@@ -1,2 +1,2 @@
-builder: npm run watch
-server: npm run server
+builder: watch 'make build' src
+server: node server.js
