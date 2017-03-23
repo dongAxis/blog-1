@@ -1,6 +1,6 @@
 <!--
 {
-  "title": "VS Code, reading source",
+  "title": "Reading VS Code",
   "date": "2017-03-18T22:43:32+09:00",
   "category": "",
   "tags": ["source"],
