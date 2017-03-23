@@ -10,6 +10,10 @@ ${content}
 
 const parseJsonFile = (filename) => JSON.parse(fs.readFileSync(filename).toString());
 
+// TODO: https://html.spec.whatwg.org/multipage/syntax.html#named-character-references
+const unescape = (str) => {
+};
+
 const posts = parseJsonFile('wp_posts.json');
 const termRelationships = parseJsonFile('wp_term_relationships.json');
 const terms = parseJsonFile('wp_terms.json');
