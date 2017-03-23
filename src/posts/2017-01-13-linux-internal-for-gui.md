@@ -1,0 +1,244 @@
+<!--
+{
+  "title": "Linux internal for GUI",
+  "date": "2017-01-13T20:01:23.000Z",
+  "category": "",
+  "tags": [],
+  "draft": true
+}
+-->
+
+- meta
+    - let's forget desktop environment things (e.g. compositing, window management, shell)
+    - I might wanna go into weston though.
+        - things is I don't care protocol or efficiency for now. so just wanna understand how user space (display server) uses graphic application centric kernel facility.
+    - display servers I know
+        - Xorg
+        - weston
+        - surface flinger
+        - mar
+    - goal is to understand how Xorg is different from getty-login-shell sequence.
+        - as I haven't read how shell does spawn process, I can ignore how desktop shell works.
+    - how about client ?
+        - nah, it's just following some protocol and talking with Xorg, so let's forget it.
+        - or maybe just check out greeter ?
+    - it's off topic, but I'm curious about how gui client library (e.g. gtk+, qt) deal with different display server, I mean those libraries' module architecture.
+    - who's in charge of managing external display/monitors ?
+        - that's what drm-kms(7) does, so look at your video card driver.
+   - Xorg plugin architecture
+        - is this just some dynamic library and some internal interface ?
+   - You can pick some stuff from http://wp.hiogawa.net/wp-admin/post.php?post=1439&action=edit
+   - try to create single process graphic application on virtual terminal
+       - you can mess with /dev/fd0 or /dev/drm or whatever
+       - promote from some /dev/tty
+         
+- User space
+    - who made tty7 to be fg_console (kernel?, systemd?, plymouth?, lightdm?, Xorg?)
+        - vt.handoff setup fg_console (ubuntu's patch)
+        - Xorg can do ioctl VT_ACTIVATE 7 (see below)
+    - systemd (pid 1)
+        - default.target -> graphical.target -> display_manager.service -> lightdm.service
+        - getty@tty7.service
+        - plymouth-start.service (ConditionKernelCommandLine=splash)
+        - gpu-manager (WantedBy=display-manager.service)
+    - plymouth
+        - https://www.freedesktop.org/wiki/Software/Plymouth/
+        - try setting up "--tty=/dev/tty7"
+        - how to see log: https://wiki.ubuntu.com/Plymouth#Enabling_Debugging
+        - /sys/class/tty/console/active implementation (see show_cons_active in (drviers/tty/tty_io.c))
+        - BOOT_TTY is /dev/tty1 (why not tty7)
+        - ? why does plymouth bother with /sys/class/tty/console/active (which is /dev/tty1) even though "get_active_vt:Remembering that initial vt is 7" (because of ubuntu's vt.handoff) ?
+        - ? doesn't it have to switch to /dev/tty1 then ? (ioctl VT_ACTIVATE or whatever)
+            - LOL "ply_terminal_activate_vt:unable to set active vt to 1: Input/output error"
+            - ? why does it fail ? (read through the case VT_ACTIVATE in vt_ioctl.c with kern.log)
+        - ? what if I press Ctrl-Alt-F1 during this failing plymouth ?
+        - plymouth might be a minimal drm application. definitely worth take a look at it.
+        - follow drm calls from plugins/renderers/drm/plugin.c
+            - (kms) on_udev_event => create_devices_for_udev_device => create_devices_for_terminal_and_renderer_type => ply_renderer_open => ply_renderer_open_plugin =>
+                - ... => create_backend
+                - ... => open_device => load_driver =>
+                    - open("/dev/drm/card0")
+                    - drmDropMaster (why?)
+                - ... => query_device =>
+                    - drmModeGetResources
+                    - create_heads_for_active_connectors =>
+                        - drmModeGetConnector
+                        - find_encoder_for_connector => drmModeGetEncoder
+                        - find_controller_for_encoder => drmModeGetCrtc (log "Found already lit monitor")
+                        - drmModeFreeEncoder
+                        - get_index_of_active_mode (find connector's mode which coincides with crtc's mode we just got)
+                            - ? not sure when connector's modes are set up since drmModeGetConnector looks returning empty `drmModeConnector.modes`
+                        - drmModeFreeCrtc
+                        - ply_renderer_head_new =>
+                            - (initialize "renderer_head" with drm structure you collected so far)
+                            - initialize ply_pixel_buffer (general plymouth's cpu render place? not a drm thing)
+                    - has_32bpp_support:
+                        - call drmModeAddFB to check color depth, so call drmModeRmFB soon after
+            - (rendering) create_devices_for_terminal_and_renderer_type => create_pixel_displays_for_renderer
+                - ply_pixel_display_new => ply_renderer_get_buffer_for_head => get_buffer_for_head
+                - on_pixel_display_added (via pixel_display_added_handler) => show_splash => show_default_splash => show_theme =>
+                    - load_theme => ply_boot_splash_new
+                    - ply_device_manager_activate_renderers => activate => ...?
+                        - drmSetMaster
+                        - flush_head
+                        - ply_renderer_head_set_scan_out_buffer =>
+                            - jesus, I don't think we even setup fb until here.
+                            - drmModeSetCrtc
+                    - ply_boot_splash_show => show_splash_screen => start_animation => ...?
+            - goddamit, I lost the trail, start over from here.
+            - ply_renderer_head_map =>
+                - create_output_buffer =>
+                    - ply_renderer_buffer_new => DRM_IOCTL_MODE_CREATE_DUMB
+                    - drmModeAddFB to the dumb buffer and obtain the id
+                - map_buffer => ply_renderer_buffer_map =>
+                    - DRM_IOCTL_MODE_MAP_DUMB to "card0" with dumb buffer gem handle and get offset for mmap
+                    - buffer->map_address = mmap "card0" from the offset
+                - ply_renderer_head_redraw => flush_head =>
+                    - some CPU render on mmaped space
+                    - end_flush => drmModeDirtyFB (?)
+                - reset_scan_out_buffer_if_needed => 
+                    - drmModeSetCrtc (specify complete set of entities (fb, crtc, mode) to finally drive connector)
+                        - no double buffering here (a.k.a. page flip)
+        - references:
+            - kernel subsystem: linux/drivers/gpu/drm
+                - two types of ioctl, general one (drm_ioctls) and device specific one (e.g. i915_ioctls)
+            - user space wrapper: https://cgit.freedesktop.org/mesa/drm/
+            - man: drm-kms(7), drm-memory(7)
+    - lightdm
+        - jesus, gobject things are hard to read...
+        - walkthrugh /var/log/lightdm/lightdm.log
+            - Launching process 1086: /usr/bin/X -core :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch
+            - Session pid=1115: Running command /usr/lib/lightdm/lightdm-greeter-session /usr/sbin/unity-greeter
+        - main =>
+            - config "minimum-vt", 7 by default
+            - (log "Monitoring logind for seats")
+            - rests are callback ?
+        - login1_service_seat_added_cb => login1_add_seat => update_login1_seat => add_login1_seat =>
+            - create_seat => seat_new("local") =(gobject magic?)=> seat_local_class_init
+            - display_manager_add_seat => ... => (seat_local_class_init) seat_class->start => parent_class->start = seat_real_start ?
+        - ? how inheritance is defined in gobject (I'm gussing, seat_local is inherited from seat)
+        - seat_real_start =>
+            - create_display_server => seat_local_create_display_server => create_x_server
+            - start_display_server => ... => x_server_local_start
+                - register got_signal_cb (later it shows "Got signal <SIGUSR1> from process <x>")
+                - (log "Launching X Server")
+                - process_start
+        - create_x_server =>
+            - get_vt =>
+                - (not clear what's happening here)
+                - plymouth_has_active_vt got to false ?
+                - vt_get_unused returns 7 since  "minimum-vt" is 7 by default
+                - if it's run vt_get_active has to return tty7 since vt.handoff=7 by ubuntu as long as plymouth didn't change it
+                - plymouth_quit (log "Quitting Plymouth")
+            - x_server_local_set_vt => ... (log "Using VT 7")
+        - ? display_server_ready_cb => start_session ...?
+    - Xorg
+        - upstream (server, input/output driver): https://cgit.freedesktop.org/xorg
+        - Documentations (https://www.x.org/wiki/Development/)
+            - https://www.x.org/wiki/guide/concepts/ (good picture)
+            - https://www.x.org/wiki/Development/Documentation/InputEventProcessing/ (not helping)
+            - https://www.x.org/wiki/Development/Documentation/HowVideoCardsWork/ (not helping)
+        -  /var/log/Xorg.0.log and lsof is a good resource to check
+        - input handling
+            - evdev(4), Documentation/input/input.txt
+        - Initialization steps (until event loop)
+            - main => dix_main =>
+            - initOutput =>
+                - config_pre_init (some libudev initialization)
+                - xf86HandleConfigFile =>
+                    - configLayout => configScreen (log "No screen section available. Using defaults.")
+                    - configFiles (log "ModulePath set to ...")
+                - LoaderInit (log "Module ABI versions: ...")
+                - systemd_logind_init => linux_parse_vt_settings (log "using VT number 7")
+                - xf86BusProbe => ?? (log "Adding drm device ...")
+                    - it looks impossible to have this log here
+                    - looks like it's supposed to be called from config_udev_init and add_device ?
+                    - ? check out my downstream source from ubuntu repository
+                - xf86LoadModules => ... (log "LoadModule: "glx"")
+                - autoConfigDevice (log "Matched intel as autoconfigured driver 0")
+                - xf86LoadModules => ... (log LoadModule: "intel" ...) => intel_setup => xf86AddDriver
+                - xf86OpenConsole => open("/dev/tty7", ...), ioctl(fd, VT_ACTIVATE, 7)
+                - xf86BusConfig => xf86CallDriverProbe => ... => intel_pci_probe => ... => xf86AllocateScreen 
+                - xf86GPUScreens[i]->PreInit => (for intel_drv) sna_pre_init
+                - xf86DeleteDriver => ... (log "UnloadModule: ...")
+                - (log "Depth 24 pixmap format is 32 bpp")
+                - AddGPUScreen(xf86ScreenInit, argc, argv) => ... => (for intel_drv) sna_screen_init
+            - initInput => config_init => config_udev_init =>
+                - device_added (log "config/udev: Adding input device Power Button (/dev/input/event3)")
+                    - NewInputDeviceRequest => xf86NewInputDevice =>
+                        - xf86LoadInputDriver => ... log ("LoadModule: "evdev"")
+                        - EvdevPreInit (via drv->PreInit)
+            - NotifyParentProcess => kill(ParentProcess, SIGUSR1) (lightdm is going to catch this and start greeter)
+            - Dispatch (main event loop)
+        - input driver initialization steps (in the case of evdev_drv.so)
+             - EvdevPreInit: setup InputInfoPtr (e.g. implement read_input function) and add EvdevPtr as private structure
+        - video driver initialization steps (in the case of intel_drv.so, see above for how those are called)
+             - intel_setup => xf86AddDriver: register `DriverRec intel`
+             - intel_pci_probe => intel_scrn_create => xf86AllocateScreen: setup `ScrnInfoPtr` (e.g. implement )
+             - sna_pre_init => ? bunch of xf86xxx function, find what's important after checking xserver event handling
+             - sna_screen_init => ? dri things happen too
+        - udev is for device discovery. evdev for handling device interactive event.
+        - what needs to be done for /dev/tty7 ?
+            - ?# don't we have to call TIOCSCTTY on /dev/tty7 ? or lightdm took care of it ?
+        - Event loop
+            - Dispatch => WaitForSomething
+                - if `INPUTTHREAD` is configured, InputThreadDoWork polls input in a dedicated thread.
+        - ? Event handling
+            - input
+            - X client request
+        - ? graphic drawing
+        - Xorg module (driver) architecture/requirement
+            - ? what's required to be "ABI class: X.Org Video Driver, version 20.0"
+            - ? how is "evdev" being "ABI class: X.Org XInput driver, version 22.1"
+        - data structure for "screen"
+            - `ScrnInfoPtr * xf86GPUScreens` in xf86GLobals.c
+            - `typedef struct _scrnInfoRec *ScrnInfoPtr` in xf86str.h
+            -  ? `screenLayoutPtr`
+        - ? threading (on my PC, I can see another thread under main process, but it doesn't open /dev/input things, so I'm guessing that's not INPUTTHREAD)
+    - udev architecture/implementation
+        - kernel: kobject_uevent function in linux/lib/kobject_uevent.c
+        - udevd: polling netlink uevent socket with on_uevent callback
+        - libudev: actually libudev is not communicating with udevd. just handling devices as udevd does.
+        - Note that udevd and llibudev shares a lot of code.
+    - what evdev does by itself ?
+        - https://www.freedesktop.org/software/libevdev/doc/1.5/index.html
+        - "libevdev is essentially a read(2) on steroids for /dev/input/eventX devices."
+        - anyway, evdev(4) is pretty confusing.
+
+- Kernel
+    - Jesus, vt.handoff is not in upstream. https://help.ubuntu.com/community/vt.handoff
+    - ? start from kms sounds a good idea since that abstraction go through important hardware components
+        - drm-kms(7)
+        - Documentation/gpu/drm-kms.rst (https://www.kernel.org/doc/html/latest/gpu/drm-kms.html)
+    - ? /dev/input
+        - read Documentation/input/input.txt
+    - hardware accelaration
+        - ? read "Computer Graphics Principles and Practice, Chapter 38 Modern Graphics Hardware" for basic recent consumer graphic application architecture overview.
+        - ? looks like a simpler version of https://queue.acm.org/detail.cfm?id=1365498
+
+- Hardware
+  - https://en.wikipedia.org/wiki/Video_display_controller
+  - color depth, bit per pixel
+      - monitor
+      - video controller
+      - gpu
+  - vga, hdmi
+  - alpha channel is meaningful for compositing concept, right?
+      - so, it's happy if we can blend multiple pixel (with alpha channel) on gpu.
+      - so, is there any advantage where passing alpha channel to monitor since at least video controller (gpu) can convert it to RGB without loss?
+      - I mean, "alpha transparency bits, which have little bearing on the color precision"
+  - it says HDMI could support alpha chennel though. https://en.wikipedia.org/wiki/Color_depth
+  - how about VGA/DVI ?
+
+
+- sysfs
+  - Documentation/filesystems/sysfs.txt
+  - boot steps:
+      - start_kernel => vfs_caches_init => dcache_init => mnt_init => sysfs_init => register_filesystem(&sysfs_fs_type)
+  - example: show_cons_active in drivers/tty/tty_io.c
+  - relevance to /proc, /proc/sys
+      - Documentation/{filesystems/proc.txt,sysctl/README}
+  - kernfs implementation
+  - ? relevance to kobject
+
+- Documentation/driver-model
