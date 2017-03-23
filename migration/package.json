@@ -1,0 +1,14 @@
+{
+  "name": "migration",
+  "version": "1.0.0",
+  "description": "Small scripts for migrate contents from wordpress (wp.hiogawa.net).",
+  "main": "sql2json.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mysql": "^2.13.0"
+  }
+}

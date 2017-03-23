@@ -1,0 +1,6 @@
+node_modules
+files
+.env
+wp_posts.json
+wp_term_relationships.json
+wp_terms.json
