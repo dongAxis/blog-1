@@ -4,17 +4,23 @@
   &__header {
     display: block;
     margin: $pad-xxl 0;
+    font-size: $fs-xxl;
+    display: flex; flex-direction: row;
+    justify-content: space-between;
 
     &__link {
       @include animate-underline;
       @include reset_a;
-      font-size: $fs-xxl;
       font-weight: bold;
 
       &__icon {
         display: inline;
         padding-left: $pad-m;
       }
+    }
+
+    &__controls {
+      &__draft-control {}
     }
   }
 
@@ -34,6 +40,10 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
+
+  &--draft {
+    color: $col-light;
+  }
 
   &__title {
     &::before {
@@ -57,8 +67,22 @@
     &__date {
       margin-right: $pad-s;
     }
+  }
+}
 
-    &__draft {
-    }
+.draft-control {
+  color: $col-light;
+  cursor: pointer;
+
+  @include hover(true) {
+    color: $col-dark;
+  }
+
+  &.showing &__shower {
+    display: none;
+  }
+
+  &.hiding &__hider {
+    display: none;
   }
 }

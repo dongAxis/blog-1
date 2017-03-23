@@ -6,23 +6,59 @@
         <i class="fa fa-github"></i>
       </div>
     </a>
+    <div class="post-list__header__controls">
+      <div class="post-list__header__controls__draft-control draft-control" >
+        <i class="fa fa-unlock draft-control__hider"
+           onclick="toggleDraftPosts(HIDE)"
+           title="Hide Draft Posts"
+        ></i>
+        <i class="fa fa-lock draft-control__shower"
+           onclick="toggleDraftPosts(SHOW)"
+           title="Show Draft Posts"
+        ></i>
+      </div>
+    </div>
   </div>
   <div class="post-list__body">
     <% postMetas.forEach(meta => { %>
-      <div class="post-list__body__list-item">
-        <div class="post-list-item">
-          <a class="post-list-item__title" href="<%= meta.link %>" ><%= meta.title %></a>
-          <div class="post-list-item__sub">
-            <div class="post-list-item__sub__date"><%= meta.date.substr(0, 10) %></div>
-            <div
-              class="post-list-item__sub__draft"
-              title="<%= meta.draft ? 'draft' : 'finished' %>"
-            >
-              <i class="fa <%= meta.draft ? 'fa-circle-o' : 'fa-check-circle-o' %>"></i>
-            </div>
-          </div>
+      <div class="post-list__body__list-item post-list-item <%= meta.draft ? 'post-list-item--draft' : '' %>">
+        <a class="post-list-item__title" href="<%= meta.link %>" ><%= meta.title %></a>
+        <div class="post-list-item__sub">
+          <div class="post-list-item__sub__date"><%= meta.date.substr(0, 10) %></div>
         </div>
       </div>
     <% }); %>
   </div>
 </div>
+<script>
+  var KEY = 'DRAFT_POSTS';
+  var SHOW = 'SHOW';
+  var HIDE = 'HIDE';
+  var draftPosts = Array.from(document.querySelectorAll('.post-list-item--draft'));
+  var control = document.querySelector('.draft-control');
+
+  function toggleDraftPosts(command) {
+    window.localStorage.setItem(KEY, command);
+    switch (command) {
+      case SHOW: {
+        draftPosts.forEach(elem => elem.style.display = '');
+        control.classList.toggle('showing', true);
+        control.classList.toggle('hiding', false);
+        return;
+      }
+
+      case HIDE: {
+        draftPosts.forEach(elem => elem.style.display = 'none');
+        control.classList.toggle('showing', false);
+        control.classList.toggle('hiding', true);
+        return;
+      }
+    }
+  }
+
+  function main() {
+    toggleDraftPosts(window.localStorage.getItem(KEY) || HIDE)
+  }
+
+  main();
+</script>

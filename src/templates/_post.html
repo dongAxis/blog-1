@@ -1,6 +1,6 @@
 <div class="post">
   <div class="post__header">
-    <div class="post__header__title"><%= meta.title %></div>
+    <div class="post__header__title"><%= meta.title %> <%= meta.draft ? '[DRAFT]' : '' %></div>
     <a
       class="post__header__date-and-source" target="_blank" title="source"
       href="<%= 'https://github.com/hi-ogawa/blog/tree/master/src' + meta.link.replace('.html', '.md') %>"
