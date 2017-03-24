@@ -42,6 +42,6 @@ start:
 	nf start builder,server
 
 clean:
-	rm -r out
+	rm -r out/index.html out/index.css out/posts
 
 .PHONY: prepare deploy start clean

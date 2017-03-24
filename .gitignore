@@ -1,2 +1,4 @@
-out
+out/index.css
+out/index.html
+out/posts/*.html
 node_modules
