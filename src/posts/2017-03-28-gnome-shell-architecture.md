@@ -40,12 +40,13 @@
   - _shell_global_get_gjs_context => ?
   - gjs_context_eval("imports.ui.environment.init(); imports.ui.main.start();")
 
-(gobject magic ?)
+(gobject magic routine)
 - shell_global_class_init
 - shell_global_init =>
   - g_object_new(GJS_TYPE_CONTEXT) => ?
 - gjs_context_class_init => ?
-- gjs_context_constructed => ?
+- gjs_context_constructed =>
+  - global object initialization ?
 
   [ data structure ]
   MetaPlugin
@@ -73,3 +74,4 @@
 # Reference
 
 - "Session" 101: https://www.freedesktop.org/wiki/Software/systemd/multiseat/
+- gobject 101: https://developer.gnome.org/gobject/stable/chapter-gobject.html#gobject-instantiation
