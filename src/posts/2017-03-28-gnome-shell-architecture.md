@@ -58,7 +58,10 @@
     JSRuntime, JSContext
 
 
-[ looking glass ]
+[ RunDialog and LookingGlass ]
+- js/ui/main.js (_sessionUpdated)
+- js/ui/runDialog.js (_internalCommands = { 'lg': ... })
+- js/ui/lookingGlass.js (LookingGlass._evaluate)
 - javascript binding (global object)
 - javascript execution context (off main thread ?)
 ```
