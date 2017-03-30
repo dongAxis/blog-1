@@ -25,11 +25,26 @@
 [ gnome-shell (and metacity and clutter) ]
 (main)
 - main =>
-  - meta_plugin_manager_set_plugin_type (gnome_shell_plugin_get_type ());
-  - meta_init
+  - meta_plugin_manager_set_plugin_type(gnome_shell_plugin_get_type())
+  - meta_init => ?
+  - _shell_global_init => g_object_new_valist(SHELL_TYPE_GLOBAL) =>
+    - (glib magic) shell_global_class_init
+    - (glib magic) shell_global_init =>
+      - g_object_new(GJS_TYPE_CONTEXT) =>
+        - (glib magic) gjs_context_class_init
+          - gjs_register_native_module (e.g. ) => ?
+        - (glib magic) gjs_context_init
+        - (glib magic) gjs_context_constructed =>
+          - JS_NewContext
+          - JS::RootedObject global
+          - gjs_init_context_standard =>
+            - JS_InitStandardClasses
+          - JS_DefineProperty(context, global, "window")
+          - JS_DefineFunctions
+          - gjs_create_root_importer and gjs_define_root_importer (assign "imports" as global's property)
   - meta_run => ?
 
-(gnome-shell-plugin.c)
+(maybe it's from meta_run ?)
 - gnome_shell_plugin_class_init
 - gnome_shell_plugin_start =>
   - _shell_global_set_plugin =>
@@ -37,42 +52,58 @@
     - (some branch by meta_is_wayland_compositor comes here too)
     - event callback setup (e.g. "after-paint", "notify::focus-window", etc...)
     - and more ...
-  - _shell_global_get_gjs_context => ?
   - gjs_context_eval("imports.ui.environment.init(); imports.ui.main.start();")
 
-(gobject magic routine)
-- shell_global_class_init
-- shell_global_init =>
-  - g_object_new(GJS_TYPE_CONTEXT) => ?
-- gjs_context_class_init => ?
-- gjs_context_constructed =>
-  - global object initialization ?
 
-  [ data structure ]
-  MetaPlugin
-  GnomeShellPluginClass
-  ShellGlobal (most top level singleton, the_object!)
-  ShellWM
-  ClutterBackend
-  GjsContext (let's not go further to the mozilla js interface)
-    JSRuntime, JSContext
+[ JS sources ]
+- environment.init (js/ui/environment)
+- main.start (js/ui/main) =>
+  - _initializeUI =>
+    - new WindowManager
+    - and more ...
+  - _sessionUpdated =>
+    - WindowManager.setCustomKeybindingHandler('panel-run-dialog', ..., openRunDialog)
+      - Meta.keybindings_set_custom_handler => ? native impl
+- main.openRunDialog (js/ui/main) =>
+  - new RunDialog.RunDialog
+    - _init => _internalCommands = { 'lg': ... Main.createLookingGlass().open() }
+  - RunDialog.open (js/ui/runDialog.js)
+- main.createLookingGlass =>
+  - new LookingGlass.LookingGlass => _init =>
+    - connect('activate', ... LookingGlass._evaluate)
+- LoogingGlass._evaluate => eval !
 
 
-[ RunDialog and LookingGlass ]
-- js/ui/main.js (_sessionUpdated)
-- js/ui/runDialog.js (_internalCommands = { 'lg': ... })
-- js/ui/lookingGlass.js (LookingGlass._evaluate)
-- javascript binding (global object)
-- javascript execution context (off main thread ?)
+[ data structure ]
+ShellGlobal (the_object!)
+MetaPlugin
+GnomeShellPluginClass
+ShellWM
+ClutterBackend
+GjsContext (let's not go further to the mozilla js interface)
+  JSRuntime, JSContext
 ```
 
 # TODO
 
-- extension load mechanism
-- looking glass architecture
 - create extension which does Super+n triggering open n-th favorite app
-- what is gnome-session (gnome-session-binary) for ?
-  - relevancy to systemd's logind
+- javascript thread
+- native module injection
+  - gjs ji modules
+- js import mechanism (gjs api)
+
+# Configuration
+
+```
+# Check current setting
+$ gsettings list-schemas | grep wm
+org.gnome.desktop.wm.keybindings
+$ gsettings list-recursively org.gnome.desktop.wm.keybindings | grep dialog
+org.gnome.desktop.wm.keybindings panel-run-dialog ['<Alt>F2']
+
+# Add new keybinding
+$ gsettings set org.gnome.desktop.wm.keybindings panel-run-dialog "['<Alt>F2', '<Super>0']"
+```
 
 # Reference
 
