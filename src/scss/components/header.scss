@@ -4,7 +4,7 @@
   margin: $pad-xl;
 
   &__title {
-    flex: 1 0;
+    flex: 1 0 auto;
     font-size: $fs-xxl;
     white-space: nowrap;
 
@@ -16,7 +16,7 @@
 
   &__menu {
     display: flex;
-    flex: 0 0;
+    flex: 0 1 auto;
     flex-direction: row;
 
     &__about {

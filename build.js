@@ -3,6 +3,9 @@ const process = require('process');
 const showdown  = require('showdown');
 const _ = require('lodash');
 
+// put config object to global
+CONFIG = require('./config.js');
+
 // Helpers
 const readFile = (file) => fs.readFileSync(file).toString();
 const template = (file, obj) => _.template(readFile(file))(obj);
@@ -28,7 +31,8 @@ const processPost = (mdFile) => {
     simplifiedAutoLink: true,
     excludeTrailingPunctuationFromURLs: true,
     disableForced4SpacesIndentedSublists: true,
-    parseImgDimensions: true
+    parseImgDimensions: true,
+    literalMidWordUnderscores: true,
   })).makeHtml(mdStr);
   const meta = extractMeta(mdFile);
   const contentHtml = template('src/templates/_post.html', { meta, mdHtml });

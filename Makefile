@@ -19,14 +19,11 @@ css: out/index.css
 out/index.css: $(shell find src/scss -name '*.scss')
 	node-sass src/scss/index.scss > out/index.css
 
-
-ifdef IGNORE_INDEX
-INDEX =
-else
-INDEX = index
+ifndef BUILD
+BUILD = index css posts
 endif
 
-build: $(INDEX) css posts
+build: $(BUILD)
 
 
 ## Some helpers ##
@@ -42,6 +39,6 @@ start:
 	nf start builder,server
 
 clean:
-	rm -r out/index.html out/index.css out/posts
+	rm -f out/index.html out/index.css out/posts/*
 
 .PHONY: prepare deploy start clean
