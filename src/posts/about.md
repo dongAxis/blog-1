@@ -35,10 +35,11 @@
   - React
 - Machine Architecture
   - AMD64
-  
+
  # Wishlist
- 
+
  - Kernel
+   - File system
    - Video card driver and spec (Intel)
  - Virtual machine
    - virtual box
@@ -49,7 +50,7 @@
    - GHC
  - Desktop
    - Wayland protocol
- 
+
 # Principles
 
 - Not being an end user
