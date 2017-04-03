@@ -35,7 +35,21 @@
   - React
 - Machine Architecture
   - AMD64
-
+  
+ # Wishlist
+ 
+ - Kernel
+   - Video card driver and spec (Intel)
+ - Virtual machine
+   - virtual box
+   - qemu
+   - kvm
+ - Programming language implementation
+   - OpenJDK
+   - GHC
+ - Desktop
+   - Wayland protocol
+ 
 # Principles
 
 - Not being an end user
