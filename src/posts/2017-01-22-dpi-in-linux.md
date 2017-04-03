@@ -26,6 +26,17 @@ screen #0:
   dimensions:    1366x768 pixels (361x203 millimeters)
   resolution:    96x96 dots per inch
 ...
+
+$ xrandr
+Screen 0: minimum 320 x 200, current 2560 x 1848, maximum 8192 x 8192
+eDP-1 connected primary 1366x768+778+1080 (normal left inverted right x axis y axis) 293mm x 165mm
+HDMI-1 connected 2560x1080+0+0 (normal left inverted right x axis y axis) 673mm x 284mm
+
+$ node
+> 25.4 * Math.sqrt((1366 * 768) / (293 * 165))
+118.32156192924059 # => 118^2 dots per inch
+> 25.4 * Math.sqrt((2560 * 1080) / (673 * 284))
+96.60483762684989 # => 96^2 dots per inch
 ```
 
 - how many dots in one pixel?
@@ -34,7 +45,7 @@ screen #0:
 - 1366x768 pixels (361x203 millimeters)
 - 96x96 dots per inch (1 inch = 2.54 cm = 25.4 mm)
 
-=&gt;
+=>
 
 in 1 mm square, 
 
