@@ -41,14 +41,14 @@
     window.localStorage.setItem(KEY, command);
     switch (command) {
       case SHOW: {
-        draftPosts.forEach(elem => elem.style.display = '');
+        draftPosts.forEach(function(elem) { elem.style.display = ''; });
         control.classList.toggle('showing', true);
         control.classList.toggle('hiding', false);
         return;
       }
 
       case HIDE: {
-        draftPosts.forEach(elem => elem.style.display = 'none');
+        draftPosts.forEach(function(elem) { elem.style.display = 'none'; });
         control.classList.toggle('showing', false);
         control.classList.toggle('hiding', true);
         return;
