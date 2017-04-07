@@ -45,10 +45,8 @@ background process group (extends process group)
 
 - Shell
   - http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18
-  - what it really does is just a utility program for controlling concepts listed above interactively + alpha.
-  - when it's run interactively, "foreground process group" is still shell itself by posix's definition (since shell is intercepting ctrl-Z kinds of commands) ?
-      - or this "special character input" is on the spec of terminal and foreground process group?
-          - http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap11.html#tag_11_01_09
+  - what it really is just a utility program for controlling concepts listed above interactively.
+  - Ctrl-C kinds of signal handling is not what shell is supposed to handle for child processes.
 
 - Terminal
   - input control: (11.1.5 Input Processing and Reading Data)
@@ -76,6 +74,7 @@ which I have to read and understand.
 
 # Side Notes
 
+- how to check controlling process group (forground job) ?
 - PID1's stdin/stdout/stderr
 - Seat
 - Graphical session
