@@ -20,6 +20,7 @@
     }
 
     &__controls {
+      display: flex; flex-direction: row;
       &__draft-control {}
     }
   }
@@ -61,8 +62,7 @@
   &__sub {
     font-size: $fs-m;
     color: $col-darker;
-    display: flex;
-    flex-direction: row;
+    display: flex; flex-direction: row;
 
     &__date {
       margin-right: $pad-s;
@@ -73,6 +73,7 @@
 .draft-control {
   color: $col-light;
   cursor: pointer;
+  display: flex; flex-direction: row;
 
   @include hover(true) {
     color: $col-dark;

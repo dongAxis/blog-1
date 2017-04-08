@@ -6,13 +6,14 @@ PATH := $(PWD)/node_modules/.bin:$(PATH)
 _SRC_POSTS = $(shell ls src/posts)
 SRC_POSTS = $(addprefix src/posts/,$(_SRC_POSTS))
 OUT_POSTS = $(addprefix out/posts/,$(patsubst %.md,%.html,$(_SRC_POSTS)))
+OTHER_DEPS = config.js build.js
 
 posts: $(OUT_POSTS)
-out/posts/%.html: src/posts/%.md $(addprefix src/templates/,_entry.html _post.html)
+out/posts/%.html: src/posts/%.md $(addprefix src/templates/,_entry.html _post.html) $(OTHER_DEPS)
 	node build.js post $<
 
-index: out/index.html
-out/index.html: $(addprefix src/templates/,_entry.html _index.html) $(SRC_POSTS)
+index: out/index.html $(OTHER_DEPS)
+out/index.html: $(addprefix src/templates/,_entry.html _index.html) $(SRC_POSTS) $(OTHER_DEPS)
 	node build.js index
 
 css: out/index.css
