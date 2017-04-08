@@ -9,10 +9,6 @@
 # Interests
 
 - Linux Kernel
-  - Memory Mangement
-  - Process Scheduling
-  - Graphics Driver
-  - Audio Driver
 - Free Desktop
   - Xorg server
   - Gnome Shell
@@ -22,9 +18,6 @@
   - V8
   - LLVM
   - Clang
-  - OpenJDK
-  - NodeJS
-  - GHC
 - Web Platform (Specification and Implementation)
   - Blink
   - HTML
@@ -36,20 +29,32 @@
 - Machine Architecture
   - AMD64
 
- # Wishlist
 
- - Kernel
-   - File system
-   - Video card driver and spec (Intel)
- - Virtual machine
-   - virtual box
-   - qemu
-   - kvm
- - Programming language implementation
-   - OpenJDK
-   - GHC
- - Desktop
-   - Wayland protocol
+# Wishlist
+
+- Kernel
+  - File system
+  - Video card driver and spec (Intel)
+  - Memory Mangement
+  - Process Scheduling
+  - Graphics Driver
+  - Audio Driver
+  - tcp implementation
+- Virtual machine
+  - virtual box
+  - qemu
+  - kvm
+- Programming language implementation
+  - OpenJDK
+  - NodeJS
+  - GHC
+- Application
+  - HTTP proxy server implementation
+- Desktop
+  - Wayland protocol
+- Machine Architecture
+  - ARM
+
 
 # Principles
 
