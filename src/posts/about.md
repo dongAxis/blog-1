@@ -44,12 +44,14 @@
   - virtual box
   - qemu
   - kvm
+  - VT-x
 - Programming language implementation
-  - OpenJDK
-  - NodeJS
-  - GHC
+  - Go: native compile, type system, GC
+  - OpenJDK: bytecode compile, JIT, type system, GC
+  - NodeJS: libev integration
+  - GHC: native compile, bytecode compile, type system, lazy evaluation, GC, TH
 - Application
-  - HTTP proxy server implementation
+  - HTTP server (read go util implementaion ?)
 - Desktop
   - Wayland protocol
 - Machine Architecture
