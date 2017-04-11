@@ -13,7 +13,7 @@ const extractMeta = (mdFile) => {
   const meta = JSON.parse(readFile(mdFile).match(/^<!--([\s\S]*?)-->/m)[1]);
   meta.link = mdFile.replace(/^src/, '').replace('.md', '.html');
   return meta;
-}
+};
 
 // Generate out/index.html
 const processIndex = () => {
@@ -22,7 +22,7 @@ const processIndex = () => {
   const contentHtml = template('src/templates/_index.html', { postMetas });
   const html = template('src/templates/_entry.html', { content: contentHtml });
   fs.writeFileSync('out/index.html', html);
-}
+};
 
 // Generate out/posts/<some-post>.html
 const processPost = (mdFile) => {
@@ -39,16 +39,50 @@ const processPost = (mdFile) => {
   const html = template('src/templates/_entry.html', { content: contentHtml });
   const outHtmlFile = mdFile.replace(/^src/, 'out').replace('.md', '.html');
   fs.writeFileSync(outHtmlFile, html);
-}
+};
+
+// Escape html-escaped characters
+const ESCAPE_CHARACTERS = [
+  { i: '&lt;',    o: '<'  },
+  { i: '&gt;',    o: '>'  },
+  { i: '&quot;',  o: '"'  },
+  { i: '&#039;',  o: '\'' }
+];
+
+const escapeString = (str) => {
+  ESCAPE_CHARACTERS.forEach(({i, o}) => {
+    str = str.replace(new RegExp(i, 'g'), o);
+  });
+  return str;
+};
+
+const escapePosts = () => {
+  fs.readdir('src/posts', (err, fileNames) => {
+    fileNames.forEach((fileName) => {
+      const path = `src/posts/${fileName}`;
+      fs.readFile(path, (err, data) => {
+        fs.writeFile(path, escapeString(data.toString()));
+      })
+    })
+  });
+};
 
 // Main
 (() => {
   switch (process.argv[2]) {
     case 'index': {
-      return processIndex();
+      processIndex();
+      break;
     }
     case 'post': {
-      return processPost(process.argv[3]);
+      processPost(process.argv[3]);
+      break;
+    }
+
+    // some cleanup after migration
+    case 'escape-posts': {
+      escapePosts();
+      break;
     }
   }
 })();
