@@ -30,79 +30,79 @@
 
 [main]
 cc::ProxyMain
-&#039;-&#039; LayerTreeHost
+'-' LayerTreeHost
 
 LayerTreeHost
-&#039;-&#039; Layer (root layer)
-    &#039;-* Layer
-&#039;-&#039; RenderWidgetCompositor (as LayerTreeHostClient)
-    &#039;-&#039; RenderWidgetCompositor
-        &#039;-&#039; RenderWidget (as RenderWidgetCompositorDelegate)
-            &#039;-&#039; WebViewFrameWidget (as WebWidget)
-                &#039;-&#039; WebLocalFrameImpl
-                    &#039;-&#039; LocalFrame
-                        &#039;-&#039; FrameView
-                &#039;-&#039; WebViewImpl
-                    &#039;-&#039; WebLayer
+'-' Layer (root layer)
+    '-* Layer
+'-' RenderWidgetCompositor (as LayerTreeHostClient)
+    '-' RenderWidgetCompositor
+        '-' RenderWidget (as RenderWidgetCompositorDelegate)
+            '-' WebViewFrameWidget (as WebWidget)
+                '-' WebLocalFrameImpl
+                    '-' LocalFrame
+                        '-' FrameView
+                '-' WebViewImpl
+                    '-' WebLayer
 
 GraphicsLayer
-&#039;-&#039; WebContentLayerImpl
-    &#039;-&#039; WebLayerImpl
-        &#039;-&#039; PictureLayer (as Layer)
+'-' WebContentLayerImpl
+    '-' WebLayerImpl
+        '-' PictureLayer (as Layer)
 
 [impl]
 ProxyImpl
- &#039;-&#039; LayerTreeHostImpl
-    &#039;-&#039; LayerTreeImpl (active one and pending one)
-    &#039;-&#039; RendererCompositorFrameSink (as CompositorFrameSink)
+ '-' LayerTreeHostImpl
+    '-' LayerTreeImpl (active one and pending one)
+    '-' RendererCompositorFrameSink (as CompositorFrameSink)
 
 LayerTreeImpl
-&#039;-* PictureLayerImpl
-&#039;-* LayerImpl
-    &#039;-&#039; RenderSurfaceImpl
+'-* PictureLayerImpl
+'-* LayerImpl
+    '-' RenderSurfaceImpl
 
 FrameData
-&#039;-* LayerImpl
-&#039;-* RenderPass
-    &#039;-* DrawQuad
+'-* LayerImpl
+'-* RenderPass
+    '-* DrawQuad
 
 CompositerFrame
 
 # Main thread and Impl thread
 
 [blink: document lifecycle]
-? =&gt;
-- ProxyMain::BeginMainFrame =&gt;
+? =>
+- ProxyMain::BeginMainFrame =>
   - LayerTreeHost::AnimateLayers
-  - cc::LayerTreeHostInProcess::RequestMainFrameUpdate =&gt; RenderWidgetCompositor::UpdateLayerTreeHost =&gt;
-    RenderWidget::UpdateVisualState =&gt; WebViewFrameWidget::updateAllLifecyclePhases =&gt; ... =&gt;  FrameView::updateAllLifecyclePhases(PaintClean)
-  - ImplThreadTaskRunner()-&gt;PostTask(.. ProxyImpl::NotifyReadyToCommitOnImpl ...)
+  - cc::LayerTreeHostInProcess::RequestMainFrameUpdate => RenderWidgetCompositor::UpdateLayerTreeHost =>
+    RenderWidget::UpdateVisualState => WebViewFrameWidget::updateAllLifecyclePhases => ... =>  FrameView::updateAllLifecyclePhases(PaintClean)
+  - ImplThreadTaskRunner()->PostTask(.. ProxyImpl::NotifyReadyToCommitOnImpl ...)
   - CompletionEvent::Wait
 
-Q. how does blink initialize/mutate LayerTreeHost&#039;s Layers ?
+Q. how does blink initialize/mutate LayerTreeHost's Layers ?
 
 ex.
-PaintLayerCompositor::updateIfNeeded =&gt; GraphicsLayerUpdater::update =&gt; ... =&gt; CLM::updateGraphixsLayerGeometry (or updateGraphicsLayerConfiguration) =&gt; updateXXX (e.g. updateTransform) =&gt; GL::setXXX =&gt; GL::performLayer, WebLayerImpl::setXXX =&gt; cc::Layer::setXXX
+PaintLayerCompositor::updateIfNeeded => GraphicsLayerUpdater::update => ... => CLM::updateGraphixsLayerGeometry (or updateGraphicsLayerConfiguration) => updateXXX (e.g. updateTransform) => GL::setXXX => GL::performLayer, WebLayerImpl::setXXX => cc::Layer::setXXX
 
 ex.
-CLM::createGraphicsLayer =&gt; GL::create =&gt;GL::GL =&gt; WebCompositorSupportImpl::createContentLayer =&gt; WebContentLayerImpl:: =&gt; WebLayerImpl::, PictureLayer::create
+CLM::createGraphicsLayer => GL::create =>GL::GL => WebCompositorSupportImpl::createContentLayer => WebContentLayerImpl:: => WebLayerImpl::, PictureLayer::create
 
 [impl: commit]
-- ProxyImpl::ScheduledActionCommit =&gt;
+- ProxyImpl::ScheduledActionCommit =>
   - LayerTreeHost::FinishCommitOnImplThread
 
 [raster?]
 (as command buffer and as real GL execution)
 
 [impl: draw]
-? =&gt;
-- ProxyImpl::DrawInternal =&gt;
-  - LTHI::PrepareToDraw =&gt; CalculateRenderPass =&gt;
-    - TrackDamageForAllSurfaces =&gt; DamageTracker::UpdateDamageTrackingState (for RenderSurface)
+? =>
+- ProxyImpl::DrawInternal =>
+  - LTHI::PrepareToDraw => CalculateRenderPass =>
+    - TrackDamageForAllSurfaces => DamageTracker::UpdateDamageTrackingState (for RenderSurface)
     - RenderSurfaceImpl::AppendQuads
-  - LayerTreeHostImpl::DrawLayers =&gt;
+  - LayerTreeHostImpl::DrawLayers =>
     - initialize CompositerFrame
-    - CompositerFrameSink::SubmitCompositerFrame =&gt; ... =&gt; send ViewHostMsg_SwapCompositorFrame
+    - CompositerFrameSink::SubmitCompositerFrame => ... => send ViewHostMsg_SwapCompositorFrame
 
 [impl: ui event hanlder]
 - compositer scroll handler ...

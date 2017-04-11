@@ -26,7 +26,7 @@ Starting from the definition of "Simplest" Iteratee I've used in [IterateeNonWai
 
 ```prettyprint
 data Iteratee s a
-  = Continue (s -&gt; Iteratee s a)
+  = Continue (s -> Iteratee s a)
   | Yield a
 ```
 
@@ -54,7 +54,7 @@ I found the previous definition is too weak to accommodate "waiting-for-coming-i
 
 ```
 data Iteratee s a
-  = Continue (Maybe s -&gt; Iteratee s a)
+  = Continue (Maybe s -> Iteratee s a)
   | Yield s
 ```
 

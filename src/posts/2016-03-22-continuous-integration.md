@@ -34,7 +34,7 @@ Here is my test project for setting up jenkins with ansible: https://github.com/
 
 - where is default jenkins home?
 ```
-$ sudo cat /etc/passwd | grep &#039;^jenkins:&#039; | cut -d: -f6
+$ sudo cat /etc/passwd | grep '^jenkins:' | cut -d: -f6
 /var/lib/jenkins
 ```
 

@@ -24,19 +24,19 @@ My first pyton program is for [2d animation plot](https://github.com/hi-ogawa/ha
   - http://stackoverflow.com/questions/139180/listing-all-functions-in-a-python-module
 ```
 $ python3
-&gt;&gt;&gt; help([])
+>>> help([])
 Help on list object:
 
 class list(object)
- |  list() -&gt; new empty list
+ |  list() -> new empty list
  ...
-&gt;&gt;&gt; i = 10
-&gt;&gt;&gt; dir(i)
-[..., &#039;__neg__&#039;, ...]
-&gt;&gt;&gt; i.__neg__()
+>>> i = 10
+>>> dir(i)
+[..., '__neg__', ...]
+>>> i.__neg__()
 -10
-&gt;&gt;&gt; type(i)
-&lt;class &#039;int&#039;&gt;
+>>> type(i)
+<class 'int'>
 ```
 
 - debugger:
@@ -71,9 +71,9 @@ class list(object)
 - NOTE:
   - `/usr/bin/python` is used for inf-process by default. so it needs to be changed when you use `python3` or `ipython`. Here is my emacs config:
 ```
-(add-hook &#039;python-mode-hook (lambda ()
-                              (setq python-shell-interpreter &quot;python3&quot;
-                                    python-shell-interpreter-args &quot;-i&quot;)
+(add-hook 'python-mode-hook (lambda ()
+                              (setq python-shell-interpreter "python3"
+                                    python-shell-interpreter-args "-i")
                               (setq python-indent-guess-indent-offset nil)
                               (flycheck-mode)))
 ```

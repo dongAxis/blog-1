@@ -52,6 +52,6 @@ For the record, it's totally coincidence that my first Go language experiment ha
   - I don't think so
 
 ```prettyprint
-    answerWriter, _ := os.Open(&quot;./p10310/sample.output&quot;)
+    answerWriter, _ := os.Open("./p10310/sample.output")
     answer, _ := ioutil.ReadAll(answerWriter)
 ```

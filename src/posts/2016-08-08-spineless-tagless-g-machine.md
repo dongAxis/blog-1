@@ -78,7 +78,7 @@ e =
 -- invalid STG expression
 e =
   case 1# +# 1# of
-    x -&gt;
+    x ->
       case x +# 1# of
-        y -&gt; f y
+        y -> f y
 ```

@@ -17,49 +17,49 @@ Here is a little demonstration about shell job control.
 # Demo
 
 ```prettyprint
-# I use &quot;-axj&quot; option to show PPID (parent process id), TT (terminal name) and STAT (state)
+# I use "-axj" option to show PPID (parent process id), TT (terminal name) and STAT (state)
 $ ps -axj | head -n1
 USER              PID  PPID  PGID   SESS JOBC STAT   TT       TIME COMMAND
 
 # start while loop process with output going to file
-$ ruby -e &#039;puts &quot;hello&quot; while sleep 5&#039; &gt; out.log 2&gt;&amp;1
+$ ruby -e 'puts "hello" while sleep 5' > out.log 2>&amp;1
 ^Z
-[1]+  Stopped                 ruby -e &#039;puts &quot;hello&quot; while sleep 5&#039; &gt; out.log 2&gt;&amp;1
+[1]+  Stopped                 ruby -e 'puts "hello" while sleep 5' > out.log 2>&amp;1
 
 # list jobs under current shell
 $ jobs
-[1]+  Stopped                 ruby -e &#039;puts &quot;hello&quot; while sleep 5&#039; &gt; out.log 2&gt;&amp;1
+[1]+  Stopped                 ruby -e 'puts "hello" while sleep 5' > out.log 2>&amp;1
 
-# &#039;T&#039; means it&#039;s stopped process
-$ ps -axj | grep &#039;ruby -e&#039;
-hiogawa         53296 53061 53296      0    1 T    s000    0:00.04 ruby -e puts &quot;hello&quot; while sleep 5
+# 'T' means it's stopped process
+$ ps -axj | grep 'ruby -e'
+hiogawa         53296 53061 53296      0    1 T    s000    0:00.04 ruby -e puts "hello" while sleep 5
 hiogawa         53339 53061 53338      0    2 S+   s000    0:00.00 grep ruby -e
 
-# disown doesn&#039;t work for &#039;Stopped&#039; job
+# disown doesn't work for 'Stopped' job
 $ disown -h %1
 
 # restart process background
 $ bg %1
-[1]+ ruby -e &#039;puts &quot;hello&quot; while sleep 5&#039; &gt; out.log 2&gt;&amp;1 &amp;
+[1]+ ruby -e 'puts "hello" while sleep 5' > out.log 2>&amp;1 &amp;
 
 # disown process from current shell
 $ disown -h %1
 
 # the job still shows up as a job
 $ jobs
-[1]+  Running                 ruby -e &#039;puts &quot;hello&quot; while sleep 5&#039; &gt; out.log 2&gt;&amp;1 &amp;
+[1]+  Running                 ruby -e 'puts "hello" while sleep 5' > out.log 2>&amp;1 &amp;
 
-# PPID/TT still doesn&#039;t change.
-$ ps -axj | grep &#039;ruby -e&#039;
-hiogawa         53296 53061 53296      0    1 S    s000    0:00.04 ruby -e puts &quot;hello&quot; while sleep 5
+# PPID/TT still doesn't change.
+$ ps -axj | grep 'ruby -e'
+hiogawa         53296 53061 53296      0    1 S    s000    0:00.04 ruby -e puts "hello" while sleep 5
 hiogawa         53372 53061 53371      0    2 S+   s000    0:00.00 grep ruby -e
 
-# only after current shell is killed, parent process will be &#039;init&#039; process
+# only after current shell is killed, parent process will be 'init' process
 $ exit
 
 # here is ps output from another shell. note that PPID = 1 and TT = ??
-$ ps -axj | grep &#039;ruby -e&#039;
-hiogawa         53296     1 53296      0    0 S      ??    0:00.04 ruby -e puts &quot;hello&quot; while sleep 5
+$ ps -axj | grep 'ruby -e'
+hiogawa         53296     1 53296      0    0 S      ??    0:00.04 ruby -e puts "hello" while sleep 5
 hiogawa         53394 52817 53393      0    2 S+   s001    0:00.00 grep ruby -e
 ```
 

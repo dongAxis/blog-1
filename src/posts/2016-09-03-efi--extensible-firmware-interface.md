@@ -46,7 +46,7 @@ Boot0081* Recovery OS	PciRoot(0x0)/Pci(0x1c,0x5)/Pci(0x0,0x0)/Sata(0,0,0)/HD(3,G
 Boot0082* 	PciRoot(0x0)/Pci(0x1c,0x5)/Pci(0x0,0x0)/Sata(0,0,0)/HD(3,GPT,84eac8e4-06dc-49ac-aa4a-3bf986257922,0x706e108,0x135f20)
 BootFFFF* 	PciRoot(0x0)/Pci(0x1c,0x5)/Pci(0x0,0x0)/Sata(0,0,0)/HD(2,GPT,69df8594-9de5-42d9-9b77-ed4e91adf7d4,0x64028,0xe066090)/File(\System\Library\CoreServices\boot.efi)
 
-# TODO: let&#039;s try this and see if what happens
+# TODO: let's try this and see if what happens
 $  efibootmgr -o 0000,0080
 ```
 
@@ -63,14 +63,14 @@ First sector: 409640 (at 200.0 MiB)
 Last sector: 117891335 (at 56.2 GiB)
 Partition size: 117481696 sectors (56.0 GiB)
 Attribute flags: 0000000000000000
-Partition name: &#039;Mac&#039;
+Partition name: 'Mac'
 
 $ sudo blkid 
-/dev/sda1: LABEL=&quot;EFI&quot; UUID=&quot;67E3-17ED&quot; TYPE=&quot;vfat&quot; PARTLABEL=&quot;EFI System Partition&quot; PARTUUID=&quot;0ee69f59-8e6f-468e-a8b7-c725f399a351&quot;
-/dev/sda2: UUID=&quot;cee5e61f-4891-35bd-a909-5a9a6739d04a&quot; LABEL=&quot;Mac&quot; TYPE=&quot;hfsplus&quot; PARTLABEL=&quot;Mac&quot; PARTUUID=&quot;b39ece42-1691-40c8-a173-0ba40febf0b5&quot;
-/dev/sda3: UUID=&quot;3c1aacde-7229-38d6-8e29-1962d8c8c4d6&quot; LABEL=&quot;Recovery HD&quot; TYPE=&quot;hfsplus&quot; PARTLABEL=&quot;Recovery HD&quot; PARTUUID=&quot;84eac8e4-06dc-49ac-aa4a-3bf986257922&quot;
-/dev/sda4: UUID=&quot;944ef339-6787-40c8-9371-353c1662b7f5&quot; TYPE=&quot;ext4&quot; PARTUUID=&quot;bae2efe7-7c58-4acd-a82b-1eb366613cfb&quot;
-/dev/sda5: UUID=&quot;7b248a8b-1232-41f3-933a-047bd3053704&quot; TYPE=&quot;swap&quot; PARTUUID=&quot;90d1d39b-0420-446e-8c56-cee5cdbe7193&quot;
+/dev/sda1: LABEL="EFI" UUID="67E3-17ED" TYPE="vfat" PARTLABEL="EFI System Partition" PARTUUID="0ee69f59-8e6f-468e-a8b7-c725f399a351"
+/dev/sda2: UUID="cee5e61f-4891-35bd-a909-5a9a6739d04a" LABEL="Mac" TYPE="hfsplus" PARTLABEL="Mac" PARTUUID="b39ece42-1691-40c8-a173-0ba40febf0b5"
+/dev/sda3: UUID="3c1aacde-7229-38d6-8e29-1962d8c8c4d6" LABEL="Recovery HD" TYPE="hfsplus" PARTLABEL="Recovery HD" PARTUUID="84eac8e4-06dc-49ac-aa4a-3bf986257922"
+/dev/sda4: UUID="944ef339-6787-40c8-9371-353c1662b7f5" TYPE="ext4" PARTUUID="bae2efe7-7c58-4acd-a82b-1eb366613cfb"
+/dev/sda5: UUID="7b248a8b-1232-41f3-933a-047bd3053704" TYPE="swap" PARTUUID="90d1d39b-0420-446e-8c56-cee5cdbe7193"
 ```
 
 # Disable logical volume

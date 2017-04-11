@@ -30,9 +30,9 @@ $ ffmpeg -i ~/Desktop/wireshark.mov -vf scale=1000:-1 -r 15 -f gif - | gifsicle 
 [1] pry(main)> require 'net/http'
 => true
 [2] pry(main)> Net::HTTP.post_form URI("http://example.com/index.html"), x: 1, y: 2
-=> #&lt;Net::HTTPOK 200 OK readbody=true>
+=> #<Net::HTTPOK 200 OK readbody=true>
 [3] pry(main)> Net::HTTP.post_form URI("http://example.com/index.html"), z: 3, w: 4
-=> #&lt;Net::HTTPOK 200 OK readbody=true>
+=> #<Net::HTTPOK 200 OK readbody=true>
 </pre>
 
 - Filter and search for the corresponding web flow in Wireshark. You can set HTTP Method (`http.request.method`) or URI (`http.request.uri`) to filtering entries.

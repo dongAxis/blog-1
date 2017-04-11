@@ -19,7 +19,7 @@ So far I tried those tools:
 
 ```
 
-$ mysql --host=127.0.0.1 -P 8889 -uroot -proot mysql -e &quot;show databases;&quot;
+$ mysql --host=127.0.0.1 -P 8889 -uroot -proot mysql -e "show databases;"
 Warning: Using a password on the command line interface can be insecure.
 +------------------------------+
 | Database |
@@ -49,7 +49,7 @@ I'm using MAMP for local apache, so I added the to `/Applications/MAMP/conf/apac
 
 ```
 Alias /adminer /usr/local/share/adminer
-&lt;Directory &quot;/usr/local/share/adminer/&quot;&gt;
+<Directory "/usr/local/share/adminer/">
 Options None
 AllowOverride None
 

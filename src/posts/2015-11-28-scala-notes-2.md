@@ -49,7 +49,7 @@ g8 hi-ogawa/scala_my_template.g8 --name=here-comes-directly-name-for-package
  - `C-c C-b r`: sbt run
  - `C-c C-b c`: sbt compile
  - `C-c C-b i`: sbt console ([my own extension]())
- - `C-c C-b o`: sbt testOnly &lt;test class in the current buffer>
+ - `C-c C-b o`: sbt testOnly <test class in the current buffer>
  - `C-c C-b E`: sbt gen-ensime
 
 - Ensime notes
@@ -60,7 +60,7 @@ g8 hi-ogawa/scala_my_template.g8 --name=here-comes-directly-name-for-package
 - SBT notes
   - Import some module automatically upon `sbt console` ([reference](http://stackoverflow.com/questions/19446406/scala-how-can-i-install-a-package-system-wide-for-working-with-in-the-repl))
 ```
-initialCommands in console := &quot;import scalaz._, Scalaz._&quot;
+initialCommands in console := "import scalaz._, Scalaz._"
 ```
 
 

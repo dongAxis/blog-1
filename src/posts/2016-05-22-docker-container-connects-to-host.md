@@ -22,8 +22,8 @@ Prepare a file `with_docker_host_ip.sh` below:
 ```
 #!/bin/bash
 
-export DOCKER_HOST_IP=$(ip route show | awk &#039;/default/ {print $3}&#039;)
-exec &quot;$@&quot;
+export DOCKER_HOST_IP=$(ip route show | awk '/default/ {print $3}')
+exec "$@"
 ```
 
 Then, in your `Dockerfile`, make this executable as an entrypoint:
@@ -31,7 +31,7 @@ Then, in your `Dockerfile`, make this executable as an entrypoint:
 ```
 FROM ubuntu:14.04
 COPY with_docker_host_ip.sh /with_docker_host_ip.sh
-ENTRYPOINT [&quot;/with_docker_host_ip.sh&quot;]
+ENTRYPOINT ["/with_docker_host_ip.sh"]
 ```
 
 When you run this image, you can see `$DOCKER_HOST_IP` is available anywhere:
@@ -52,7 +52,7 @@ production:
   template: template0
   reconnect: true
   pool: 5
-  host: &lt;%= ENV[&#039;DOCKER_HOST_IP&#039;] %&gt;
+  host: <%= ENV['DOCKER_HOST_IP'] %>
   port: 5432
   database: xxxx
   username: yyyy

@@ -22,13 +22,13 @@
 - confusing matrix representation:
 
 ```
-&gt;&gt;&gt; np.array([1, 2, 3]).transpose()
+>>> np.array([1, 2, 3]).transpose()
 array([1, 2, 3])
-&gt;&gt;&gt; np.array([[1, 2, 3]]).transpose()
+>>> np.array([[1, 2, 3]]).transpose()
 array([[1],
        [2],
        [3]])
-&gt;&gt;&gt; np.array([[4], [5], [6]]).dot(np.array([[1, 2, 3]]))
+>>> np.array([[4], [5], [6]]).dot(np.array([[1, 2, 3]]))
 array([[ 4,  8, 12],
        [ 5, 10, 15],
        [ 6, 12, 18]])

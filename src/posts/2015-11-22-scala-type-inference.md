@@ -23,12 +23,12 @@ def foldLeftError[A, B, E] : Traversable[A] => B => ((B, A) => /[E, B]) => /[E, 
 Then I found this type error:
 
 ```
-&gt; compile
+> compile
 [info] Compiling 1 Scala source to /Users/hiogawa/repositories/mine/algorithm_practice/target/scala-2.11/classes...
 [error] /Users/hiogawa/repositories/mine/algorithm_practice/src/main/scala/data_structures/P3_1.scala:22: type mismatch;
 [error]  found   : scalaz./[E,B]
 [error]  required: scalaz./-[B]
-[error]       (eb : /[E, B], a : A) =&gt; eb flatMap ((_b : B) =&gt; f(_b, a))
+[error]       (eb : /[E, B], a : A) => eb flatMap ((_b : B) => f(_b, a))
 [error]                                    ^
 [error] one error found
 [error] (compile:compileIncremental) Compilation failed

@@ -42,16 +42,16 @@ For example:
 $ cat /proc/self/stat # this shows a bunch of information
 8412 (cat) R 7434 8412 7434 34833 8412 4194304 ...
 
-$ cat /proc/self/stat | awk &#039;{print $7}&#039; # the 7th number is tty_nr
+$ cat /proc/self/stat | awk '{print $7}' # the 7th number is tty_nr
 34833
 
-$ printf &#039;%x\n&#039; 34833 # this number is not understood as decimal, so convert it to hex
+$ printf '%x\n' 34833 # this number is not understood as decimal, so convert it to hex
 8811
 
-$ printf &#039;%d\n&#039; 0x88 # the bits 8-15 represents major device number
+$ printf '%d\n' 0x88 # the bits 8-15 represents major device number
 136
 
-$ printf &#039;%d\n&#039; 0x11 # the bits 0-7 represents minor device number
+$ printf '%d\n' 0x11 # the bits 0-7 represents minor device number
 17
 
 $ ls -l /dev/pts # such device file is found under /dev/pts

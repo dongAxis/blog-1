@@ -27,56 +27,56 @@
 - InlineBox
   - InlineFlowBox (line box)
     - RootInlineBox (?)
-  - InlineTextBox (single &quot;text run&quot; level entity?)
+  - InlineTextBox (single "text run" level entity?)
 
 - FloatingObject
 
 # Topology
 
 Document
-&#039;-&#039; LayoutView
+'-' LayoutView
 
 Node
-&#039;-&#039; LayoutObject
+'-' LayoutObject
 
 LayoutBoxModelObject
-&#039;-&#039; PaintLayer
+'-' PaintLayer
 
 LayoutObject 
-&#039;-&#039; ComputedStyle
+'-' ComputedStyle
 
 ComputedStyle
-&#039;-&#039; StyleBoxData (as m_box)
-&#039;-&#039; etc...
+'-' StyleBoxData (as m_box)
+'-' etc...
 
 LayoutItem
-&#039;-&#039; LayoutObject
+'-' LayoutObject
 
 LayoutBox
-&#039;-&#039; BoxOverflowModel
+'-' BoxOverflowModel
 
 LayoutView
-&#039;-&#039; LayoutState
-&#039;-&#039; PaintLayerCompositor (supposedly replaced with PaintArtifactCompositor for SPv2)
+'-' LayoutState
+'-' PaintLayerCompositor (supposedly replaced with PaintArtifactCompositor for SPv2)
 
 LayoutBlock
-&#039;-* LayoutObject  (as m_children)
+'-* LayoutObject  (as m_children)
 
 LayoutBlockFlow
-&#039;-* InlineFlowBox  (as m_lineBoxes)
+'-* InlineFlowBox  (as m_lineBoxes)
 
 LayoutInline
-&#039;-*  LayoutObject   (as m_children)
-&#039;-*  InlineFlowBox  (as m_lineBoxes)
+'-*  LayoutObject   (as m_children)
+'-*  InlineFlowBox  (as m_lineBoxes)
 
 LayoutText
-&#039;-* InlineTextBox (as m_{first,last}TextBox)
+'-* InlineTextBox (as m_{first,last}TextBox)
 
 InlineFlowBox
-&#039;-*  InlineBox (as m_{first,last}Child)
+'-*  InlineBox (as m_{first,last}Child)
 
 InlineBox
-&#039;-&#039;  LayoutObject (as m_lineLayoutItem)
+'-'  LayoutObject (as m_lineLayoutItem)
 
 (Inheritance)	 	 
 - cc::LayerClient	 	 
@@ -96,117 +96,117 @@ InlineBox
 
 (Topology)
 PaintLayerCompositor (being replaced for SPv2)	 	 
-&#039;-&#039; PaintLayer (as root layer)	 	 
-&#039;-* GraphicsLayer
+'-' PaintLayer (as root layer)	 	 
+'-* GraphicsLayer
 
 PaintLayer	 	 
-&#039;-&#039; LayoutBoxModelObject
-&#039;-* PaintLayer (as children node)
-&#039;-&#039; LayoutPoint
-&#039;-&#039; CompositedLayerMapping (rare data) (squashed to others or its own)
-&#039;-&#039; AncestorDependentCompositingInputs
-   &#039;-* PaintLayer (track some special kind of ancestor e.g. opacityAncestorer, transformAncestor, filterAncestor, clipParent)
-&#039;-&#039; PaintLayerStackingNode (track z-index ordered nodes)
+'-' LayoutBoxModelObject
+'-* PaintLayer (as children node)
+'-' LayoutPoint
+'-' CompositedLayerMapping (rare data) (squashed to others or its own)
+'-' AncestorDependentCompositingInputs
+   '-* PaintLayer (track some special kind of ancestor e.g. opacityAncestorer, transformAncestor, filterAncestor, clipParent)
+'-' PaintLayerStackingNode (track z-index ordered nodes)
 
 PaintLayerStackingNode
-&#039;-* PaintLayerStackingNode (as posZOrderList)
-&#039;-* PaintLayerStackingNode (... neg)
+'-* PaintLayerStackingNode (as posZOrderList)
+'-* PaintLayerStackingNode (... neg)
 
 CompositedLayerMapping
-&#039;-&#039; PaintLayer
-&#039;-* GraphicsLayer (bunch of types, their hierarchy is explained as commemt)
-&#039;-&#039; GraphicsLayer (m_squashingLayer)
-&#039;-* GraphicsLayerPaintInfo (m_squashedLayers)
-    &#039;-&#039; PaintLayer
+'-' PaintLayer
+'-* GraphicsLayer (bunch of types, their hierarchy is explained as commemt)
+'-' GraphicsLayer (m_squashingLayer)
+'-* GraphicsLayerPaintInfo (m_squashedLayers)
+    '-' PaintLayer
 
 GraphicsLayer	 	 
-&#039;-* GraphicsLayer
-&#039;-&#039; GraphicsLayerClient (normally CompositeLayerMapping)
-&#039;-&#039; PaintController
-&#039;-&#039; WebContentLayer
-    &#039;-&#039; WebLayer
-        &#039;-&#039; cc::Layer
-&#039;-&#039; WebContentLayerClient
+'-* GraphicsLayer
+'-' GraphicsLayerClient (normally CompositeLayerMapping)
+'-' PaintController
+'-' WebContentLayer
+    '-' WebLayer
+        '-' cc::Layer
+'-' WebContentLayerClient
 
 GraphicsContext
-&#039;-&#039; PaintCanvas (SkCanvas)
-&#039;-&#039; PaintController
-&#039;-* GraphicsContextState (paint states as stack)
-&#039;-&#039; SkMetaData
+'-' PaintCanvas (SkCanvas)
+'-' PaintController
+'-* GraphicsContextState (paint states as stack)
+'-' SkMetaData
 
 PaintLayerFragment
-&#039;-* Rect (bunch of types of ClipRect and LayoutRect)
+'-* Rect (bunch of types of ClipRect and LayoutRect)
 
 PaintLayerPainter (for self-painting PaintLayer)
-&#039;-&#039;  PaintLayer
+'-'  PaintLayer
 
 PaintController
-&#039;-&#039; DisplayItemList
-  &#039;-* DisplayItem
-  &#039;-* IntRect (visualRects)
+'-' DisplayItemList
+  '-* DisplayItem
+  '-* IntRect (visualRects)
 
 DisplayItem	 	 
-&#039;-&#039; DisplayItemClient	 	 
-&#039;-&#039; DisplayItem::Type	 	 
+'-' DisplayItemClient	 	 
+'-' DisplayItem::Type	 	 
 
 ---
 
 # Layout entry point
 
-- FrameView::layout =&gt;
-  - performPreLayoutTask =&gt;
+- FrameView::layout =>
+  - performPreLayoutTask =>
     - advanceTo(DocumentLifecycle::InPreLayout)
     - Document::mediaQuery...
     - updateStyleAndLayoutTree (see http://wp.hiogawa.net/2017/02/07/blink-overview/)
     - advanceTo(DocumentLifecycle::StyleClean)
-  - performLayout =&gt;
+  - performLayout =>
     - advanceTo(DocumentLifecycle::InPerformLayout)
-    - layoutFromRootObject =&gt;
-      - LayoutView::layout =&gt;
+    - layoutFromRootObject =>
+      - LayoutView::layout =>
         - initialize SubtreeLayoutScope
         - SubtreeLayoutScope::setChildNeedsLayout (for children with size isPercentOrCalc)
         - initialize  LayoutState 
-        - layoutContent =&gt; LayoutBlock::layout =&gt; (see below)
+        - layoutContent => LayoutBlock::layout => (see below)
     - advanceTo(DocumentLifecycle::AfterPerformLayout)
   - scheduleOrPerformPostLayoutTasks
 
-- LayoutBlock::layout =&gt; LayoutBlockFlow::layoutBlock(false) =&gt;
+- LayoutBlock::layout => LayoutBlockFlow::layoutBlock(false) =>
   - simplifiedLayout (?)
-  - updateLogicalWidthAndColumnWidth =&gt; ... =&gt; LayoutView::layoutSize =&gt; FrameView::layoutSize
-  - layoutChildren (loop this if something failed it? not in the sense of traversing some tree structure ?) =&gt;
+  - updateLogicalWidthAndColumnWidth => ... => LayoutView::layoutSize => FrameView::layoutSize
+  - layoutChildren (loop this if something failed it? not in the sense of traversing some tree structure ?) =>
     - setLogicalHeight (?)
-    - layoutBlockChildren =&gt;
+    - layoutBlockChildren =>
       - (for each child)
         - (special care for child if it isOutOfFlowPositioned, isFloating, isColumnSpanAll)
-        - (but, normally) layoutBlockChild =&gt;
+        - (but, normally) layoutBlockChild =>
           - computeAndSetBlockDirectionMargin
           - estimateLogicalTopPosition
-          - positionAndLayoutOnceIfNeeded =&gt;
+          - positionAndLayoutOnceIfNeeded =>
             - setLogicalTopForChild
-            - LayoutBlock::layout (recursively back to the flow above for this child) =&gt; ...
+            - LayoutBlock::layout (recursively back to the flow above for this child) => ...
           - determineLogicalLeftPositionForChild
-          - setLogicalHeight (add up child&#039;s height)
-        - handleAfterSideOfBlock =&gt;
+          - setLogicalHeight (add up child's height)
+        - handleAfterSideOfBlock =>
           - setLogicalHeight (add up bottom margin)
     - setLogicalHeight (some float things)
   - layoutPositionedObjects
-  - updateLayerTransformAfterlayout =&gt; 
+  - updateLayerTransformAfterlayout => 
 
 (for non LayoutView)
-- LayoutBlock::updateLogicalWidthAndColumnWidth =&gt; LayoutBox::updateLogicalWidth =&gt; computeLogicalWidth =&gt;
+- LayoutBlock::updateLogicalWidthAndColumnWidth => LayoutBox::updateLogicalWidth => computeLogicalWidth =>
   - containingBlockLogicalWidthForContent
   - computeMarginsForDirection
 
 
 Q. why is LayoutView::layout called 5 times for my example?
 
-- WebView initialization =&gt; FrameView::layout =&gt;
-  - performLayout =&gt; LayoutView::layout
-  - adjustViewSizeAndLayout =&gt; ... =&gt; scrollbarExistenceDidChanged =&gt; LayoutView::layout
-  - Document::layoutUpdated =&gt; ... =&gt; scrollbarExistenceDidChanged =&gt; LayoutView::layout
+- WebView initialization => FrameView::layout =>
+  - performLayout => LayoutView::layout
+  - adjustViewSizeAndLayout => ... => scrollbarExistenceDidChanged => LayoutView::layout
+  - Document::layoutUpdated => ... => scrollbarExistenceDidChanged => LayoutView::layout
 
-- TaskQueueManager::DoWork =&gt; ... =&gt; HTMLParserSchedular::continueParsing =&gt; ... =&gt; Document::implicitClose =&gt; FrameView::layout 
-- FrameView::updateAllLifecyclePhases =&gt; ... =&gt; layout
+- TaskQueueManager::DoWork => ... => HTMLParserSchedular::continueParsing => ... => Document::implicitClose => FrameView::layout 
+- FrameView::updateAllLifecyclePhases => ... => layout
 
 not sure why last one is necessary ? Anyway, it looked like the second last one is something.
 
@@ -229,8 +229,8 @@ layer at (0,0) size 800x216
 
 # Paint
 
-- FrameView::updateAllLifecyclePhases(PaintClean) =&gt; updateLifecyclePhasesInternal =&gt;
-  -  PaintLayerCompositor::updateIfNeededRecursive =&gt; updateIfNeededRecursiveInternal (for each nested frame) =&gt;
+- FrameView::updateAllLifecyclePhases(PaintClean) => updateLifecyclePhasesInternal =>
+  -  PaintLayerCompositor::updateIfNeededRecursive => updateIfNeededRecursiveInternal (for each nested frame) =>
     - advanceTo(InCompositingUpdate)
     - updateIfNeeded (see below)
     - advanceTo(DocumentLifecycle::CompositingClean)
@@ -238,59 +238,59 @@ layer at (0,0) size 800x216
   - FrameView::paintTree (see below)
 
 - updateIfNeeded
-  - CompositingInputsUpdater::update =&gt; updateRecursive =&gt;
+  - CompositingInputsUpdater::update => updateRecursive =>
     - initialize PaintLayer::AncestorDependentCompositingInputs
     - updateRecursive (for each child PaintLayer)
-  - CompositingRequirementsUpdater::update =&gt; updateRecursive =&gt;
-    - updateLayerListsIfNeeded =&gt; ... =&gt; PaintLayerStackingNode::rebuildZOrderList ...
+  - CompositingRequirementsUpdater::update => updateRecursive =>
+    - updateLayerListsIfNeeded => ... => PaintLayerStackingNode::rebuildZOrderList ...
     - lots of CompositingReason ... (read later)
     - updateRecursive (for each stacked object under this PaintLayer)
     - PaintLayer::setCompositeReason
-  - CompositingLayerAssigner::assign =&gt; assignLayersToBackingsInternal =&gt;
-    - determine &quot;squash&quot;-ability by checking CompositingReason
-    - updateSquashingAssignment =&gt;
-      - CompositingLayerMapping::updateSquashingLayerAssignment =&gt;
-        - Vector&lt;GraphicsLayerPaintInfo&gt;::insert ? (squash into squashingState.mostRecentMapping)
+  - CompositingLayerAssigner::assign => assignLayersToBackingsInternal =>
+    - determine "squash"-ability by checking CompositingReason
+    - updateSquashingAssignment =>
+      - CompositingLayerMapping::updateSquashingLayerAssignment =>
+        - Vector<GraphicsLayerPaintInfo>::insert ? (squash into squashingState.mostRecentMapping)
         - PaintLayer::setGroupedMapping ?
     - assignLayersToBackingsInternal (for each stacked object)
   - updateClippingOnCompositorLayers (some root frame layer scroller thing?)
-  - GraphicsLayerUpdater::update =&gt; updateRecursive =&gt;
-    - CompositedLayerMapping::updateGraphicsLayerConfiguration =&gt;
-      - updateXXXLayers (e.g. updateSquashingLayers) =&gt;
-        - createGraphicsLayer =&gt; GraphicsLayer::Create
-    - CompositeLayerMapping::updatteGraphicsLayerGeometry =&gt;
-      - ... GraphicsLayer::setXXX (e.g. Transform, Position, ...) =&gt; WebLayerImpl::setPosition
+  - GraphicsLayerUpdater::update => updateRecursive =>
+    - CompositedLayerMapping::updateGraphicsLayerConfiguration =>
+      - updateXXXLayers (e.g. updateSquashingLayers) =>
+        - createGraphicsLayer => GraphicsLayer::Create
+    - CompositeLayerMapping::updatteGraphicsLayerGeometry =>
+      - ... GraphicsLayer::setXXX (e.g. Transform, Position, ...) => WebLayerImpl::setPosition
     - updateRecursive (for each child PaintLayer)
-  - GraphicsLayerTreeBuilder::rebuild =&gt;
+  - GraphicsLayerTreeBuilder::rebuild =>
     - rebuild (for NegativeZOrderChildren)
     - rebuild (for NormalFlowChildren and PositiveZOrderChildren)
-    - ? what&#039;s up with stuff around GraphicsLayerVector
+    - ? what's up with stuff around GraphicsLayerVector
 
-- FrameView::paintTree =&gt; paintGraphicsLayerRecursively =&gt;
-  - GraphicsLayer::paint (if drawsContent)  =&gt;
-    - paintWithoutCommit =&gt;
+- FrameView::paintTree => paintGraphicsLayerRecursively =>
+  - GraphicsLayer::paint (if drawsContent)  =>
+    - paintWithoutCommit =>
       - CompositedLayerMapping::computeInterestRect
       - initialize GraphicsContext
-      - CompositedLayerMapping::paintContents =&gt; doPaintTask (for its own or for each squashed paint layer) (go below)
-    - PaintController::commitNewDisplayItems =&gt;
+      - CompositedLayerMapping::paintContents => doPaintTask (for its own or for each squashed paint layer) (go below)
+    - PaintController::commitNewDisplayItems =>
       - DisplayItemList::appendVisualRect (for each DisplayItem)
-      - what&#039;s up with &quot;commit&quot; ?
+      - what's up with "commit" ?
   - paintGraphicsLayerRecursively (for mask layer and each child GraphicsLayer)
 
-- CompositedLayerMapping::doPaintTask =&gt;
-  - (non-squashed case) PaintLayerPainter::paintLayerContents =&gt;
+- CompositedLayerMapping::doPaintTask =>
+  - (non-squashed case) PaintLayerPainter::paintLayerContents =>
     - initialize PaintLayerFragments
-    - paintXXXforFragments (e.g. paintBackgroundForFragments) =&gt; paintFragmentWithPhase(PaintPhaseSelfBlockBackgroundOnly, ...) =&gt;
+    - paintXXXforFragments (e.g. paintBackgroundForFragments) => paintFragmentWithPhase(PaintPhaseSelfBlockBackgroundOnly, ...) =>
       - process PaintInfo, LayoutOffset
       - LayoutObject::paint(PaintInfo, LayoutOffset) (e.g. LayoutBlock::paint) (see below)
-    - paintChildren (in terms of zOrderNeg and zOrderPos) =&gt;
-      - PaintLayerPainter::paint =&gt;
-        - paintLayerWithTransform =&gt; paintFragmentByApplyingTransform =&gt; paintLayerContentsCompositingAllPhases =&gt; paintLayerContents
-        - (or directly) paintLayerContentsCompositingAllPhases =&gt; paintLayerContents
+    - paintChildren (in terms of zOrderNeg and zOrderPos) =>
+      - PaintLayerPainter::paint =>
+        - paintLayerWithTransform => paintFragmentByApplyingTransform => paintLayerContentsCompositingAllPhases => paintLayerContents
+        - (or directly) paintLayerContentsCompositingAllPhases => paintLayerContents
   - (squashed case)
-    - PaintLayerPainter::paint =&gt; (see above)
+    - PaintLayerPainter::paint => (see above)
 
-- LayoutBlock::paint =&gt; ...
+- LayoutBlock::paint => ...
 
 Q. categorize the way LayoutObject is painted.
 
@@ -316,7 +316,7 @@ Q. when/why do we squash ? when we squash is related to zorder ? when paintleyer
 Q. compositing happens in two levels ?
 
 - 1. composite PaintLayers within grouped backing (CompositedLayerMapping)
-  - I guess, this shouldn&#039;t be called &quot;compositing&quot;. squashing is only for resource saving purpose?
+  - I guess, this shouldn't be called "compositing". squashing is only for resource saving purpose?
 - 2. composite GraphicsLayers ?? who does that ? (impl side compositing ?)
 
 Q. how to see log from TRACE_EVENT0 ?
@@ -327,87 +327,87 @@ Q. how to see log from TRACE_EVENT0 ?
 
 (topology)
 LayoutObjectDrawingRecorder
-&#039;-&#039; DrawingRecorder
-    &#039;-&#039; GraphicsContext
-    &#039;-&#039; DisplayItemClient
-    &#039;-&#039; DisplayItem::Type
+'-' DrawingRecorder
+    '-' GraphicsContext
+    '-' DisplayItemClient
+    '-' DisplayItem::Type
 
 GraphicsContext
-&#039;-&#039; SkCanvas
-&#039;-&#039; ...
+'-' SkCanvas
+'-' ...
 
 [procedures]
 
-- PaintLayerPainter::paintLayerContents =&gt;
-- paintBackgroundForFragments =&gt; ... =&gt; LayoutView::paint
-  - ViewPainter::paint =&gt;
-    - LayoutBlock::paintObject =&gt; BlockPainter::paintObject =&gt;
-      - LayoutView::paintBoxDecorationBackground =&gt; ViewPainter::xxx =&gt;
+- PaintLayerPainter::paintLayerContents =>
+- paintBackgroundForFragments => ... => LayoutView::paint
+  - ViewPainter::paint =>
+    - LayoutBlock::paintObject => BlockPainter::paintObject =>
+      - LayoutView::paintBoxDecorationBackground => ViewPainter::xxx =>
         - create LayoutObjectDrawingRecorder
-        - GraphicsContext::fillRect =&gt;
+        - GraphicsContext::fillRect =>
           - GraphicsContextState::fillPaint (or synonym filleFlags)
-          - drawRect =&gt; SkCanvas::drawRect =&gt; onDrawRect =&gt; some magics... (TRY_MINIRECORDER and APPEND macro)
-- paintChildren(NegativeZOrderChildren) =&gt; ... (no children for my example)
-- paintForegroundForFragments =&gt; ...(same flow as above but phase is now different) =&gt;
-  - BlockPainter::paintObject =&gt;
-    - BlockFlowPainter::paintContents =&gt; BlockPainter::paintContents =&gt; LayoutBlock::paintChildren =&gt;
-      - BlockPainter::paintChildren =&gt; paintChild (for each child LayoutBox) =&gt;
+          - drawRect => SkCanvas::drawRect => onDrawRect => some magics... (TRY_MINIRECORDER and APPEND macro)
+- paintChildren(NegativeZOrderChildren) => ... (no children for my example)
+- paintForegroundForFragments => ...(same flow as above but phase is now different) =>
+  - BlockPainter::paintObject =>
+    - BlockFlowPainter::paintContents => BlockPainter::paintContents => LayoutBlock::paintChildren =>
+      - BlockPainter::paintChildren => paintChild (for each child LayoutBox) =>
         - LayoutBox::paint (only for non-self-painting child) (actually nothing matched for my example)
-- paintChildren(NormalFlowChildren | PositiveZOrderChildren) =&gt;
-  - PaintLayerPainter::paint =&gt; ... =&gt; paintLayerContents =&gt;
+- paintChildren(NormalFlowChildren | PositiveZOrderChildren) =>
+  - PaintLayerPainter::paint => ... => paintLayerContents =>
 
 [nest level for my example]
 
-- GraphicsLayer::paint =&gt; paintWithoutCommit =&gt; CLM::paintContents =&gt; doPaintTask =&gt;
-  - paintLayerContents =&gt;
-    - paintBackgroundForFragments =&gt; ... =&gt; LayoutView::paint =&gt; Graphics::drawRect
-    - paintChildren(NormalFlow or PosZOrder) =&gt; ... =&gt;
-      - paintLayerContents =&gt;
+- GraphicsLayer::paint => paintWithoutCommit => CLM::paintContents => doPaintTask =>
+  - paintLayerContents =>
+    - paintBackgroundForFragments => ... => LayoutView::paint => Graphics::drawRect
+    - paintChildren(NormalFlow or PosZOrder) => ... =>
+      - paintLayerContents =>
         - paintBackgroundForFragments (I missed it again ...)
-        - paintForegroundForFragments =&gt; ... =&gt;
-          LayoutBlock/BlockPainter::paint =&gt;
+        - paintForegroundForFragments => ... =>
+          LayoutBlock/BlockPainter::paint =>
             - (several paintObject calls with different locally patched paintPhase (localPaintInfo.phase), which leads to different parts in paintObject)
-            - LayoutBlock/BlockPainter::paintObject =&gt;
+            - LayoutBlock/BlockPainter::paintObject =>
               - paintDecorationBackground, paintMask, etc... (depending on self-painting-ness and paintPhase)
-              - BlockFlowPainter/BlockPainter::paintContents =&gt; LayoutBlock/BlockPainter::paintChildren =&gt;
-                - paintChild (for each child LayoutBox) =&gt; LayoutBlock/BlockPainter::paint (repeat above)
+              - BlockFlowPainter/BlockPainter::paintContents => LayoutBlock/BlockPainter::paintChildren =>
+                - paintChild (for each child LayoutBox) => LayoutBlock/BlockPainter::paint (repeat above)
 
 Q. what is LayoutUnit ?
 
 for example, in LayoutView::updateLogicalWidth, LayoutUnit ::LayoutUnit(int ) converts value to 6 bit shifted as in kLayoutUnitFractionalBits = 6, which is same as multiplication by 64.
-So, if Viewport is 800x600, layoutView&#039;s m_frameRect will be 51200x38400
+So, if Viewport is 800x600, layoutView's m_frameRect will be 51200x38400
 
 Q. what belongs to Foreground and what belongs to NormalFlowChildren ?
 
-- non-self-painting children will go to some ancestor&#039;s Fourground contents
-- self-painting children will go to some ancestor&#039;s NormalFlowChildren
+- non-self-painting children will go to some ancestor's Fourground contents
+- self-painting children will go to some ancestor's NormalFlowChildren
 
 
 # frame lifecycle and its entrypoint
 
 - RenderView initialization (see Blink Overview Vol. 1)
-  - RenderThreadImpl::CreateView =&gt; ... =&gt; WebViewImpl::updateAllLifecyclePhase =&gt;
-    - PageWidgetDelegate::updateAllLifecyclePhases =&gt; ... =&gt; FrameView::updateAllLifecyclePhases(PaintClean)
-    - content::RenderWidget::didMeaningFullLayout (as WebWidgetClient) =&gt;
-      - QueueMessage(new ViewHostMsg_didFirstVisuallyNonEmptyPaint, ...) =&gt; must be something ?? maybe not, considering anyway renderer needs impl side compositing.
+  - RenderThreadImpl::CreateView => ... => WebViewImpl::updateAllLifecyclePhase =>
+    - PageWidgetDelegate::updateAllLifecyclePhases => ... => FrameView::updateAllLifecyclePhases(PaintClean)
+    - content::RenderWidget::didMeaningFullLayout (as WebWidgetClient) =>
+      - QueueMessage(new ViewHostMsg_didFirstVisuallyNonEmptyPaint, ...) => must be something ?? maybe not, considering anyway renderer needs impl side compositing.
 
 - * Queued task (how??)
-  - ... =&gt; TaskQueueManagerDoWork =...=&gt; cc::ProxyMain::BeginMainFrame =&gt;
-    cc::LayerTreeHostInProcess::RequestMainFrameUpdate =&gt; RenderWidgetCompositor::UpdateLayerTreeHost =&gt;
-    RenderWidget::UpdateVisualState =&gt; WebViewFrameWidget::updateAllLifecyclePhases =&gt; WebViewImpl::xxx =&gt; ...
+  - ... => TaskQueueManagerDoWork =...=> cc::ProxyMain::BeginMainFrame =>
+    cc::LayerTreeHostInProcess::RequestMainFrameUpdate => RenderWidgetCompositor::UpdateLayerTreeHost =>
+    RenderWidget::UpdateVisualState => WebViewFrameWidget::updateAllLifecyclePhases => WebViewImpl::xxx => ...
 
 - ui event handler (hit testing) on main thread
-  - ... =&gt; TaskQueueManagerDoWork =&gt; content::MainThreadEventQueue::DispatchSingleEvent =&gt; DispatchInFlightEvent =&gt;
-    InputEventFilter::HandleEventOnMainThread =&gt; ChildThreadImpl::OnMessageReceived =&gt; MessageRouter::xxx =&gt;
-    ChildThreadImpl::ChildThreadMessageRouter::RouteMessage =&gt; IPC::MessageRouter::xxx =&gt;
-    RenderViewImpl::OnMessageReceived =&gt; IPC_MESSAGE_HANDLER(InputMsg_HandleInputEvent, OnHandleInputEvent) =&gt; (some IPC magic) =&gt;
-    RenderWidget::OnHandleInputEvent =&gt; RenderWidgetInputHandler::HandleInputEvent =&gt; WebViewFrameWidget::handleInputEvent =&gt;
-    WebViewImpl::handleInputEvent =&gt; PageWidgetDelegate::xxx =&gt; e.g. handleMouseMove =&gt;
-    EventHandler::handleMouseMoveEvent =&gt; handleMouseMoveOrLeaveEvent =&gt; EventHandlingUtil::performMouseEventHitTest =&gt;
-    Document::xxx =&gt; LayoutViewItem::hitTest =&gt; LayoutView::histTest =&gt; ... follow until you find Element to dispatch event ??
+  - ... => TaskQueueManagerDoWork => content::MainThreadEventQueue::DispatchSingleEvent => DispatchInFlightEvent =>
+    InputEventFilter::HandleEventOnMainThread => ChildThreadImpl::OnMessageReceived => MessageRouter::xxx =>
+    ChildThreadImpl::ChildThreadMessageRouter::RouteMessage => IPC::MessageRouter::xxx =>
+    RenderViewImpl::OnMessageReceived => IPC_MESSAGE_HANDLER(InputMsg_HandleInputEvent, OnHandleInputEvent) => (some IPC magic) =>
+    RenderWidget::OnHandleInputEvent => RenderWidgetInputHandler::HandleInputEvent => WebViewFrameWidget::handleInputEvent =>
+    WebViewImpl::handleInputEvent => PageWidgetDelegate::xxx => e.g. handleMouseMove =>
+    EventHandler::handleMouseMoveEvent => handleMouseMoveOrLeaveEvent => EventHandlingUtil::performMouseEventHitTest =>
+    Document::xxx => LayoutViewItem::hitTest => LayoutView::histTest => ... follow until you find Element to dispatch event ??
     
 
-  - ?? =&gt; LayoutView::hitTest =&gt; ?? =&gt; FrameView::updateAllLifecyclePhases(CompositingClean) =&gt;
+  - ?? => LayoutView::hitTest => ?? => FrameView::updateAllLifecyclePhases(CompositingClean) =>
 
 - how about impl thread ??
   - does this happen on WebViewImpl::handleInputEvent, I guess ??

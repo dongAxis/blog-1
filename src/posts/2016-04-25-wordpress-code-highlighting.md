@@ -16,9 +16,9 @@
 
 ```prettyprint
 ...
-&lt;?php wp_head(); ?&gt;
-&lt;script src=&quot;https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js&quot;&gt;&lt;/script&gt;
-&lt;/head&gt;
+<?php wp_head(); ?>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+</head>
 ...
 ```
 
@@ -33,7 +33,7 @@
 
 ### Small thing
 
-The theme I use didn&#039;t do well about code styling, so I changed it from editor:
+The theme I use didn't do well about code styling, so I changed it from editor:
 
 ```prettyprint
 pre {

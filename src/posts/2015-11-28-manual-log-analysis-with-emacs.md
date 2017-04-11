@@ -34,7 +34,7 @@ The good thing about `tail -f` is the command is not a pager command like `less`
 This is an example:
 
 ```
-$ tail -n 100 -f log/development.log | awk -v skip=-1 &#039;/GET.*(jpg|JPG|png|PNG|jpeg)/ { skip = 6 } skip-- &gt;= 0 { next } 1&#039;
+$ tail -n 100 -f log/development.log | awk -v skip=-1 '/GET.*(jpg|JPG|png|PNG|jpeg)/ { skip = 6 } skip-- >= 0 { next } 1'
 ```
 
 
@@ -44,9 +44,9 @@ What I wanted to do with the previous example is cutting out image request from 
 
 ```
 ...
-Started GET &quot;/trip-planner/development/spot_photo/image/556960e169702d3e709c0700/thumb_9346382163_876b6cf2d6_o.jpg&quot; for 127.0.0.1 at 2015-11-28 20:07:22 +0900
+Started GET "/trip-planner/development/spot_photo/image/556960e169702d3e709c0700/thumb_9346382163_876b6cf2d6_o.jpg" for 127.0.0.1 at 2015-11-28 20:07:22 +0900
 Processing by PagesController#home as JPEG
-  Parameters: {&quot;path&quot;=&gt;&quot;trip-planner/development/spot_photo/image/556960e169702d3e709c0700/thumb_9346382163_876b6cf2d6_o&quot;}
+  Parameters: {"path"=>"trip-planner/development/spot_photo/image/556960e169702d3e709c0700/thumb_9346382163_876b6cf2d6_o"}
 Redirected to https://trip-planner-production.s3.amazonaws.com/production/spot_photo/image/556960e169702d3e709c0700/thumb_9346382163_876b6cf2d6_o.jpg
 Completed 302 Found in 47ms
 ...
@@ -58,17 +58,17 @@ Basically, `grep` cannot do this kind of **hiding** multiple lines after matchin
 Actually, I don't understand how `awk` works yet. The `awk` command piped to `tail -f` in the previous example is just what I got from the same [stackoverflow answer](http://serverfault.com/questions/284305/remove-2-lines-from-output-grep-match-regular-expression-plus-next-1.).
 
 ```
-awk -v skip=-1 &#039;/GET.*(jpg|JPG|png|PNG|jpeg)/ { skip = 6 } skip-- &gt;= 0 { next } 1&#039;
+awk -v skip=-1 '/GET.*(jpg|JPG|png|PNG|jpeg)/ { skip = 6 } skip-- >= 0 { next } 1'
 ```
 
 I think I like the below way by `for` and `getline`.
 ```
-awk &#039;/GET.*(jpg|JPG|png|PNG|jpeg)/ { for (i=1; i &lt;= 6; i++) { getline } } 1&#039;
+awk '/GET.*(jpg|JPG|png|PNG|jpeg)/ { for (i=1; i <= 6; i++) { getline } } 1'
 ```
 
 `sed` realizes the similar thing with more intuitive (reasonable) syntax by specifing a range to hide (`/<reg-exp0>/,/<reg-exp1>/`) and delete command `d`:
 ```
-sed -e &quot;/GET.*jpg/,/Completed^^/d&quot;
+sed -e "/GET.*jpg/,/Completed^^/d"
 ```
 
 ##### References

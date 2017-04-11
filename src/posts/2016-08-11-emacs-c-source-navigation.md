@@ -29,7 +29,7 @@ Recently, I started to read some of C projects from the Internet, such as, Linux
 - Generate `TAGS` file
 
 ```
-$ find . -type f -iname &quot;*.[chS]&quot; | xargs etags --append
+$ find . -type f -iname "*.[chS]" | xargs etags --append
 ```
 
 - Minimal navigation
@@ -45,9 +45,9 @@ $ find . -type f -iname &quot;*.[chS]&quot; | xargs etags --append
 - I tried `helm-etags-select` from  _helm-mode_, but completion search is too slow for navigating linux kernel source. So, I disabled it as below:
 
 ```prettyprint
-(require &#039;helm-config)
+(require 'helm-config)
 (helm-mode)
-(setcdr (assoc &#039;find-tag helm-completing-read-handlers-alist) nil) 
+(setcdr (assoc 'find-tag helm-completing-read-handlers-alist) nil) 
 ;;  see https://github.com/emacs-helm/helm/wiki#customize-helm-mode
 ```
   

@@ -29,7 +29,7 @@ I didn't like font in admin editor, so I changed it:
 
 ```
 textarea.wp-editor-area {
-  font-family: &quot;Open Sans&quot;, sans-serif;
+  font-family: "Open Sans", sans-serif;
 }
 ```
   
