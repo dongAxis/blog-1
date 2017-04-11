@@ -29,31 +29,31 @@ import Test.Hspec
 
 spec :: Spec
 spec = do
-  let s   = &quot;hello&quot; :: String
-      b   = &quot;hello&quot; :: B.ByteString
-      bc  = &quot;hello&quot; :: BC.ByteString
-      bl  = &quot;hello&quot; :: BL.ByteString
-      blc = &quot;hello&quot; :: BLC.ByteString
-      t   = &quot;hello&quot; :: T.Text
-      tl  = &quot;hello&quot; :: TL.Text
-  describe &quot;string-like types conversions&quot; $ do
-    describe &quot;encodeUtf8, decodeUtf8&quot; $ do
-      it &quot;B   -&gt; T&quot;   $ TE.decodeUtf8 b == t
-      it &quot;T   -&gt; B&quot;   $ TE.encodeUtf8 t == b
-    describe &quot;fromStrict, toStrict&quot; $ do
-      it &quot;B   -&gt; BL&quot;  $ BL.fromStrict b == bl
-      it &quot;BL  -&gt; B&quot;   $ BL.toStrict bl == b
-      it &quot;BLC -&gt; BC&quot;  $ BLC.fromStrict bc == blc
-      it &quot;BC  -&gt; BLC&quot; $ BLC.toStrict blc == bc
-      it &quot;TL  -&gt; T&quot;   $ TL.fromStrict t == tl
-      it &quot;T   -&gt; TL&quot;  $ TL.toStrict tl == t
-    describe &quot;pack, unpack&quot; $ do
-      it &quot;S   -&gt; T&quot;   $ T.pack s == t
-      it &quot;S   -&gt; TL&quot;  $ TL.pack s == tl
-      it &quot;S   -&gt; BC&quot;  $ BC.pack s == bc
-      it &quot;S   -&gt; BLC&quot; $ BLC.pack s == blc
-      it &quot;T   -&gt; S&quot;   $ T.unpack t == s
-      it &quot;TL  -&gt; S&quot;   $ TL.unpack tl == s
-      it &quot;BC  -&gt; S&quot;   $ BC.unpack bc == s
-      it &quot;BLC -&gt; S&quot;   $ BLC.unpack blc == s
+  let s   = "hello" :: String
+      b   = "hello" :: B.ByteString
+      bc  = "hello" :: BC.ByteString
+      bl  = "hello" :: BL.ByteString
+      blc = "hello" :: BLC.ByteString
+      t   = "hello" :: T.Text
+      tl  = "hello" :: TL.Text
+  describe "string-like types conversions" $ do
+    describe "encodeUtf8, decodeUtf8" $ do
+      it "B   -> T"   $ TE.decodeUtf8 b == t
+      it "T   -> B"   $ TE.encodeUtf8 t == b
+    describe "fromStrict, toStrict" $ do
+      it "B   -> BL"  $ BL.fromStrict b == bl
+      it "BL  -> B"   $ BL.toStrict bl == b
+      it "BLC -> BC"  $ BLC.fromStrict bc == blc
+      it "BC  -> BLC" $ BLC.toStrict blc == bc
+      it "TL  -> T"   $ TL.fromStrict t == tl
+      it "T   -> TL"  $ TL.toStrict tl == t
+    describe "pack, unpack" $ do
+      it "S   -> T"   $ T.pack s == t
+      it "S   -> TL"  $ TL.pack s == tl
+      it "S   -> BC"  $ BC.pack s == bc
+      it "S   -> BLC" $ BLC.pack s == blc
+      it "T   -> S"   $ T.unpack t == s
+      it "TL  -> S"   $ TL.unpack tl == s
+      it "BC  -> S"   $ BC.unpack bc == s
+      it "BLC -> S"   $ BLC.unpack blc == s
 ```

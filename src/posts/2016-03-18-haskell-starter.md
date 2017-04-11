@@ -30,32 +30,32 @@ __Development Tips__
 - `ghci` commands
 
 ```
-## :type &lt;expr&gt; ##
+## :type <expr> ##
 
-Î»&gt; :t map
-map :: (a -&gt; b) -&gt; [a] -&gt; [b]
+Î»> :t map
+map :: (a -> b) -> [a] -> [b]
 
-## :info &lt;name&gt; ##
+## :info <name> ##
 
-Î»&gt; :i map
-map :: (a -&gt; b) -&gt; [a] -&gt; [b] 	-- Defined in â€˜GHC.Baseâ€™
-Î»&gt; :i Ord
-class Eq a =&gt; Ord a where
-  compare :: a -&gt; a -&gt; Ordering
+Î»> :i map
+map :: (a -> b) -> [a] -> [b] 	-- Defined in â€˜GHC.Baseâ€™
+Î»> :i Ord
+class Eq a => Ord a where
+  compare :: a -> a -> Ordering
   ...
 
-## :kind &lt;type&gt; ##
+## :kind <type> ##
 
-Î»&gt; :k Ord
-Ord :: * -&gt; ghc-prim-0.4.0.0:GHC.Prim.Constraint
-Î»&gt; :k []
-[] :: * -&gt; *
+Î»> :k Ord
+Ord :: * -> ghc-prim-0.4.0.0:GHC.Prim.Constraint
+Î»> :k []
+[] :: * -> *
 
-## :browse &lt;mod&gt; ##
+## :browse <mod> ##
 
-Î»&gt; :bro Data.List
-isSubsequenceOf :: Eq a =&gt; [a] -&gt; [a] -&gt; Bool
-(!!) :: [a] -&gt; Int -&gt; a
+Î»> :bro Data.List
+isSubsequenceOf :: Eq a => [a] -> [a] -> Bool
+(!!) :: [a] -> Int -> a
 ```
 
 - Emacs

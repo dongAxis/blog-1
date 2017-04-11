@@ -34,8 +34,8 @@ object Playground {
 
  def sugar =
     for {
-      x_ &lt;- x
-      y_ &lt;- y
+      x_ <- x
+      y_ <- y
     } yield {x_ + y_}
 
   def desugar =
@@ -52,7 +52,7 @@ I noticed another way to include code in blog by using [gist-it](http://gist-it.
 This is the example from the commit I showed at the above Setup section:
 
 ```
-&lt;script src=&quot;http://gist-it.appspot.com/https://github.com/hi-ogawa/hiogawa-blog-ghost/blob/4529291afeafdbfb6c3cb6096e2abefecfef884c/core/server/views/default.hbs?slice=58:64&quot;&gt;&lt;/script&gt;
+<script src="http://gist-it.appspot.com/https://github.com/hi-ogawa/hiogawa-blog-ghost/blob/4529291afeafdbfb6c3cb6096e2abefecfef884c/core/server/views/default.hbs?slice=58:64"></script>
 ```
 turns into
 <script src="http://gist-it.appspot.com/https://github.com/hi-ogawa/hiogawa-blog-ghost/blob/4529291afeafdbfb6c3cb6096e2abefecfef884c/core/server/views/default.hbs?slice=58:64"></script>

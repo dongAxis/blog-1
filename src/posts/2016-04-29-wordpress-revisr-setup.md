@@ -57,18 +57,18 @@ Second, save generated public key to github repository as deploy key:
 Then, make sure connection is fine. Here I had a problem, so I'll show my workaround:
 
 ```prettyprint
-# it fails for some reason I don&#039;t know
-$ sudo su - www-data -s /bin/bash -c &#039;ssh -T git@github.com&#039;
+# it fails for some reason I don't know
+$ sudo su - www-data -s /bin/bash -c 'ssh -T git@github.com'
 Host key verification failed.
 
-# that&#039;s why I forced to add github.com as known host
-$ sudo su - www-data -s /bin/bash -c &#039;ssh -o StrictHostKeyChecking=no -T git@github.com&#039;
-Warning: Permanently added &#039;github.com,192.30.252.121&#039; (RSA) to the list of known hosts.
-Hi hi-ogawa/wordpress-revisr! You&#039;ve successfully authenticated, but GitHub does not provide shell access.
+# that's why I forced to add github.com as known host
+$ sudo su - www-data -s /bin/bash -c 'ssh -o StrictHostKeyChecking=no -T git@github.com'
+Warning: Permanently added 'github.com,192.30.252.121' (RSA) to the list of known hosts.
+Hi hi-ogawa/wordpress-revisr! You've successfully authenticated, but GitHub does not provide shell access.
 
-# then it&#039;s fine for all
-$ sudo su - www-data -s /bin/bash -c &#039;ssh -T git@github.com&#039;
-Hi hi-ogawa/wordpress-revisr! You&#039;ve successfully authenticated, but GitHub does not provide shell access.
+# then it's fine for all
+$ sudo su - www-data -s /bin/bash -c 'ssh -T git@github.com'
+Hi hi-ogawa/wordpress-revisr! You've successfully authenticated, but GitHub does not provide shell access.
 ```
 
 ### References

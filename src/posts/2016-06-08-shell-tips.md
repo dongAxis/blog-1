@@ -35,7 +35,7 @@ DESCRIPTION
        o   The child process has a different parent process ID (i.e., the process ID
              of the parent process).
 
-       o   The child process has its own copy of the parent&#039;s descriptors.  These
+       o   The child process has its own copy of the parent's descriptors.  These
              descriptors reference the same underlying objects, so that, for instance,
              file pointers in file objects are shared between the child and the parent,
              so that an lseek(2) on a descriptor in the child process can affect a sub-
@@ -53,7 +53,7 @@ DESCRIPTION
 - http://unix.stackexchange.com/questions/106847/what-does-aux-mean-in-ps-aux
 
 ```
-    -a      Display information about other users&#039; processes as well as your own.  This
+    -a      Display information about other users' processes as well as your own.  This
              will skip any processes which do not have a controlling terminal, unless the
              -x option is also specified.
     -j      Print information associated with the following keywords: user, pid, ppid,
@@ -95,10 +95,10 @@ In `~/.bash_profile`, define `my_alert`:
 
 ```
 my_alert() {
-    osascript -e &#039;display notification &quot;&quot; with title &quot;Your script is done!!&quot;&#039;
+    osascript -e 'display notification "" with title "Your script is done!!"'
     while true
     do
-        say -v Bells &quot;dong dong dong dong&quot;
+        say -v Bells "dong dong dong dong"
         sleep 0.5
     done
 }

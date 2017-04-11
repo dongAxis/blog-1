@@ -21,12 +21,12 @@ _/usr/local/var/postgres/postgresql.conf_
 ```
 ## before ## 
 
-listen_addresses = &#039;localhost&#039;
+listen_addresses = 'localhost'
 
 
 ## after ##
 
-listen_addresses = &#039;*&#039;
+listen_addresses = '*'
 ```
 
 _/usr/local/var/postgres/pg_hba.conf_
@@ -54,7 +54,7 @@ $ pg_ctl restart -D /usr/local/var/postgres
 
 ```
 # create user postgres;
-# alter user postgres password &#039;postgres&#039;;
+# alter user postgres password 'postgres';
 ```
 
 ---

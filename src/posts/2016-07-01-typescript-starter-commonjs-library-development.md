@@ -41,13 +41,13 @@ As another aspect of this experiment, I wanted to try out non-browser javascript
 Every executable from npm package has a wrapper command in [package.json](https://github.com/hi-ogawa/typescript_kopt/blob/7afbd4de91d026826364c949df35ee69a8e9719f/package.json) as below:
 
 ```
-  &quot;scripts&quot;: {
-    &quot;start&quot;: &quot;nf start&quot;,
-    &quot;tsc:watch&quot;: &quot;tsc --watch&quot;,
-    &quot;mocha:watch&quot;: &quot;mocha --reporter dot --watch build&quot;,
-    &quot;mocha:watch_debug&quot;: &quot;mocha --debug-brk --reporter dot --watch build&quot;,
-    &quot;tslint:watch&quot;: &quot;watch &#039;tslint -c tslint.json src/*&#039; src&quot;,
-    &quot;inspector&quot;: &quot;node-inspector&quot;,
+  "scripts": {
+    "start": "nf start",
+    "tsc:watch": "tsc --watch",
+    "mocha:watch": "mocha --reporter dot --watch build",
+    "mocha:watch_debug": "mocha --debug-brk --reporter dot --watch build",
+    "tslint:watch": "watch 'tslint -c tslint.json src/*' src",
+    "inspector": "node-inspector",
     ...
   },
 ```

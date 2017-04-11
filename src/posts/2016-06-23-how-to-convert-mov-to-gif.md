@@ -22,7 +22,7 @@ Example is below:
 ```
 $ ls
 test_movie.mov
-$ docker run -v $PWD:/app --rm hiogawa/mov2gif test_movie.mov 600x800 30 # &lt;filename&gt; &lt;frame size&gt; &lt;frame rate&gt;
+$ docker run -v $PWD:/app --rm hiogawa/mov2gif test_movie.mov 600x800 30 # <filename> <frame size> <frame rate>
 ...
 $ ls
 test_movie.gif test_movie.mov

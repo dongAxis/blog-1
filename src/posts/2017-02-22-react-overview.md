@@ -11,37 +11,37 @@
 # ReactDOM.render main path
 
 ```
-- ReactDOM.render =&gt; ReactMount.render =&gt; ... =&gt; ReactMount._renderNewRootComponent =&gt;
-  - instantiateReactComponent =&gt; ... =&gt; ReactCompositeComponent.construct (or ReactHostComponent.createInternalComponent)
-  - ReactDefaultBatchingStrategy.batchedUpdates (as ReactUpdates via injection) =&gt; ... =&gt;
-    - ReactMount.mountComponentIntoNode =&gt;
-      - ReactReconciler.mountComponent =&gt; (go below)
-      - ReactMount._mountImageIntoNode =&gt; DOMLazyTree.insertTreeBefore =&gt; setInnerHTML
-  - (after finished transaction.perform callback) this.reactMountReady.notifyAll =&gt; run all queued callbacks
+- ReactDOM.render => ReactMount.render => ... => ReactMount._renderNewRootComponent =>
+  - instantiateReactComponent => ... => ReactCompositeComponent.construct (or ReactHostComponent.createInternalComponent)
+  - ReactDefaultBatchingStrategy.batchedUpdates (as ReactUpdates via injection) => ... =>
+    - ReactMount.mountComponentIntoNode =>
+      - ReactReconciler.mountComponent => (go below)
+      - ReactMount._mountImageIntoNode => DOMLazyTree.insertTreeBefore => setInnerHTML
+  - (after finished transaction.perform callback) this.reactMountReady.notifyAll => run all queued callbacks
 
 [CompositeComponent case]
-- ReactReconciler.mountComponent =&gt;
-  - ReactCompositeComponent.mountComponent =&gt;
-    - _constructComponent =&gt; ... =&gt; new Component
+- ReactReconciler.mountComponent =>
+  - ReactCompositeComponent.mountComponent =>
+    - _constructComponent => ... => new Component
     - call componentWillMount with possibly followed by setState
-    - performInitialMount =&gt;
-      - _renderValidatedComponent =&gt; Component.prototype.render (to get child element)
+    - performInitialMount =>
+      - _renderValidatedComponent => Component.prototype.render (to get child element)
       - instantiateReactComponent (recursive call for child element)
       - ReactReconciler.mountComponent (recursive call for child element)
     - enqueue componentDidMount to getReactMountReady queue
   - enqueue ReactRef.attachRefs to getReactMountReady queue
 
-[HostComponent case (e.g. &quot;div&quot;)]
-- ReactReconciler.mountComponent =&gt;
-  - ReactDomComponent.mountComponent =&gt;
+[HostComponent case (e.g. "div")]
+- ReactReconciler.mountComponent =>
+  - ReactDomComponent.mountComponent =>
     - document.createElement
-    - _updateDOMProperties =&gt;
-      - ensureListeningTo =&gt; listenTo =&gt;  ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent =&gt;
-        ReactEventListener.trapBubbledEvent =&gt; EventListener.listen (from fbjs) =&gt; addEventListener
+    - _updateDOMProperties =>
+      - ensureListeningTo => listenTo =>  ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent =>
+        ReactEventListener.trapBubbledEvent => EventListener.listen (from fbjs) => addEventListener
       - DOMPropertyOperations.setValueForProperty
       - CSSPropertyOperations.setValueForStyles
     - DOMLazyTree
-    - _createInitialChildren =&gt; ReactMultiChild.mountChildren =&gt; (recursively) instantiation and mountComponent ...
+    - _createInitialChildren => ReactMultiChild.mountChildren => (recursively) instantiation and mountComponent ...
 ```
 
 # Some basic parts

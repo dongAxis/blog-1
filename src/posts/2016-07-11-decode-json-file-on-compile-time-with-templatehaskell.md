@@ -22,13 +22,13 @@ Is it possible to define in general way (not specific `Config` record type)?
 - Debug in ghci
 
 ```
-&gt; :set -XTemplateHaskell
-&gt; :set -ddump-splices
-&gt; :reload
+> :set -XTemplateHaskell
+> :set -ddump-splices
+> :reload
 ```
 
 ```
-&gt; :set -ddump-deriv
+> :set -ddump-deriv
 ```
 
 - stage issue
@@ -44,7 +44,7 @@ From template-haskell-2.11.0.0, liftData is available.
 http://hackage.haskell.org/package/template-haskell-2.11.0.0/docs/Language-Haskell-TH-Syntax.html#v:liftData
 
 ```
-liftData :: Data a =&gt; a -&gt; Q Exp
+liftData :: Data a => a -> Q Exp
 ```
 
 If we use this, we don't have to define `instance Lift HExp` by your own.
@@ -59,12 +59,12 @@ data HBinOp = HAddO | HSubO | HMulO | HDivO
 
 ...
 
-quoteHExp :: String -&gt; TH.ExpQ
+quoteHExp :: String -> TH.ExpQ
 quoteHExp s = do
-  loc &lt;- TH.location
+  loc <- TH.location
   let (line, col) = TH.loc_start loc
       file = TH.loc_filename loc
-  THS.liftData =&lt;&lt; doParse (file, line, col) s
+  THS.liftData =<< doParse (file, line, col) s
 
 ```
 

@@ -15,9 +15,9 @@ __Summery__: blink layout code reading to clear my confusion around max-height, 
 ```
 $ Input
 
-&lt;html&gt;
-&lt;head&gt;
-&lt;style&gt;
+<html>
+<head>
+<style>
 * {
   margin: 0;
   padding: 0;
@@ -42,15 +42,15 @@ body {
   height: 250px;
   background: blue; width: 140px;
 }
-&lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;div class=&quot;B&quot;&gt;
-    &lt;div class=&quot;C&quot;&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+</style>
+</head>
+<body>
+  <div class="B">
+    <div class="C">
+    </div>
+  </div>
+</body>
+</html>
 
 
 $ Output
@@ -67,24 +67,24 @@ layer at (0,0) size 180x200 scrollHeight 250
 
 $ Code path (focusing how setLogicalHeight is called for one LayoutBlock)
 
-- LayoutBlock::layout =&gt; LayoutBlockFlow::layoutBlock =&gt;
-  - layoutChildren =&gt;
+- LayoutBlock::layout => LayoutBlockFlow::layoutBlock =>
+  - layoutChildren =>
     - setLogicalHeight (initialize to top border and padding)
-    -  layoutBlockChildren (or layoutInlineChildren) =&gt;
-      - layoutBlockChild =&gt;
-        - positionAndLayoutOnceIfNeeded =&gt;
+    -  layoutBlockChildren (or layoutInlineChildren) =>
+      - layoutBlockChild =>
+        - positionAndLayoutOnceIfNeeded =>
           - LayoutBox::layout (recursively) ...
-        - setLogicalHeight (add up child&#039;s height)
-      - handleAfterSideOfBlock =&gt;
+        - setLogicalHeight (add up child's height)
+      - handleAfterSideOfBlock =>
         - setLogicalHeight (add up some kind of margin collapse left over ?)
         - setLogicalHeight (add up bottom padding and bottom)
   - updateLogicalHeight (check its own height related property for the final setLogicalHeight)
-    - computeLogicalHeight * 2 (different signiture) =&gt;
-      - (essentially check up style&#039;s height, maxHeight, and minHeight)
-      - computeLogicalHeightUsing =&gt; computeContentAndScrollbarLogicalHeightUsing =&gt;
-        - (when it&#039;s percentage length) computePercentageLogicalHeight =&gt;
-          - availableLogicalHeightForPercentageComputation =&gt;
-            - (if containing block&#039;s height is percentage) computePercentageLogicalHeight (recursively) ...
+    - computeLogicalHeight * 2 (different signiture) =>
+      - (essentially check up style's height, maxHeight, and minHeight)
+      - computeLogicalHeightUsing => computeContentAndScrollbarLogicalHeightUsing =>
+        - (when it's percentage length) computePercentageLogicalHeight =>
+          - availableLogicalHeightForPercentageComputation =>
+            - (if containing block's height is percentage) computePercentageLogicalHeight (recursively) ...
   - setLogicalHeight (overwrite with the result of updateLogicalHeight)
 
 
@@ -95,25 +95,25 @@ $ Some notes
   - blink::LayoutBox::updateLogicalHeight
   - (and occasionally)  blink::LayoutBox::computePercentageLogicalHeight
 
-- what&#039;s the difference between style and styleRef ?
+- what's the difference between style and styleRef ?
   - https://cs.chromium.org/chromium/src/third_party/WebKit/Source/core/layout/LayoutObject.h?l=1322
   
 - computed value vs used value (not quite sure this is right)
-  - &quot;Length&quot; correponds to css computed value and &quot;LayoutUnit&quot; corresponds to css used value
-  - for example, what LayoutBox::computeLogicalHeight does is to get &quot;used value&quot; from &quot;computed value&quot;.
+  - "Length" correponds to css computed value and "LayoutUnit" corresponds to css used value
+  - for example, what LayoutBox::computeLogicalHeight does is to get "used value" from "computed value".
   - https://drafts.csswg.org/css-cascade-3/#value-stages
   - https://www.w3.org/TR/CSS2/visudet.html#Computing_heights_and_margins
 
 - LayoutView::layout is called ? times in the following way:
-  - WebView initialization =&gt; FrameView::layout =&gt; (for blank document, like 3 LayoutBlocks)
-    - performLayout =&gt; LayoutView::layout
-    - adjustViewSizeAndLayout =&gt; ... =&gt; LayoutView::layout (a bit different from others, like 8px margin appearing somehow ?)
-    - Document::layoutUpdated =&gt; ... =&gt; LayoutView::layout
-  - mojom::LayoutTestControlStub =&gt; ... =&gt; RenderViewImpl::SetFocusAndActivateForTesting =&gt; ... =&gt; FrameView::layout =&gt;
+  - WebView initialization => FrameView::layout => (for blank document, like 3 LayoutBlocks)
+    - performLayout => LayoutView::layout
+    - adjustViewSizeAndLayout => ... => LayoutView::layout (a bit different from others, like 8px margin appearing somehow ?)
+    - Document::layoutUpdated => ... => LayoutView::layout
+  - mojom::LayoutTestControlStub => ... => RenderViewImpl::SetFocusAndActivateForTesting => ... => FrameView::layout =>
     - LayoutView::layout * 2 (again for blank document ?)
-  - HTMLStyleElement::dispatchPendingEvent =&gt; ... =&gt; Document::ImplicitClose =&gt; FrameView::layout =&gt;
+  - HTMLStyleElement::dispatchPendingEvent => ... => Document::ImplicitClose => FrameView::layout =>
     - LayoutView::layout * 2 (something real)
-  - BlinkTestRunner::OnMessageReceived =&gt; OnReset =&gt; ... =&gt; Document::finishedParsing =&gt; ... =&gt; Document::ImplicitClose =&gt; FrameView::layout =&gt;
+  - BlinkTestRunner::OnMessageReceived => OnReset => ... => Document::finishedParsing => ... => Document::ImplicitClose => FrameView::layout =>
     - LayoutView::layout * 2 (again for blank document ?)
 ```
 

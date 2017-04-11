@@ -29,26 +29,26 @@ The prepared `Vagrantfile` didn't work for me (or I don't know how to use), so I
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-$script = &lt;&lt;SCRIPT
+$script = <<SCRIPT
 set -x
 
 curl -sSL https://get.haskellstack.org/ | sh
 
-su vagrant -c &#039;stack setup&#039;
-su vagrant -c &#039;stack install happy&#039;
-su vagrant -c &#039;stack install alex&#039;
+su vagrant -c 'stack setup'
+su vagrant -c 'stack install happy'
+su vagrant -c 'stack install alex'
 
 apt-get install -y autoconf automake git llvm-dev libedit-dev libffi-dev libncurses5-dev
 
-echo &#039;export PATH=&quot;$(stack path --compiler-bin):$PATH&quot;&#039; &gt;&gt; /home/vagrant/.bashrc
-echo &#039;export PATH=&quot;$(stack path --local-bin):$PATH&quot;&#039; &gt;&gt; /home/vagrant/.bashrc
+echo 'export PATH="$(stack path --compiler-bin):$PATH"' >> /home/vagrant/.bashrc
+echo 'export PATH="$(stack path --local-bin):$PATH"' >> /home/vagrant/.bashrc
 
 SCRIPT
 
 Vagrant.configure(2) do |config|
-  config.vm.box = &quot;ubuntu/trusty64&quot;
+  config.vm.box = "ubuntu/trusty64"
   config.vm.provision :shell, inline: $script
-  config.vm.provider &quot;virtualbox&quot; do |vb|
+  config.vm.provider "virtualbox" do |vb|
     vb.gui = false
     vb.memory = 4096
     vb.cpus = 2
@@ -62,7 +62,7 @@ end
 $ vagrant up
 $ vagrant ssh
 (vm)$ cd /vagrant
-(vm)$ git config --global url.&quot;git://github.com/ghc/packages-&quot;.insteadOf git://github.com/ghc/packages/
+(vm)$ git config --global url."git://github.com/ghc/packages-".insteadOf git://github.com/ghc/packages/
 (vm)$ cp mk/build.mk.sample mk/build.mk
 (vm)$ git submodule update --init
 (vm)$ ./boot
@@ -70,15 +70,15 @@ $ vagrant ssh
 (vm)$ make # I felt like this took half a day
 (vm)$ ./inplace/bin/ghc-stage2 --interactive
 GHCi, version 8.1.20160801: http://www.haskell.org/ghc/  :? for help
-Prelude&gt; sum [1..100]
+Prelude> sum [1..100]
 5050
-Prelude&gt; :q
+Prelude> :q
 Leaving GHCi.
 (vm)$ make fasttest
 (vm)$ cat testsuite_summary.txt
 
 Unexpected results from:
-TEST=&quot;T9203 haddock.Cabal haddock.base T1969 T5837 T3294&quot;
+TEST="T9203 haddock.Cabal haddock.base T1969 T5837 T3294"
 
 SUMMARY for test run started at Mon Aug  8 05:02:29 2016 UTC
  3:43:44 spent to go through

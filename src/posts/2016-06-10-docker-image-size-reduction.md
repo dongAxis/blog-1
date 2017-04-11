@@ -41,14 +41,14 @@ ENV PREFIX=/usr/local
 # build binutils
 RUN mkdir -p /srv/build_binutils
 WORKDIR /srv/build_binutils
-RUN /$DOWNLOAD_BINUTILS/configure --target=$TARGET --prefix=&quot;$PREFIX&quot; --with-sysroot --disable-nls --disable-werror
+RUN /$DOWNLOAD_BINUTILS/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
 RUN make
 RUN make install
 
 # build gcc
 RUN mkdir -p /srv/build_gcc
 WORKDIR /srv/build_gcc
-RUN /$DOWNLOAD_GCC/configure --target=$TARGET --prefix=&quot;$PREFIX&quot; --disable-nls --enable-languages=c,c++ --without-headers
+RUN /$DOWNLOAD_GCC/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
 RUN make all-gcc
 RUN make all-target-libgcc
 RUN make install-gcc
@@ -85,7 +85,7 @@ RUN wget -q http://ftp.gnu.org/gnu/binutils/$DOWNLOAD_BINUTILS.tar.gz &amp;&amp;
     tar -xzf $DOWNLOAD_BINUTILS.tar.gz                                &amp;&amp; \
     mkdir -p /srv/build_binutils                                      &amp;&amp; \
     cd /srv/build_binutils                                            &amp;&amp; \
-    /$DOWNLOAD_BINUTILS/configure --target=$TARGET --prefix=&quot;$PREFIX&quot;    \
+    /$DOWNLOAD_BINUTILS/configure --target=$TARGET --prefix="$PREFIX"    \
                         --with-sysroot --disable-nls --disable-werror &amp;&amp; \
     make                                                              &amp;&amp; \
     make install                                                      &amp;&amp; \
@@ -97,7 +97,7 @@ RUN wget -q ftp://ftp.gnu.org/gnu/gcc/$DOWNLOAD_GCC/$DOWNLOAD_GCC.tar.gz &amp;&a
     cd /$DOWNLOAD_GCC &amp;&amp; contrib/download_prerequisites                  &amp;&amp; \
     mkdir -p /srv/build_gcc                                              &amp;&amp; \
     cd /srv/build_gcc                                                    &amp;&amp; \
-    /$DOWNLOAD_GCC/configure --target=$TARGET --prefix=&quot;$PREFIX&quot;            \
+    /$DOWNLOAD_GCC/configure --target=$TARGET --prefix="$PREFIX"            \
                  -disable-nls --enable-languages=c,c++ --without-headers &amp;&amp; \
     make all-gcc                                                         &amp;&amp; \
     make all-target-libgcc                                               &amp;&amp; \

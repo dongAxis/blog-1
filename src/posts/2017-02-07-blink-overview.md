@@ -31,19 +31,19 @@
 ## Topology
 
 RenderWidget
-&#039;-* RenderFrameImpl (as base::ObserverList&lt;RenderFrameImpl&gt; render_frames_)
-&#039;-&#039; ScreenInfo
-&#039;-&#039; WebWidget
+'-* RenderFrameImpl (as base::ObserverList<RenderFrameImpl> render_frames_)
+'-' ScreenInfo
+'-' WebWidget
 
 RenderViewImpl
-&#039;-&#039; RenderFrameImpl
-&#039;-&#039; WebFrameWidget
-&#039;-&#039; WebView
+'-' RenderFrameImpl
+'-' WebFrameWidget
+'-' WebView
 
 RenderFrameImpl
-&#039;-&#039; RenderViewImpl
-&#039;-&#039; RenderWidget (when it&#039;s local root)
-&#039;-&#039; WebLocalFrame
+'-' RenderViewImpl
+'-' RenderWidget (when it's local root)
+'-' WebLocalFrame
 
 
 #### Blink ####
@@ -97,87 +97,87 @@ RenderFrameImpl
 WebWidget
 
 WebViewImpl
-&#039;-&#039; WebLayer
-&#039;-&#039; WebLayerTreeView
+'-' WebLayer
+'-' WebLayerTreeView
 
 WebFrameWidget
 
 WebFrameWidgetBase
 
 WebViewFrameWidget
-&#039;-&#039; WebWidgetClient
-&#039;-&#039; WebLocalFrameImpl
-&#039;-&#039; WebViewImpl
+'-' WebWidgetClient
+'-' WebLocalFrameImpl
+'-' WebViewImpl
 
 WebFrameWidgetImpl
-&#039;-&#039; WebWidgetClient
-&#039;-&#039; WebLocalFrameImpl
-&#039;-&#039; WebLayer
-&#039;-&#039; WebLayerTreeView
+'-' WebWidgetClient
+'-' WebLocalFrameImpl
+'-' WebLayer
+'-' WebLayerTreeView
 
 (frame things)
 
 WebFrame
-&#039;-&#039; WebFrame (as m_opener)
-&#039;-&#039; WebFrame (as m_parent)
-&#039;-* WebFrame (as m_{first,last}Child)
+'-' WebFrame (as m_opener)
+'-' WebFrame (as m_parent)
+'-* WebFrame (as m_{first,last}Child)
 
 WebLocalFrameImpl
-&#039;-&#039; WebFrameWidgetBase (only when frame is root frame)
-&#039;-&#039; WebDevToolsFrontendImpl
-&#039;-&#039; WebDevToolsAgentImpl
-&#039;-&#039; WebFrameClient (impl is RenderFrameImpl)
-&#039;-&#039; FrameLoaderClientImpl
-&#039;-&#039; LocalFrame
+'-' WebFrameWidgetBase (only when frame is root frame)
+'-' WebDevToolsFrontendImpl
+'-' WebDevToolsAgentImpl
+'-' WebFrameClient (impl is RenderFrameImpl)
+'-' FrameLoaderClientImpl
+'-' LocalFrame
 
 (internal frame things)
 
 Widget
-&#039;-&#039; FrameRect
-&#039;-&#039; Widget (m_parent)
+'-' FrameRect
+'-' Widget (m_parent)
 
 FrameView
-&#039;-* Widget (as ChildrenWidgetSet m_children)
-&#039;-&#039; LocalFrame
-&#039;-&#039; LayoutSize
+'-* Widget (as ChildrenWidgetSet m_children)
+'-' LocalFrame
+'-' LayoutSize
 
 Frame
-&#039;-&#039; DomWindow
+'-' DomWindow
 
 LocalFrame
-&#039;-&#039; FrameView
-&#039;-&#039; FrameLoader
-&#039;-&#039; ScriptController
+'-' FrameView
+'-' FrameLoader
+'-' ScriptController
 
 Page
-&#039;-&#039; Frame
+'-' Frame
 
 (loaders)
 FrameLoader
-&#039;-&#039; DocumentLoader
-&#039;-&#039; LocalFrame
+'-' DocumentLoader
+'-' LocalFrame
 
 DocumentLoader
-&#039;-&#039; RawResource (m_mainResourse)
-&#039;-&#039; ResourceFetcher
-&#039;-&#039; LocalFrame
-&#039;-&#039; DocumentWriter
-    &#039;-&#039; DocumentParser
-    &#039;-&#039; Document
-&#039;-&#039; Resource{Request,Response} (how does this relate to mainresourse)
+'-' RawResource (m_mainResourse)
+'-' ResourceFetcher
+'-' LocalFrame
+'-' DocumentWriter
+    '-' DocumentParser
+    '-' Document
+'-' Resource{Request,Response} (how does this relate to mainresourse)
 
 ResourceFetcher
-&#039;-* ResourceLoader (as m_loaders or m_nonBlockingLoaders)
+'-* ResourceLoader (as m_loaders or m_nonBlockingLoaders)
 
 ResourceLoader
-&#039;-&#039; WebURLLoader
-&#039;-&#039; Resource
-&#039;-&#039; ResourceFetcher
+'-' WebURLLoader
+'-' Resource
+'-' ResourceFetcher
 
 Resource
-&#039;-* ResourceClient (as m_clients{,AwaitingCallback}, m_finishedClients)
-&#039;-&#039; ResourceLoader
-&#039;-&#039; Resource{Request,Response}
+'-* ResourceClient (as m_clients{,AwaitingCallback}, m_finishedClients)
+'-' ResourceLoader
+'-' Resource{Request,Response}
 
 #### Furthor pieces in Blink ###
 
@@ -201,32 +201,32 @@ Resource
 ## Topology
 
 DomWindow
-&#039;-&#039; Frame
-&#039;-&#039; Location
+'-' Frame
+'-' Location
 
 LocalDomWindow
-&#039;-&#039; Document
+'-' Document
 
 Document
-&#039;-&#039; DocumentParser
-&#039;-&#039; ResourceFetcher
-&#039;-&#039; LocalFrame
-&#039;-&#039; LayoutView
+'-' DocumentParser
+'-' ResourceFetcher
+'-' LocalFrame
+'-' LayoutView
 
 LayoutView
-&#039;-&#039; FrameView
+'-' FrameView
 
 HTMLDocumentParser
-&#039;-&#039; HTMLTreeBuilder
-    &#039;-&#039; HTMLConstructionSite
-        &#039;-&#039; HTMLDocument
-&#039;-&#039; HTMLInputStream
+'-' HTMLTreeBuilder
+    '-' HTMLConstructionSite
+        '-' HTMLDocument
+'-' HTMLInputStream
 
 Node
-&#039;-&#039; LayoutObject
+'-' LayoutObject
 
 LayoutObject
-&#039;-&#039; ComputedStyle
+'-' ComputedStyle
 ```
 
 # Some important steps
@@ -234,17 +234,17 @@ LayoutObject
 ```
 # Navigation and Resource loading
 
-- (some IPC ?) =&gt;
-  - WebLocalFrame::LoadRequest =&gt; load =&gt; FrameLoader::load =&gt; startLoad =&gt;
+- (some IPC ?) =>
+  - WebLocalFrame::LoadRequest => load => FrameLoader::load => startLoad =>
     - FrameLoaderClientImpl::createDocumentLoader
-    - DocumentLoader::startLoadingMainResource =&gt;
-      - RawResource::fetchMainResource =&gt; ResourceFetcher::requestResource =&gt;
-        - createResourceForLoading =&gt; RawResourceFactory::create
-        - ResourceFetcher::startLoad =&gt;
+    - DocumentLoader::startLoadingMainResource =>
+      - RawResource::fetchMainResource => ResourceFetcher::requestResource =>
+        - createResourceForLoading => RawResourceFactory::create
+        - ResourceFetcher::startLoad =>
           - ResourceLoader::create
-          - ResourceLoader::start =&gt;
+          - ResourceLoader::start =>
             - RendererBlinkPlatformImpl::createURLLoader  (yay! finally reached platform implementation!)
-            - WebURLLoaderImpl::loadAsynchronously =&gt; WebURLLoaderImpl::Context::Start =&gt; (some IPC on ResourceDispachter ...)
+            - WebURLLoaderImpl::loadAsynchronously => WebURLLoaderImpl::Context::Start => (some IPC on ResourceDispachter ...)
       - RawResource.addClient(DocumentLoader)
 
 # Resource reception and DOM construction
@@ -253,69 +253,69 @@ HTMLDocumentParser spec: https://html.spec.whatwg.org/multipage/syntax.html
 
 [Incremental]
 
-- (... some IPC from ResourceDispatcher) =&gt; WebURLLoaderImpl::Context::OnReceivedResponse =&gt; 
-  - ResourceLoader::didReceiveData =&gt; RawResource::appendData =&gt;
-    - DocumentLoader::dataReceived (as RawResourseClient) =&gt; processData =&gt; commitData =&gt;
-      - ensureWriter =&gt; createWriterFor =&gt; DocumentWriter::create =&gt; Document::createParser =&gt; HTMLDocumentParser::create
-      - DocumentWriter::addData =&gt;
-        - HTMLDocumentParser::appendBytes (as DocumentParser) =&gt; DocodedDataDocumentParser::appendBytes =&gt; updateDocument =&gt;
-          HTMLDocumentParser::append =&gt; pumpTokenizer =&gt; constructTreeFromHTMLToken =&gt;
-          HTMLTreeBuilder::constructTree =&gt; processToken =&gt; (e.g. processStartTagForInBody) =&gt;
-          HTMLConstructionSite::insertHTMLElement =&gt;
-          - createHTMLElement =&gt; HTMLElementFactory::createHTMLElement (=&gt; e.g. HTMLDivElement::Create) 
-          - attachLater =&gt; (queueTask --&gt; executeQueuedTasks) =&gt; executeTask =&gt; executeInsertTask =&gt; insert =&gt; ContainerNode::parserAppendChild
+- (... some IPC from ResourceDispatcher) => WebURLLoaderImpl::Context::OnReceivedResponse => 
+  - ResourceLoader::didReceiveData => RawResource::appendData =>
+    - DocumentLoader::dataReceived (as RawResourseClient) => processData => commitData =>
+      - ensureWriter => createWriterFor => DocumentWriter::create => Document::createParser => HTMLDocumentParser::create
+      - DocumentWriter::addData =>
+        - HTMLDocumentParser::appendBytes (as DocumentParser) => DocodedDataDocumentParser::appendBytes => updateDocument =>
+          HTMLDocumentParser::append => pumpTokenizer => constructTreeFromHTMLToken =>
+          HTMLTreeBuilder::constructTree => processToken => (e.g. processStartTagForInBody) =>
+          HTMLConstructionSite::insertHTMLElement =>
+          - createHTMLElement => HTMLElementFactory::createHTMLElement (=> e.g. HTMLDivElement::Create) 
+          - attachLater => (queueTask --> executeQueuedTasks) => executeTask => executeInsertTask => insert => ContainerNode::parserAppendChild
 
 [Completion]
 
-- (some platform IPC ...) =&gt; WebURLLoaderImpl::Context::OnCompletedRequest =&gt; ResourceLoader::didFinishLoading =&gt;
-  ResourceFetcher::handlerLoaderFinish =&gt; Resource::finish =&gt; CheckNotify =&gt;
-  DocumentLoader::notifyFinished =&gt; finishedWriting =&gt; endWriting =&gt; DocumentWriter::end =&gt;
-  HTMLDocumentParser::finish =&gt; attemptToEnd =&gt; prepareToStopParsing =&gt; attemptToRunDeferredScriptsAndEnd =&gt; end =&gt;
-  HTMLTreeBuilder::finished =&gt; HTMLConstructionSite::finishedParsing =&gt; Document::finishedParsing =&gt;
+- (some platform IPC ...) => WebURLLoaderImpl::Context::OnCompletedRequest => ResourceLoader::didFinishLoading =>
+  ResourceFetcher::handlerLoaderFinish => Resource::finish => CheckNotify =>
+  DocumentLoader::notifyFinished => finishedWriting => endWriting => DocumentWriter::end =>
+  HTMLDocumentParser::finish => attemptToEnd => prepareToStopParsing => attemptToRunDeferredScriptsAndEnd => end =>
+  HTMLTreeBuilder::finished => HTMLConstructionSite::finishedParsing => Document::finishedParsing =>
   - dispatchEvent (with DOMContentLoaded)  
-  - FrameLoader::finishedParsing =&gt; checkCompleted =&gt;
-    - Document::implicitClose =&gt;
-      - updateStyleAndLayoutTree =&gt;
-        - updateStyle =&gt; (go to &quot;Style Calculation&quot; below)
-        - notifyLayoutTreeOfSubtreeChanges =&gt;
+  - FrameLoader::finishedParsing => checkCompleted =>
+    - Document::implicitClose =>
+      - updateStyleAndLayoutTree =>
+        - updateStyle => (go to "Style Calculation" below)
+        - notifyLayoutTreeOfSubtreeChanges =>
           - advanceTo(DocumentLifecycle::InLayoutSubtreeChange)
-          - LayoutItem::handleSubtreeModifications =&gt; LayoutObject::handleSubtreeModifications (go to &quot;layout tree change&quot; below)
+          - LayoutItem::handleSubtreeModifications => LayoutObject::handleSubtreeModifications (go to "layout tree change" below)
           - advanceTo(DocumentLifecycle::LayoutSubtreeChangeClean)
-      - FrameView::layout =&gt; performLayout =&gt; layoutFromRootObject =&gt; LayoutView::layout =&gt; (go to &quot;Layout&quot; below)
+      - FrameView::layout => performLayout => layoutFromRootObject => LayoutView::layout => (go to "Layout" below)
 
 # CSS (Style calculation, Layout tree construction)
 
 (Topology)
 Document
-&#039;-&#039; StyleEngine
-&#039;-&#039; StyleSheetList
-&#039;-&#039; LayoutView
+'-' StyleEngine
+'-' StyleSheetList
+'-' LayoutView
 
 Node
-&#039;-&#039; LayoutObject (this is rare data)
+'-' LayoutObject (this is rare data)
 
 LayoutObject 
-&#039;-&#039; ComputedStyle
+'-' ComputedStyle
 
-LayoutItem &#039;-&#039; LayoutObject
+LayoutItem '-' LayoutObject
 
 StyleEnine
-&#039;-&#039; StyleResolver
+'-' StyleResolver
 
 ElementResolveContext
-&#039;-&#039; Element (m_element)
-&#039;-&#039; ContainerNode (m_parentNode)
-&#039;-&#039; ComputedStyle (m_rootElementStyle)
+'-' Element (m_element)
+'-' ContainerNode (m_parentNode)
+'-' ComputedStyle (m_rootElementStyle)
 
 (Procedures)
 
-- Document::updateStyle =&gt;
-  - StyleResolver::styleForDocument =&gt; ComputedStyle::create()
+- Document::updateStyle =>
+  - StyleResolver::styleForDocument => ComputedStyle::create()
   - ensureStyleResolver
-  - inheritHtmlAndBodyElementStyles (some root element and body element quirks) =&gt;
+  - inheritHtmlAndBodyElementStyles (some root element and body element quirks) =>
     - StyleResolver::styleForElement (for root and body) (see below for detail)
   - Element::recalcStyle (from root) (see below for detail)
-  - FrameView::recalcOverflowAfterStyleChange =&gt; (some viewport or root element thing? forget it for now.)
+  - FrameView::recalcOverflowAfterStyleChange => (some viewport or root element thing? forget it for now.)
 
 - StyleResolver::styleForElement (this returns ComputedStyle)
   - initialize ElementResolveContext and StyleResolverState
@@ -323,34 +323,34 @@ ElementResolveContext
   - inheritFrom or initialStyleForElement or ComputedStyle::create
   - ensureUAStyleForElement
   - initialize ElementRuleCollector
-  - matchAllRules =&gt;
-    - StyleResolver::matchUARules =&gt; matchRuleSet =&gt;
-      - ElementRuleCollector::collectMatchingRules =&gt; collectMatchingRulesForList (for cases by ID, tag name, etc..) =&gt; didMatchRule
+  - matchAllRules =>
+    - StyleResolver::matchUARules => matchRuleSet =>
+      - ElementRuleCollector::collectMatchingRules => collectMatchingRulesForList (for cases by ID, tag name, etc..) => didMatchRule
     - (apply inline style from html attribute e.g. Element::presentationAttributeStyle)
-    - matchAuthorRules =&gt;
-      - matchHostRules (some shadow dom styling is happening ? let&#039;s forget it for now...)
-      - matchScopedRules =&gt;
+    - matchAuthorRules =>
+      - matchHostRules (some shadow dom styling is happening ? let's forget it for now...)
+      - matchScopedRules =>
         - initialize ScopedStyleResolver
-        - matchElementScopeRules =&gt; ScopedStyleResolver::collectMatchingAuthorRules =&gt; collectMatchingRules (same as above (matchUARules))
-  - adjustComputedStyle =&gt;StyleAduster::adjustComputedStyle =&gt;
-    - adjustStyleForHTMLElement (some element&#039;s tag based style change)
+        - matchElementScopeRules => ScopedStyleResolver::collectMatchingAuthorRules => collectMatchingRules (same as above (matchUARules))
+  - adjustComputedStyle =>StyleAduster::adjustComputedStyle =>
+    - adjustStyleForHTMLElement (some element's tag based style change)
     - etc... (looks like a big deal though...)
 
-- Element::recalcStyle =&gt;
-  - recalcOwnStyle =&gt;
-    - propagateInheritedProperties or styleForLayoutObject (=&gt; originalStyleForLayoutObject =&gt; StyleResolver::styleForElement)
-    - ComputedStyle::stylePropagationDiff (will return Reattach if Element (Node) didn&#039;t have LayoutObject yet)
-    - rebuildLayoutTree =&gt; reattachLayoutTree =&gt; attachLayoutTree =&gt;
-      - LayoutTreeBuilderForElement::createLayoutObjectIfNeeded =&gt; createLayoutObject =&gt;
-        - Element::createLayoutObject =&gt; LayoutObject::createObject =&gt; (new LayoutXXX depending on arguments, Element and ComputedStyle)
+- Element::recalcStyle =>
+  - recalcOwnStyle =>
+    - propagateInheritedProperties or styleForLayoutObject (=> originalStyleForLayoutObject => StyleResolver::styleForElement)
+    - ComputedStyle::stylePropagationDiff (will return Reattach if Element (Node) didn't have LayoutObject yet)
+    - rebuildLayoutTree => reattachLayoutTree => attachLayoutTree =>
+      - LayoutTreeBuilderForElement::createLayoutObjectIfNeeded => createLayoutObject =>
+        - Element::createLayoutObject => LayoutObject::createObject => (new LayoutXXX depending on arguments, Element and ComputedStyle)
         - Node::setLayoutObject
-      - Element::createPseudoElementIfNeeded =&gt;
-        - StyleResolver::createPseudoElementIfNeeded =&gt; (animation things considered ??)
-        - PseudoElement::attachLayoutTree =&gt; TextContentData::createLayoutObject =&gt; new LayoutTextFragment
-    - LayoutObject::setStyle =&gt; LayoutBoxModelObject::StyleDidChange =&gt;
-      - createLayer =&gt; ... WTF and base magic ... =&gt; new PaintLayer
+      - Element::createPseudoElementIfNeeded =>
+        - StyleResolver::createPseudoElementIfNeeded => (animation things considered ??)
+        - PseudoElement::attachLayoutTree => TextContentData::createLayoutObject => new LayoutTextFragment
+    - LayoutObject::setStyle => LayoutBoxModelObject::StyleDidChange =>
+      - createLayer => ... WTF and base magic ... => new PaintLayer
       - Layout invalidation, Paint invalidatiaon and more
-  - recalcDescendantStyles =&gt; Text::recalcTextStyle or Element::recalcStyle for each child
+  - recalcDescendantStyles => Text::recalcTextStyle or Element::recalcStyle for each child
   - updatePseudoElement (recalcStyle for PseudoElement)
 
 # Layout
@@ -361,13 +361,13 @@ ElementResolveContext
 
 # Event (handler registration, event dispatching)
 
-- IPC::ChannelProxy::Context::OnDispatchMessage =&gt; ChildThreadImpl::OnMessageReceived =&gt; IPC::MessageRouter::xxx =&gt;
-  ChildThreadImpl::ChildThreadMessageRouter::RouteMessage =&gt; IPC::MessageRoute::xxx =&gt;
-  RenderViewImpl::OnMessageReceived =&gt; RenderWidget::xxx =&gt;
-  IPC_MESSAGE_HANDLER(InputMsg_HandleInputEvent, OnHandleInputEvent) =&gt; ... (some magic) =&gt;
-  RenderWidget::OnHandleInputEvent =&gt; RenderWidgetInputHandler::HandleInputEvent =&gt; WebViewFrameWidget::xxx =&gt; WebViewImpl::xxx =&gt;
-  PageWidgetDelegate::xxx =&gt; (e.g. handleMouseMove) =&gt; EventHandler::handleMouseMoveEvent =&gt; handleMouseMoveEventOrLeaveEvent =&gt;
-  EventHandlingUtil::performMouseEventHitTest =&gt; Document::xxx =&gt; LayoutView::hitTest =&gt;
+- IPC::ChannelProxy::Context::OnDispatchMessage => ChildThreadImpl::OnMessageReceived => IPC::MessageRouter::xxx =>
+  ChildThreadImpl::ChildThreadMessageRouter::RouteMessage => IPC::MessageRoute::xxx =>
+  RenderViewImpl::OnMessageReceived => RenderWidget::xxx =>
+  IPC_MESSAGE_HANDLER(InputMsg_HandleInputEvent, OnHandleInputEvent) => ... (some magic) =>
+  RenderWidget::OnHandleInputEvent => RenderWidgetInputHandler::HandleInputEvent => WebViewFrameWidget::xxx => WebViewImpl::xxx =>
+  PageWidgetDelegate::xxx => (e.g. handleMouseMove) => EventHandler::handleMouseMoveEvent => handleMouseMoveEventOrLeaveEvent =>
+  EventHandlingUtil::performMouseEventHitTest => Document::xxx => LayoutView::hitTest =>
   - FrameView::updateLifecycleToCompositingCleanPlusScrolling
   - ???
  
@@ -375,9 +375,9 @@ ElementResolveContext
 ??
 
 # Renderer process initialization
-- main =&gt; ContentMain =&gt; ContentMainRunnerImpl::Run =&gt; RunZygote =&gt; RendererMain =&gt;
+- main => ContentMain => ContentMainRunnerImpl::Run => RunZygote => RendererMain =>
   - SkGraphics::Init()
-  - HandleRendererErrorTestParameters =&gt; ChildProcess::WaitForDebugger =&gt; pause
+  - HandleRendererErrorTestParameters => ChildProcess::WaitForDebugger => pause
   - new base::MessageLoop()
   - blink::scheduler::RendererScheduler::Create
   - RenderProcessImpl render_process (+2 threads via ChildProcess)
@@ -385,15 +385,15 @@ ElementResolveContext
   - base::RunLoop().Run()
 
 # RenderView initialization
-- (IPC) =&gt; RenderThreadImpl::CreateView =&gt; RenderViewImpl::Create =&gt; Initialize =&gt;
+- (IPC) => RenderThreadImpl::CreateView => RenderViewImpl::Create => Initialize =>
   - WebView::Create
   - RenderFrameImpl::CreateMainFrame
-  - RenderViewImpl::OnResize =&gt; RenderWidget::OnResize =&gt; Resize =&gt; RenderViewImpl::ResizeWidget =&gt;
-    WebViewImpl::resizeWithBrowserControls =&gt; resizeViewWhileAnchored =&gt; updateAllLifecyclePhases =&gt;
-    PageWidgetDelegate::updateAllLifecyclePhases =&gt; PageAnimator::updateAllLifecyclePhases =&gt;
-    FrameView::updateAllLifecyclePhases(PaintClean) =&gt; updateLifecyclePhasesInternal =&gt;
-    - ... =&gt; FrameView::layout
-    - ... =&gt; PaintLayerCompositor::updateIfNeeded 
+  - RenderViewImpl::OnResize => RenderWidget::OnResize => Resize => RenderViewImpl::ResizeWidget =>
+    WebViewImpl::resizeWithBrowserControls => resizeViewWhileAnchored => updateAllLifecyclePhases =>
+    PageWidgetDelegate::updateAllLifecyclePhases => PageAnimator::updateAllLifecyclePhases =>
+    FrameView::updateAllLifecyclePhases(PaintClean) => updateLifecyclePhasesInternal =>
+    - ... => FrameView::layout
+    - ... => PaintLayerCompositor::updateIfNeeded 
     - ? ...
   - ?
 

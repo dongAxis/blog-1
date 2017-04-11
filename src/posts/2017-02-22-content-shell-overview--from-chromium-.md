@@ -15,7 +15,7 @@
 $ ninja -C out/Default content/shell:content_shell
 
 # run
-$ out/Default/content_shell &lt;url&gt;
+$ out/Default/content_shell <url>
 
 # layout test (see docs/testing/layout_tests.md)
 $ out/Default/content_shell --run-layout-test third_party/WebKit/LayoutTests/css2.1/20110323/abspos-containing-block-initial-001.htm
@@ -24,7 +24,7 @@ layer at (0,0) size 800x600 clip at (0,0) size 785x600 scrollY 50.00 scrollHeigh
   LayoutView at (0,0) size 800x600
 ...
 
-# debug browser process (for some reason, sometimes, browser process&#039;s UI thread locks on some spin lock (base::Internal::SpinLockDelay) when I do step execution.)
+# debug browser process (for some reason, sometimes, browser process's UI thread locks on some spin lock (base::Internal::SpinLockDelay) when I do step execution.)
 $ lldb out/Default/content_shell
 (lldb) breakpoint set --name main
 (lldb) process launch
@@ -36,7 +36,7 @@ $ lldb out/Default/content_shell
 $ out/Default/content_shell --no-sandbox --disable-hang-monitor --renderer-startup-dialog
 
 # from another shell
-$ lldb -p $(pgrep -f &#039;content_shell --type=renderer&#039;)
+$ lldb -p $(pgrep -f 'content_shell --type=renderer')
 (lldb) gui # set one-time breakpoint somewhere after the current pause()
 (lldb) c
 (lldb) pr signal SIGUSR1
@@ -50,108 +50,108 @@ $ lldb -p $(pgrep -f &#039;content_shell --type=renderer&#039;)
 
 ```
 - Browser process (read browser_main_loop.h well)
-  - main =&gt; content::ContentMain =&gt;
-    - ContentMainRunner::Initialize =&gt;
+  - main => content::ContentMain =>
+    - ContentMainRunner::Initialize =>
       - ShellMainDelegate::BasicStartupComplete
       - InitializeMojo
-    - ContentMainRunner::Run =&gt; RunNamedProcessTypeMain =&gt; ShellMainDelegate::RunProcess =&gt; ShellBrowserMain =&gt;
-    - BrowserMainRunner::Initialize =&gt;
+    - ContentMainRunner::Run => RunNamedProcessTypeMain => ShellMainDelegate::RunProcess => ShellBrowserMain =>
+    - BrowserMainRunner::Initialize =>
       - SkGraphics::Init
-      - BrowserMainLoop::Init =&gt; ShellContentBrowserClient::CreateBrowserMainParts =&gt; new ShellBrowserMainParts
-      - BrowserMainLoop::EarlyInitialization =&gt;
-        - SetupSandbox =&gt;
-          - RenderSandboxLinux::Init =&gt;
+      - BrowserMainLoop::Init => ShellContentBrowserClient::CreateBrowserMainParts => new ShellBrowserMainParts
+      - BrowserMainLoop::EarlyInitialization =>
+        - SetupSandbox =>
+          - RenderSandboxLinux::Init =>
             - new base::DelegateSimpleThread(...SandboxIPCHandler...)
-            - SimpleThread::Start =&gt; PlatformThread::CreateWithPriority =&gt; CreateThread =&gt; pthread_create(..., ThreadFunc, ...) =&gt; ThreadFunc =&gt; SimpleThread::ThreadMain (override PlatformThread::Delegate::ThreadMain) =&gt;
+            - SimpleThread::Start => PlatformThread::CreateWithPriority => CreateThread => pthread_create(..., ThreadFunc, ...) => ThreadFunc => SimpleThread::ThreadMain (override PlatformThread::Delegate::ThreadMain) =>
               - WaitableEvent::Signal (will catched WaitableEvent::wait in later part of SimpleThread::Start)
-              - DelegateSimpleThread::Run =&gt; SandboxIPCHandler::Run/HandleRequestFromRenderer (see linux_sandbox_ipc.md for this thread loop)
+              - DelegateSimpleThread::Run => SandboxIPCHandler::Run/HandleRequestFromRenderer (see linux_sandbox_ipc.md for this thread loop)
           - ZygoteHostImpl::Init
-          - CreateZygote =&gt; ZygoteCommunication::Init =&gt; ZygoteHostImpl::LaunchZygote =&gt; sandbox::NamespaceSandbox::LaunchProcess
-            - ?? =&gt; +1 thread
+          - CreateZygote => ZygoteCommunication::Init => ZygoteHostImpl::LaunchZygote => sandbox::NamespaceSandbox::LaunchProcess
+            - ?? => +1 thread
       - BrowserMainLoop::InitializeToolkit
-        - aura::Env::CreateInstance, aura::Env::Init =&gt; ui::PlatformEventSource::CreateDefault =&gt; gfx::GetXDisplay
-      - BrowserMainLoop::MainMessageLoopStart =&gt;
+        - aura::Env::CreateInstance, aura::Env::Init => ui::PlatformEventSource::CreateDefault => gfx::GetXDisplay
+      - BrowserMainLoop::MainMessageLoopStart =>
         - new base::MessageLoopForUI
-        - InitializaMainThread =&gt; new BrowserThreadImpl(BrowserThread::UI, base::MessageLoop::current())
-      - BrowserMainLoop::PostMessageLoopStart =&gt; ?? +4 threads
-      - BrowserMainLoop::CreateStartupTasks (4 tasks) =&gt; RunAllTasksNow =&gt;
-        - PreCreateThreads =&gt; ?? +2 threads
-        - CreateThreads =&gt;
-          - base::TaskScheduler::CreateAndSetDefaultTaskScheduler =&gt; +5 threads
-          - =&gt; BrowserProcessSubThreads (db, file_user_blocking, file, process_launcher, cache, io) +6 threads
-        - BrowserThreadsStarted =&gt;
-          - InitializeMojo (isn&#039;t it a second time ?)
-          - indexed_db_thread_-&gt;Start() =&gt; +1 thread
+        - InitializaMainThread => new BrowserThreadImpl(BrowserThread::UI, base::MessageLoop::current())
+      - BrowserMainLoop::PostMessageLoopStart => ?? +4 threads
+      - BrowserMainLoop::CreateStartupTasks (4 tasks) => RunAllTasksNow =>
+        - PreCreateThreads => ?? +2 threads
+        - CreateThreads =>
+          - base::TaskScheduler::CreateAndSetDefaultTaskScheduler => +5 threads
+          - => BrowserProcessSubThreads (db, file_user_blocking, file, process_launcher, cache, io) +6 threads
+        - BrowserThreadsStarted =>
+          - InitializeMojo (isn't it a second time ?)
+          - indexed_db_thread_->Start() => +1 thread
           - BrowserGpuChannelHostFactory::Initialize
-          - ImageTransportFactory::Initialize =&gt; +1 thread
-          - CreateAudioManager =&gt; +2 threads
-        - PreMainMessageLoopRun =&gt;
-          - ShellBrowserMainParts::PreMainMessageLoopStart =&gt;
-            - InitializeBrowserContexts =&gt; BrowserContext::Initialize
-            - content::Shell::Initialize =&gt; content::Shell::PlatformInitialize (content/shell/browser/shell_views.cc) =&gt;
+          - ImageTransportFactory::Initialize => +1 thread
+          - CreateAudioManager => +2 threads
+        - PreMainMessageLoopRun =>
+          - ShellBrowserMainParts::PreMainMessageLoopStart =>
+            - InitializeBrowserContexts => BrowserContext::Initialize
+            - content::Shell::Initialize => content::Shell::PlatformInitialize (content/shell/browser/shell_views.cc) =>
               - new wm::WMState
-              - views::CreateDesktopScreen =&gt; new DesktopScreenX11 =&gt; PlatformEventSource::AddPlatformEventDispatcher(this)
-              - =&gt; +1 thread around here (maybe one-off thread for some small task) ??
-            - ShellDevToolsManagerDelegate::StartHttpHandler =&gt; DevToolsAgentHost::StartRemoteDebuggingServer =&gt; new DevToolsHttpHandler ...
-            - InitializeMessageLoopContext =&gt; Shell::CreateNewWindow =&gt;
+              - views::CreateDesktopScreen => new DesktopScreenX11 => PlatformEventSource::AddPlatformEventDispatcher(this)
+              - => +1 thread around here (maybe one-off thread for some small task) ??
+            - ShellDevToolsManagerDelegate::StartHttpHandler => DevToolsAgentHost::StartRemoteDebuggingServer => new DevToolsHttpHandler ...
+            - InitializeMessageLoopContext => Shell::CreateNewWindow =>
               - content::WebContents::CreateParams
-              - WebContents::Create =&gt; ... =&gt; WebContentsImpl::Init
+              - WebContents::Create => ... => WebContentsImpl::Init
                 - (create SiteInstance)
                 - (create RenderWidgetHost/RenderViewHost/RenderFrameHost)
                 - (new WebContentsViewAura and WebContentsViewAura::CreateView)
-              - Shell::CreateShell =&gt;
+              - Shell::CreateShell =>
                 - new Shell
-                - Shell::CreatePlatformWindow =&gt;
+                - Shell::CreatePlatformWindow =>
                   - window_widget_ = new views::Widget
-                  - Widget::Init =&gt;
-                    - DesktopTestViewsDelegate::onBeforeWidgetInit =&gt; new DesktopNativeWidgetAura =&gt; new aura::Window
+                  - Widget::Init =>
+                    - DesktopTestViewsDelegate::onBeforeWidgetInit => new DesktopNativeWidgetAura => new aura::Window
                     - CreateRootView
-                    - DesktopNativeWidgetAura::InitNativeWidget =&gt;
+                    - DesktopNativeWidgetAura::InitNativeWidget =>
                       - aura::Window::Init (for content_window)
                       - aura::Window::Window/Init/Show (for content_window_container)
-                      - content_window_container-&gt;AddChild(content_window)
-                      - DesktopWindowTreeHost::Create =&gt; new DesktopWindowTreeHostX11 =&gt; ...
-                      - DesktopWindowTreeHostX11::Init =&gt;
-                        - DesktopWindowTreeHostX11::InitX11Window =&gt;
+                      - content_window_container->AddChild(content_window)
+                      - DesktopWindowTreeHost::Create => new DesktopWindowTreeHostX11 => ...
+                      - DesktopWindowTreeHostX11::Init =>
+                        - DesktopWindowTreeHostX11::InitX11Window =>
                           - XCreateWindow
                           - PlatformEventSource::AddPlatformEventDispatcher(this)
-                        - aura::WindowTreeHost::InitHost =&gt; ...
-                - WindowTreeHost::Show =&gt;
-                  - DesktopWindowHostTreeX11::ShowImpl =&gt;
+                        - aura::WindowTreeHost::InitHost => ...
+                - WindowTreeHost::Show =>
+                  - DesktopWindowHostTreeX11::ShowImpl =>
                     - ShowWindowWithState (this actually create window on my PC)
                     - aura::Window::Show 
-                - Shell::PlatformSetContents =&gt;
-                  - ShellWindowDelegateView::SetWebContents =&gt;
+                - Shell::PlatformSetContents =>
+                  - ShellWindowDelegateView::SetWebContents =>
                     - new views::WebView
                     - views::WebView::SetWebContents
                     - views::View::Layout
-              - Shell::LoadURL (with GURL &quot;https://www.google.com/&quot;) =&gt; LoadURLForFrame =&gt;
-                - NavigationControllerImpl::LoadURLWithParams =&gt;
+              - Shell::LoadURL (with GURL "https://www.google.com/") => LoadURLForFrame =>
+                - NavigationControllerImpl::LoadURLWithParams =>
                   - CreateNavigationEntry
-                  - LoadEntry =&gt; NavigateToPendingEntry =&gt; NavigateToPendingEntryInterval =&gt; NavigatorImpl::NavigateToPendingEntry/NavigateToEntry =&gt; RenderFrameHostManager::Navigate/ReinitializeRenderFrame/InitRenderView =&gt; ... =&gt; RenderProcessHostImpl::Init (supposed to spawn renderer via zygote)
-                  - RenderFrameHostManager::InitRenderView =&gt; WebContentsImpl::CreateRenderViewForRenderManager =&gt; RenderViewHostImpl::CreateRenderView =&gt; content::mojom::RendererProxy::CreateView (is this from content/common/renderer.mojom ?)
-                - WebContentsImpl::Focus =&gt; ... =&gt; RenderWidgetHostViewAura::Focus =&gt; ... =&gt; wm::FocusController::FocusAndActivateWIndow =&gt; ... =&gt; RenderProcessHostImpl::Send(new ViewMsg_SetActive)
-    - BrowserMainRunner::Run =&gt;
-      - BrowserMainLoop::RunMainMessageLoopParts =&gt; MainMessageLoopRun =&gt; base::RunLoop::Run (see below for main loop flow)
-        - g_main_context_iteration =&gt; 
-          - when this line passed, my ubuntu&#039;s dock icon is highlighted, why ?? 
+                  - LoadEntry => NavigateToPendingEntry => NavigateToPendingEntryInterval => NavigatorImpl::NavigateToPendingEntry/NavigateToEntry => RenderFrameHostManager::Navigate/ReinitializeRenderFrame/InitRenderView => ... => RenderProcessHostImpl::Init (supposed to spawn renderer via zygote)
+                  - RenderFrameHostManager::InitRenderView => WebContentsImpl::CreateRenderViewForRenderManager => RenderViewHostImpl::CreateRenderView => content::mojom::RendererProxy::CreateView (is this from content/common/renderer.mojom ?)
+                - WebContentsImpl::Focus => ... => RenderWidgetHostViewAura::Focus => ... => wm::FocusController::FocusAndActivateWIndow => ... => RenderProcessHostImpl::Send(new ViewMsg_SetActive)
+    - BrowserMainRunner::Run =>
+      - BrowserMainLoop::RunMainMessageLoopParts => MainMessageLoopRun => base::RunLoop::Run (see below for main loop flow)
+        - g_main_context_iteration => 
+          - when this line passed, my ubuntu's dock icon is highlighted, why ?? 
           - when try to step in, segmentation fault happens !?
-        - MessageLoop::DoWork =&gt; DeferOrRunPendingTask =&gt; RunTask =&gt; debug::TaskAnnotator::RunTask =&gt; RunMixin::Run
+        - MessageLoop::DoWork => DeferOrRunPendingTask => RunTask => debug::TaskAnnotator::RunTask => RunMixin::Run
           - ContextCacheController::OnIdle is called ??
-        - ? (find when/how message loop&#039;s work initialized)
+        - ? (find when/how message loop's work initialized)
 
 - Zygote process
   - ? how does it fork-exec to RendererMain
 
 - Gpu process
-  - (couldn&#039;t track when GPU process is spawned)
+  - (couldn't track when GPU process is spawned)
 
 - Render process (a.k.a. Renderer)
   - RenderThreadImpl::Create(std::move(main_message_loop), ...)
   - (? RenderViewImpl (deprecating), RenderFrameImpl, RenderWidget)
 
 - Main loop implementation (see comment in message_pump.h. here, assume use_glib is on.)
-  - (Thread::Run) =&gt; base::RunLoop::Run =&gt; MessageLoop::RunHandler =&gt; MessagePumpGlib::Run =&gt;
+  - (Thread::Run) => base::RunLoop::Run => MessageLoop::RunHandler => MessagePumpGlib::Run =>
     - while: g_main_context_iteration, MessageLoop::DoWork/DoDelayedWork/DoIdleWork
 
 - multi process architecture

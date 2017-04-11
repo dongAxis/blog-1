@@ -19,20 +19,20 @@ module Chaining where
 --  realize collection processing interface by chaining
 --  like in ruby, scala, javascript (lodash/underscore)
 
-import Control.Arrow ((&gt;&gt;&gt;))
+import Control.Arrow ((>>>))
 import Control.Monad
 
 -- pure case
 ex0 :: IO ()
 ex0 = do
   let x = ($ [0..9]) $ (
-        map $ j -&gt;
+        map $ j ->
           j^2
-        ) &gt;&gt;&gt; (
-        filter $ v -&gt;
+        ) >>> (
+        filter $ v ->
           even v
-        ) &gt;&gt;&gt; (
-        flip foldl 0 $ acc v -&gt;
+        ) >>> (
+        flip foldl 0 $ acc v ->
           acc + v
         )
   print x
@@ -40,14 +40,14 @@ ex0 = do
 -- monad case
 ex1 :: IO ()
 ex1 = do
-  x &lt;- ($ [0..9]) $ (
-    mapM $ j -&gt; do
+  x <- ($ [0..9]) $ (
+    mapM $ j -> do
       return (j^2)
-    ) &gt;=&gt; (
-    filterM $ v -&gt; do
+    ) >=> (
+    filterM $ v -> do
       return (even v)
-    ) &gt;=&gt; (
-    flip foldM 0 $ acc v -&gt;
+    ) >=> (
+    flip foldM 0 $ acc v ->
       return (acc + v)
     )
   print x

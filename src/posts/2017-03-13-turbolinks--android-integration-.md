@@ -21,21 +21,21 @@
 ```
 # Initial load driven from Android Activity
 
-- (Java) TurbolinkSession.visit (assume the url given is the page with turbolink enabled) =&gt;
+- (Java) TurbolinkSession.visit (assume the url given is the page with turbolink enabled) =>
   - webView.loadUrl
 
-- (WebViewClient onPageFinished) =&gt;
-  - TurbolinksHelper.injectTurbolinksBridge =&gt; (run turbolinks_bridge.js) =&gt;
+- (WebViewClient onPageFinished) =>
+  - TurbolinksHelper.injectTurbolinksBridge => (run turbolinks_bridge.js) =>
     - (Js) Turbolinks.controller = new TLWebView
 
 
 # Second (or later) load driven within webview with a link
 
-- (user clicks link within WebView) =&gt;
-  - (Js) Turbolinks.controller.clickCaptured =&gt; clickBubbled =&gt; visit =&gt;
-    - TLWebView.visitProposedToLocationWithAction (as Turbolinks.controller.adapter) =&gt;
-      - (Java) TurbolinkSession.visitProposedToLocationWithAction (as js TurbolinksNative object) =&gt;
-        - TurbolinksHelper.runOnMainThread =&gt;
+- (user clicks link within WebView) =>
+  - (Js) Turbolinks.controller.clickCaptured => clickBubbled => visit =>
+    - TLWebView.visitProposedToLocationWithAction (as Turbolinks.controller.adapter) =>
+      - (Java) TurbolinkSession.visitProposedToLocationWithAction (as js TurbolinksNative object) =>
+        - TurbolinksHelper.runOnMainThread =>
           - (on Activity thread) TurbolinksAdapter.visitProposedToLocationWithAction
             - (your implementation, but usually) 
 

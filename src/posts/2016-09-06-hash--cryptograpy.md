@@ -49,9 +49,9 @@ Retype new UNIX password: a1b2c3d4
 passwd: password updated successfully
 $ sudo cat /etc/shadow | grep hiogawa
 hiogawa:$6$oifbdQNc$U5U3vsWNNRbkck6E25UXxBchmtuZPjnIVCq51NRnx/g/.qPOf/FFY/fqFva7wZDKGVyFzl.ZHUSJ76T7RBmdt/:17050:0:99999:7:::
-# 6 &lt;= SHA-512
-# oifbdQNc &lt;= salt (8 characters)
-# U5U3v... &lt;= encrypted hash (86 characters)
+# 6 <= SHA-512
+# oifbdQNc <= salt (8 characters)
+# U5U3v... <= encrypted hash (86 characters)
 $ openssl
 ```
 

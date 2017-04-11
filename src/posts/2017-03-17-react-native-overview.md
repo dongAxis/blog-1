@@ -18,8 +18,8 @@ public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost = new ReactNativeHost(this) {
     @Override
-    protected List&lt;ReactPackage&gt; getPackages() {
-      return Arrays.&lt;ReactPackage&gt;asList(
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
           new MainReactPackage()
       );
     }
@@ -28,116 +28,116 @@ public class MainApplication extends Application implements ReactApplication {
 }
 
 [Javascript]
-import React, { Component } from &#039;react&#039;;
-import { AppRegistry, Text } from &#039;react-native&#039;;
+import React, { Component } from 'react';
+import { AppRegistry, Text } from 'react-native';
 class HelloWorldApp extends Component {
   render() {
     return (
-      &lt;Text&gt;Hello world!&lt;/Text&gt;
+      <Text>Hello world!</Text>
     );
   }
 }
-AppRegistry.registerComponent(&#039;HelloWorldApp&#039;, () =&gt; HelloWorldApp);
+AppRegistry.registerComponent('HelloWorldApp', () => HelloWorldApp);
 
 
 # Main path
 
 [Android]
-- new MainApplication =&gt; new ReactNativeHost
+- new MainApplication => new ReactNativeHost
 
-- new MainActivity =&gt;
-  - createReactActivityDelegate =&gt; new ReactActivityDelegate
-  - onCreate =&gt; ReactActivityDelegate::onCreate =&gt; loadApp =&gt;
-    - createRootView =&gt; new ReactRootView =&gt; ... =&gt; new android.widget.FrameLayout
-    - ReactNativeHost.getReactInstanceManager =&gt; createReactInstanceManager =&gt;
+- new MainActivity =>
+  - createReactActivityDelegate => new ReactActivityDelegate
+  - onCreate => ReactActivityDelegate::onCreate => loadApp =>
+    - createRootView => new ReactRootView => ... => new android.widget.FrameLayout
+    - ReactNativeHost.getReactInstanceManager => createReactInstanceManager =>
       - ReactInstanceManagerBuilder.addPackage (e.g. MainReactPackage)
-      - ReactInstanceManagerBuilder.build =&gt; new ReactInstanceManager
-    - ReactRootView.startReactApplication =&gt;
-      - ReactInstanceManager.createReactContextInBackground =&gt; ... =&gt;
+      - ReactInstanceManagerBuilder.build => new ReactInstanceManager
+    - ReactRootView.startReactApplication =>
+      - ReactInstanceManager.createReactContextInBackground => ... =>
         - new JSCJavaScriptExecutor.Factory
-        - recreateReactContextInBackground =&gt;
+        - recreateReactContextInBackground =>
           - new ReactContextInitParams
           - new ReactContextInitAsyncTask (subclass of android.os.AsyncTask)
           - android.os.AsyncTask.executeOnExecutor (off thread)
     - Activity.setContentView
 
-- (off-thread) ReactContextInitAsyncTask.doInBackground =&gt;
-  - JavaScriptExecutor.Factory.create =&gt; new JSCJavaScriptExecutor
-  - ReactInstanceManager.createReactContext =&gt;
-    - new ReactApplicationContext =&gt; new ReactContext
+- (off-thread) ReactContextInitAsyncTask.doInBackground =>
+  - JavaScriptExecutor.Factory.create => new JSCJavaScriptExecutor
+  - ReactInstanceManager.createReactContext =>
+    - new ReactApplicationContext => new ReactContext
     - new NativeModuleRegistryBuilder
     - new JavaScriptModuleRegistry.Builder
-    - processPackage(CoreModulePackage) =&gt;
-      - NativeModuleRegistryBuilder.processPackage =&gt;
+    - processPackage(CoreModulePackage) =>
+      - NativeModuleRegistryBuilder.processPackage =>
         - addPackage for each CoreModulePackage.createNativeModules
       - JavaScriptModuleRegistry.Builder.add for each CoreModulePackage.createJSModules
-    - processPackage (e.g. MainReactPackage) =&gt; (same as above)
-    - NativeModuleRegistryBuilder.build =&gt; new NativeModuleRegistry (will passed to CatalystInstanceBuilder)
-    - JavaScriptModuleRegistry.Builder.build =&gt; new JavaScriptModuleRegistry (will passed to CatalystInstanceBuilder)
-    - CatalystInstanceBuilder.build =&gt; new CatalystInstanceImpl =&gt;
-      - ReactQueueConfigurationImpl.create =&gt; new ReactQueueConfigurationImpl =&gt;
-        - MessageQueueThreadImpl.create (for UI thread) =&gt; MessageQueueThreadImpl.create =&gt;
-          - createForMainThread =&gt;
-            - new MessageQueueThreadImpl =&gt; new MessageQueueThreadHandler =&gt; new android.os.Handler
-        - MessageQueueThreadImpl.create (for native module thread or js thread ?) =&gt; MessageQueueThreadImpl.create =&gt;
-          - startNewBackgroundThread =&gt;
+    - processPackage (e.g. MainReactPackage) => (same as above)
+    - NativeModuleRegistryBuilder.build => new NativeModuleRegistry (will passed to CatalystInstanceBuilder)
+    - JavaScriptModuleRegistry.Builder.build => new JavaScriptModuleRegistry (will passed to CatalystInstanceBuilder)
+    - CatalystInstanceBuilder.build => new CatalystInstanceImpl =>
+      - ReactQueueConfigurationImpl.create => new ReactQueueConfigurationImpl =>
+        - MessageQueueThreadImpl.create (for UI thread) => MessageQueueThreadImpl.create =>
+          - createForMainThread =>
+            - new MessageQueueThreadImpl => new MessageQueueThreadHandler => new android.os.Handler
+        - MessageQueueThreadImpl.create (for native module thread or js thread ?) => MessageQueueThreadImpl.create =>
+          - startNewBackgroundThread =>
             - new Thread
-            - Thread.start =&gt; (on jsQueue thread)
+            - Thread.start => (on jsQueue thread)
               - MessageQueueThreadRegistry.register
               - Looper.loop()
-            - new MessageQueueThreadImpl =&gt; ... =&gt; new android.os.Handler
-      - initializeBridge =&gt; (cpp) CatalystInstanceImpl::initializeBridge =&gt;
+            - new MessageQueueThreadImpl => ... => new android.os.Handler
+      - initializeBridge => (cpp) CatalystInstanceImpl::initializeBridge =>
         - push JavaModuleWrapper to CatalystInstanceImpl.modules as JavaNativeModule
         - new ModuleRegistry with the modules
-        - Instance::initializeBridge =&gt;
-          - JMessageQueueThread::runOnQueueSync =&gt;
-            - (on jsQueue thread) new NativeToJsBridge =&gt;
+        - Instance::initializeBridge =>
+          - JMessageQueueThread::runOnQueueSync =>
+            - (on jsQueue thread) new NativeToJsBridge =>
               - JsToNativeBridge
-              - JSCExecutorFactory::createJSExecutor =&gt; new JSCExecutor =&gt;
-                - initOnJSVMThread =&gt;
+              - JSCExecutorFactory::createJSExecutor => new JSCExecutor =>
+                - initOnJSVMThread =>
                   - JSC_JSGlobalContextCreateInGroup
                   - several installGlobalFunction
-                - installGlobalProxy(&quot;nativeModuleProxy&quot;, exceptionWrapMethod(&amp;JSCExecutor::getNativeModule)) =&gt;
-                  - Object::getGlobalObject(JSGlobalContextRef).setProperty(&quot;nativeModuleProxy&quot;, ...)
+                - installGlobalProxy("nativeModuleProxy", exceptionWrapMethod(&amp;JSCExecutor::getNativeModule)) =>
+                  - Object::getGlobalObject(JSGlobalContextRef).setProperty("nativeModuleProxy", ...)
               - NativeToJsBridge::registerExecutor
-    - CatalystInstanceImpl.runJSBundle =&gt;
-      - JSBundleLoader.loadScript (assume it&#039;s from JSBundleLoader.createAssetLoader) =&gt;
-        - CatalystInstanceImpl.loadScriptFromAssets =&gt; jniLoadScriptFromAssets =&gt;
-          - (cpp) CatalystInstanceImpl:: jniLoadScriptFromAssets =&gt; Instance::loadScriptFromString =&gt;
-            - JInstanceCallback::incrementPendingJSCall =&gt; ?
-            - NativeToJS::loadApplication =&gt;
-              - runOnExecutorQueue =&gt; runOnQueue (jsQueue thread ?) =&gt;
-                - (jsQueue thread ?) JSCExecutor::loadApplicationScript =&gt;
-                  - evaluateScript (from JSCHelpers) =&gt; JSC_JSEvaluateScript
+    - CatalystInstanceImpl.runJSBundle =>
+      - JSBundleLoader.loadScript (assume it's from JSBundleLoader.createAssetLoader) =>
+        - CatalystInstanceImpl.loadScriptFromAssets => jniLoadScriptFromAssets =>
+          - (cpp) CatalystInstanceImpl:: jniLoadScriptFromAssets => Instance::loadScriptFromString =>
+            - JInstanceCallback::incrementPendingJSCall => ?
+            - NativeToJS::loadApplication =>
+              - runOnExecutorQueue => runOnQueue (jsQueue thread ?) =>
+                - (jsQueue thread ?) JSCExecutor::loadApplicationScript =>
+                  - evaluateScript (from JSCHelpers) => JSC_JSEvaluateScript
                   - bindBridge (bind javascript object from Libraries/BatchedBridge to cpp world)
 
-- ReactRootView.onMeasure =&gt;
+- ReactRootView.onMeasure =>
   - queue attachToReactInstanceManager to run on ui thread
 
-- ReactContextInitAsyncTask.onPostExecute =&gt;
-  - setupReactContext =&gt;
-    - CatalystInstanceImpl.initialize =&gt; NativeModuleRegistry.notifyCatalystInstanceInitialized =&gt;
-      - ModuleHolder.initialize =&gt; ... =&gt; NativeModule.initialize
-    - attachMeasuredRootViewToInstance =&gt;
+- ReactContextInitAsyncTask.onPostExecute =>
+  - setupReactContext =>
+    - CatalystInstanceImpl.initialize => NativeModuleRegistry.notifyCatalystInstanceInitialized =>
+      - ModuleHolder.initialize => ... => NativeModule.initialize
+    - attachMeasuredRootViewToInstance =>
       - CatalystInstanceImpl.getNativeModule(UIManagerModule.class)
-      - UIManagerModule.addMeasuredRootView =&gt;
-        - UIImplementation.registerRootView =&gt;
+      - UIManagerModule.addMeasuredRootView =>
+        - UIImplementation.registerRootView =>
           - createRootShadowNode
           - ShadowNodeRegistry.addRootNode
           - UIViewOperationQueue.addRootView
-      - CatalystInstanceImpl.getJavaScriptModule(AppRegistry.class) =&gt;
-        - JavaScriptModuleRegistry.getJavaScriptModule =&gt;
+      - CatalystInstanceImpl.getJavaScriptModule(AppRegistry.class) =>
+        - JavaScriptModuleRegistry.getJavaScriptModule =>
           - Proxy.newProxyInstance(new JavaScriptModuleInvocationHandler)
             - (this patches JavaScriptModule to call CatalystInstanceImpl.callFunction for normal java method call)
-      - AppRegistry.runApplication =&gt;
-        - CatalystInstanceImpl.callFunction =&gt; jniCallJSFunction =&gt;
-          - (cpp) CatalystInstanceImpl::jniCallJSFunction =&gt; Instance::callJSFunction =&gt;
-            -  JInstanceCallback::incrementPendingJSCall =&gt; ?
-            - NativeToJsBridge::callFunction =&gt; runOnExecutorQueue =&gt; runOnQueue =&gt;
-              - (jsQueue thread) JSCExecutor::callFunction =&gt; JSCExecutor::callFunction =&gt; callNativeModules =&gt;
+      - AppRegistry.runApplication =>
+        - CatalystInstanceImpl.callFunction => jniCallJSFunction =>
+          - (cpp) CatalystInstanceImpl::jniCallJSFunction => Instance::callJSFunction =>
+            -  JInstanceCallback::incrementPendingJSCall => ?
+            - NativeToJsBridge::callFunction => runOnExecutorQueue => runOnQueue =>
+              - (jsQueue thread) JSCExecutor::callFunction => JSCExecutor::callFunction => callNativeModules =>
                 - Object::callAsFunction (object is m_callFunctionReturnFlushedQueueJS ??)
-                - JsToNativeBridge::callNativeModules (as ExecutorDelegate) =&gt; runOnQueue
-                  - (nativeQueue thread) callNativeMethod =&gt; NativeModule.invoke
+                - JsToNativeBridge::callNativeModules (as ExecutorDelegate) => runOnQueue
+                  - (nativeQueue thread) callNativeMethod => NativeModule.invoke
 
 (from javascript UIManager call)
 - ?
@@ -145,22 +145,22 @@ AppRegistry.registerComponent(&#039;HelloWorldApp&#039;, () =&gt; HelloWorldApp)
 [JavaScript]
 
 (From android main path)
-- AppRegistry.registerComponent =&gt; prepare (anonymous).run
+- AppRegistry.registerComponent => prepare (anonymous).run
 
-- AppRegistry.runApplication =&gt;
-  - (anonymous).run =&gt; renderApplication =&gt;
-    - ReactNative.render =&gt; ReactNativeStack.render =&gt; ReactNativeMount.renderComponent =&gt; ... =&gt;
-      - ReactReconciler.mountComponent =&gt; (rest is shared layer)
-      - _mountImageIntoNode =&gt; UIManager.setChildren =&gt; ?
+- AppRegistry.runApplication =>
+  - (anonymous).run => renderApplication =>
+    - ReactNative.render => ReactNativeStack.render => ReactNativeMount.renderComponent => ... =>
+      - ReactReconciler.mountComponent => (rest is shared layer)
+      - _mountImageIntoNode => UIManager.setChildren => ?
 
 (Host component mounting)
-- ReactNativeBaseComponent#mountComponent =&gt;
-  - UIManager.createView =&gt; ?
-  - UIManager.setChildren =&gt; ?
+- ReactNativeBaseComponent#mountComponent =>
+  - UIManager.createView => ?
+  - UIManager.setChildren => ?
 
 Q. NativeModule lifecycle (BaseJavaModule)
 - (initialization) CoreModulesPackage ?
-- (method call from javascript) UIManager.createView =&gt; ?
+- (method call from javascript) UIManager.createView => ?
 
 Q. Java native module vs Cxx native module (examples)
 - (java) NativeModuleRegistry
@@ -168,30 +168,30 @@ Q. Java native module vs Cxx native module (examples)
 - CxxModuleWrapper, JavaModuleWrapper is passed around via initializeBridge
 
 Q. how is UIManger exposed to javascript execution context ?
-- (javascript) UIManager =&gt; NativeModules.UIManager =&gt; global.nativeModuleProxy.UIManager =&gt;
-  - (cpp) JSCExecutor::getNativeModule =&gt; JSCNativeModules::getModule =&gt; createModule =&gt;
-    - Object::getGlobalObject(context).getProperty(&quot;__fbGenNativeModule&quot;) (which is defined as genModule in Libraries/BatchedBridge/NativeModule)
-    - ModuleRegistry::getConfig =&gt;
+- (javascript) UIManager => NativeModules.UIManager => global.nativeModuleProxy.UIManager =>
+  - (cpp) JSCExecutor::getNativeModule => JSCNativeModules::getModule => createModule =>
+    - Object::getGlobalObject(context).getProperty("__fbGenNativeModule") (which is defined as genModule in Libraries/BatchedBridge/NativeModule)
+    - ModuleRegistry::getConfig =>
       - JavaNativeModule.getMethods (as NativeModule)
         - (this is passed from (java) JavaModuleWrapper and NativeModuleRegistry to (cpp) JavaNativeModule and ModuleRegistry)
-        - JavaModuleWrapper.getMethodDescriptors =&gt;
-          - (java) JavaModuleWrapper.getMethodDescriptors =&gt;
-            - BaseJavaModule.getMethods =&gt; findMethods =&gt;
+        - JavaModuleWrapper.getMethodDescriptors =>
+          - (java) JavaModuleWrapper.getMethodDescriptors =>
+            - BaseJavaModule.getMethods => findMethods =>
               - (reflecting java.lang.reflect.Method)
               - new JavaMethod (by default mType = METHOD_TYPE_ASYNC)
-    - Object::callAsFunction =&gt;
-      - (javascript) genModule =&gt;
-        - genMethod (with one of &#039;async&#039;, &#039;promise&#039;, &#039;sync&#039;) =&gt;
+    - Object::callAsFunction =>
+      - (javascript) genModule =>
+        - genMethod (with one of 'async', 'promise', 'sync') =>
           - define method as BatchedBridge.enqueueNativeCall (for async)
         - return { name: ..., module: UIManager } to (cpp)
   - return module part of it to (javascript)
 - (javascript) UIManager returned
 
-- (javascript) UIManager.createView =&gt;
-  - BatchedBridge.enqueueNativeCall =&gt; global.queueImmediate (it&#039;s installed on ?)
-    - (cpp) JSCExecutor::nativeimmediate something =&gt; 
-      - JSCExecutor::callNativeModules =&gt; JsToNative::callNativeModules =&gt;
-        - (on Native queue) m_registry-&gt;callNativeMethod
+- (javascript) UIManager.createView =>
+  - BatchedBridge.enqueueNativeCall => global.queueImmediate (it's installed on ?)
+    - (cpp) JSCExecutor::nativeimmediate something => 
+      - JSCExecutor::callNativeModules => JsToNative::callNativeModules =>
+        - (on Native queue) m_registry->callNativeMethod
 
 Q. how is ProxyExecutor used?
 - relevance to JSCExecutor

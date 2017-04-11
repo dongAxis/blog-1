@@ -46,7 +46,7 @@ _Migration_
 For now, I manage migration by hand with ".sql" files. Since I was using docker for preparing db, the command was like below:
 
 ```
-$ psql -U postgres -w -h $(docker-machine ip default) -p 5432 postgres &lt; db/migrations/20160501_create_todo_table.sql
+$ psql -U postgres -w -h $(docker-machine ip default) -p 5432 postgres < db/migrations/20160501_create_todo_table.sql
 ```
 
 # Development

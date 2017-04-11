@@ -26,7 +26,7 @@ Just 2 steps:
 2. Run [_ffmpeg_](https://ffmpeg.org/) command like below:
 
 ```
-$ ffmpeg -i out.ogv -filter:v &quot;setpts=0.7*PTS&quot; -pix_fmt rgb24 test.gif
+$ ffmpeg -i out.ogv -filter:v "setpts=0.7*PTS" -pix_fmt rgb24 test.gif
 ```
 
 Here is an example:

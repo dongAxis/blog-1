@@ -29,25 +29,25 @@ Simply put, it was a memory shortage and that came from Apache2 and MySQL. These
 For the file `/etc/apache2/mods-available/mpm_prefork.conf`, I changed from this:
 
 ```
-&lt;IfModule mpm_prefork_module&gt;
+<IfModule mpm_prefork_module>
 	StartServers			 5
 	MinSpareServers		  5
 	MaxSpareServers		 10
 	MaxRequestWorkers	  150
 	MaxConnectionsPerChild   0
-&lt;/IfModule&gt;
+</IfModule>
 ```
 
 to this:
 
 ```
-&lt;IfModule mpm_prefork_module&gt;
+<IfModule mpm_prefork_module>
 	StartServers		1
 	MinSpareServers		1
 	MaxSpareServers		5
 	MaxRequestWorkers	20
 	MaxConnectionsPerChild   0
-&lt;/IfModule&gt;
+</IfModule>
 ```
 
 ### MySQL
@@ -101,7 +101,7 @@ $ ps -e -T | grep mysqld | wc
 
 __After__
 
-&lt;a href=&quot;http://wp.hiogawa.net/wp-content/uploads/2016/04/2016-04-28_0016.png&quot;&gt;&lt;img src=&quot;http://wp.hiogawa.net/wp-content/uploads/2016/04/2016-04-28_0016-1024x920.png&quot; alt=&quot;2016-04-28_0016&quot; width=&quot;580&quot; height=&quot;521&quot; class=&quot;alignnone size-large wp-image-219&quot; /&gt;&lt;/a&gt;
+<a href="http://wp.hiogawa.net/wp-content/uploads/2016/04/2016-04-28_0016.png"><img src="http://wp.hiogawa.net/wp-content/uploads/2016/04/2016-04-28_0016-1024x920.png" alt="2016-04-28_0016" width="580" height="521" class="alignnone size-large wp-image-219" /></a>
 
 
 ```

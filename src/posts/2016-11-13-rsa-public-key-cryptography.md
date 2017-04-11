@@ -20,13 +20,13 @@ Here is how I played with `openssl` to generate and extract RSA keys, and check 
 # ersm(x, e, n) == x ** e % n
 def ersm(x, e, n):
     k = 0
-    while (e &gt;&gt; k) &gt; 0:
+    while (e >> k) > 0:
         k += 1
 
     result = 1
     for i in range(k, -1, -1):
         result = result ** 2 % n
-        if (e &gt;&gt; i) &amp; 1:
+        if (e >> i) &amp; 1:
             result = result * x % n
 
     return result
@@ -84,24 +84,24 @@ $ openssl asn1parse -in test.pem -inform PEM -strparse 22 -out test.pem.prkey.de
 $ python
 Python 2.7.12 (default, Jul  1 2016, 15:12:24)
 [GCC 5.4.0 20160609] on linux2
-Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for more information.
-&gt;&gt;&gt; f = file(&#039;test.pem.prkey.der&#039;)
-&gt;&gt;&gt; f.seek(276 + 2); p = eval(&#039;0x&#039; + binascii.b2a_hex(f.read(65)))
-&gt;&gt;&gt; f.seek(343 + 2); q = eval(&#039;0x&#039; + binascii.b2a_hex(f.read(65)))
-&gt;&gt;&gt; f.seek(7 + 3); n = eval(&#039;0x&#039; + binascii.b2a_hex(f.read(129)))
-&gt;&gt;&gt; f.seek(139 + 2); e = eval(&#039;0x&#039; + binascii.b2a_hex(f.read(3)))
-&gt;&gt;&gt; f.seek(144 + 3); d = eval(&#039;0x&#039; + binascii.b2a_hex(f.read(129)))
-&gt;&gt;&gt; n == p * q
+Type "help", "copyright", "credits" or "license" for more information.
+>>> f = file('test.pem.prkey.der')
+>>> f.seek(276 + 2); p = eval('0x' + binascii.b2a_hex(f.read(65)))
+>>> f.seek(343 + 2); q = eval('0x' + binascii.b2a_hex(f.read(65)))
+>>> f.seek(7 + 3); n = eval('0x' + binascii.b2a_hex(f.read(129)))
+>>> f.seek(139 + 2); e = eval('0x' + binascii.b2a_hex(f.read(3)))
+>>> f.seek(144 + 3); d = eval('0x' + binascii.b2a_hex(f.read(129)))
+>>> n == p * q
 True
-&gt;&gt;&gt; phi = (p - 1) * (q - 1) # Euler&#039;s totient function of n
-&gt;&gt;&gt; d * e % phi
+>>> phi = (p - 1) * (q - 1) # Euler's totient function of n
+>>> d * e % phi
 1L
-&gt;&gt;&gt; from random import random
-&gt;&gt;&gt; M = int(random() * n) # original message
-&gt;&gt;&gt; M
+>>> from random import random
+>>> M = int(random() * n) # original message
+>>> M
 76679876356419771287420599065181484956260965882856303750797271657295999331511915867674621229787330493719321478372508912037728967557975626730683431649452072816658293128489331243403038368333572933806638426863374970353742652528160409867522702574878131532689165825512284233735910735537834426649073463685854265344L
-&gt;&gt;&gt; C = script.ersm(M, e, n) # encrypted message
-&gt;&gt;&gt; M == script.ersm(C, d, n) # decrypted message coincides with original message
+>>> C = script.ersm(M, e, n) # encrypted message
+>>> M == script.ersm(C, d, n) # decrypted message coincides with original message
 True
 ```
 
