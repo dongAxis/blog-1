@@ -40,6 +40,14 @@ SYSCALL_DEFINE3(open, ...) => do_sys_open => ?
 [ Data structure ]
 ```
 
+# FUSE (Filesystem in USEr space)
+
+```
+(fs/fuse/inode.c)
+- module_init(fuse_init) =>
+  - fuse_fs_init => register_filesystem(&fuse_fs_type)
+```
+
 # Block device subsystem
 
 Later...
@@ -57,7 +65,7 @@ Later...
   - inode.c, dcache.c
   - filesystem.c (register_filesystem)
   - mount.h (struct mnt_namespace, mountpoint, mount)
-  - ext4/
+  - fuse/
 
 - block/
   - KConfig, Makefile
