@@ -67,6 +67,8 @@ fib(10) = 55
   - overriding operator
   - type inference
   - lambda impl
+  - constructor chain ?
+  - `&` or `*`
 - know runtime memory layout
   - class/namespaced functions
   - class instance
