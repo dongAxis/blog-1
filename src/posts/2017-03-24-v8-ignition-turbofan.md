@@ -1,12 +1,15 @@
 <!--
 {
-  "title": "V8: Compiling Javascript",
+  "title": "V8: Ignition Turbofan",
   "date": "2017-03-25T01:54:33+09:00",
   "category": "",
-  "tags": ["javascript", "source"],
-  "draft": true
+  "tags": ["v8", "javascript", "source"],
+  "draft": false
 }
 -->
+
+It seems there's a long history the way V8 runs Javascript, but happily
+the code base I see now only needs Ignition (interpreter/) and Turbofan (compiler/).
 
 # Summery
 
@@ -682,96 +685,6 @@ which calls into C++ implemented `Runtime_CompileLazy` with tail call.
 - Builtins::Generate_InterpreterEntryTrampoline (x64/builtins-x64.cc) => ??
 ```
 
-# GC
-
-```
-[ Initialization ]
-- Isolate::Init =>
-  - Heap::Setup =>
-    - ConfigureHeapDefault
-    - InitializeGCOnce =>
-    - new MemoryAllocator, StoreBuffer, IncrementalMarking, ConcurrentMarking
-    - new NewSpace, OldSpace (for object) , OldSpace (for executable code), MapSpace + SetUp
-    - new Scavenger, MarkCompactCollector
-
-- InitializeGCOnce =>
-  - Scavenger::Initialize =>
-  - StaticScavengeVisitor::Initialize =>
-  - MarkCompactCollector::Initialize =>
-
-
-[ Allocation via GC system]
-(externally)
-- v8::Object::New =>
-  - Factory::NewJSObject =>
-    - CALL_HEAP_FUNCTION =>
-      - Heap::AllocateJSObject (return allocation (Object*)) =>
-        - AllocateJSObjectFromMap =>
-          - SelectSpace => ?
-          - Allocate =>
-            - AllocateRaw =>
-              - (assume SelectSpace got NEW_SPACE)
-              - NewSpace::AllocateRaw => AllocateRawUnaligned =>
-                - HeapObject::FromAddress(AllocationInfo::top)
-                - AllocationInfo::set_top (extends heap by size_in_bytes)
-            - HeapObject::set_map_no_write_barrier => ?
-          - InitializeJSObjectFromMap => ?
-      - (if allocation failed, Heap::CollectGarbage and retry)
-      - RETURN_OBJECT_UNLESS_RETRY =>
-        - Handle<JSObject>(JSObject::cast(...)) =>
-          - location_ = HandleScope::GetHandle (returns Object**) =>
-            - Isolate::handle_scope_data::canonical_scope
-            - (CanonicalHandleScope::lookup or CreateHandle)
-            - CanonicalHandleScope::lookup => ?
-            - CreateHandle => ?
-
-(internally, like from builtin or runtime ?)
-
-Q. what's the scenerio of having a nested HandleScope ?
-Q. what are these HandleScope variants ? (e.g. CanonicalHandleScope, DeferredHandleScope, SealHandleScope)
-
-[ Data structure ]
-Isolate
-'-' HandleScopeData
-  '-' CanonicalHandleScope
-'-' HandleScopeImplementer
-
-Handle (extends HandleBase)
-'-' _location (keep pointer to heap object)
-
-
-Q. object memory layout in heap
-
-Object, HeapObject, Map, JSObject
-
-
-
-                     top -----
-
-top + kHeapObjectTag (1) ----- HeapObject::FromAddress(top)
-
-
-     top + size_in_bytes -----
-
-
-
-
-[ Copying ]
-- Heap::Scavenge
-
-[ Generational ]
-- Heap::EvacuateYoungGeneration
-
-[ Marking ]
-- IncrementalMarking::Start
-- ConcurrentMarking::Task (not used yet?)
-
-[ Mank, Sweep, and Compact ]
-- MarkCompactCollector::CollectGarbage =>
-  - MarkLiveObjects
-  - StartSweepSpaces
-- MarkCompactCollector::StartCompaction
-```
 
 # Some Examples
 
