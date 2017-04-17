@@ -774,7 +774,6 @@ Frame size 40
   - v8::platform::PumpMessageLoop ?
 - (internal) Threads use
 - GC
-- is FullCodegenCompilationJob worth looking ?
 - Some Javascript feature I don't know
   - label jump: http://www.ecma-international.org/ecma-262/7.0/index.html#sec-labelled-statements
   - execution context: http://www.ecma-international.org/ecma-262/7.0/index.html#sec-executable-code-and-execution-contexts
