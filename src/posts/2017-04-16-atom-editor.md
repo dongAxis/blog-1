@@ -57,7 +57,11 @@ Note:
   - CompileCache.install => (patch `require.extensions` to be able to load .coffee file)
   - require("../src/initialize-application-window.coffee") =>
     - new AtomEnvironment =>
+      - new Config, CommandRegistry, GrammarRegistry, StyleManager, PackageManager, Project
       - new Workspace =>
+        - createCenter => new WorkspaceCenter
+        - createDock => new Dock
+        - new PanelContainer
   - (initialize-application-window.coffee's exports function) =>
     - AtomEnvironment.prototype.initialize =>
       - Config.prototype.load
@@ -72,7 +76,14 @@ Note:
         - loadUserKeymap
         - requireUserInitScript
         - openInitialEmptyEditorIfNecessary
-      - ??        
+```
+
+
+# Editor
+
+```
+(user clicks file from tree-view in dock)
+
 ```
 
 
