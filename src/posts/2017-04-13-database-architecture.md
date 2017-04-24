@@ -17,6 +17,11 @@ is actually undefined. Let's go for understanding what's happening under the hoo
 
 # Architecture
 
+- server (tcp)
+- client library (tcp)
+- application level client
+  - connection pooling
+
 # Reference
 
 - https://mariadb.org/get-involved/getting-started-for-developers/
