@@ -28,6 +28,7 @@ How htop gets them (read `man 5 proc`):
 - /proc/loadavg
 - /proc/[pid]/stat
 - /proc/[pid]/statm
+- /proc/[pid]/io
 - /proc/[pid]/environ
 - /proc/[pid]/task/[tid]
 
@@ -66,20 +67,10 @@ Roughly follow from main:
 
 # TODO
 
-- proc filesystem
-  - /proc/[pid]/
-    - fd, fdinfo
-    - io
-    - stat, statm, status
-    - task/[tid]/
-  - /proc/meminfo
-  - /proc/net/
-    - ...
-  - /proc/stat
+- /proc/[pid]/fd/
+- /proc/[pid]/fdinfo/
+- /proc/net/
 
-- Kernel (subsystem)
-  - fs/proc/*
-  - ?
 
 # CPU
 
@@ -147,4 +138,6 @@ Roughly follow from main:
   - [block/stat.txt](https://www.kernel.org/doc/Documentation/block/stat.txt)
   - [iostats.txt](https://www.kernel.org/doc/Documentation/iostats.txt)
 - [man 5 proc](http://man7.org/linux/man-pages/man5/proc.5.html)
+- [man 2 stat](http://man7.org/linux/man-pages/man2/stat.2.html)
+- [lsof/00QUICKSTART](https://anonscm.debian.org/cgit/collab-maint/lsof.git/tree/00QUICKSTART)
 - http://www.binarytides.com/linux-commands-monitor-network/
