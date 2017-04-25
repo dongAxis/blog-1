@@ -335,7 +335,8 @@ which is generated from a kind of packed line data:
             - displayLayer.emitDidChangeSyncEvent => ... will reach textEditorComponent.updateSync as ABOVE
       - emitter.emit 'did-insert-text' (this is for public use)
 
-- Q. does workspace (or body) stopPropagation on capture phase in any case ?
+- Does workspace (or body) stopPropagation on capture phase in any case ?
+  - I don't think so. atom-keymap is used for bubble phase on document. (SEE BELOW)
 
 
 (TextEditorElement DOM overview)
@@ -492,7 +493,7 @@ ATOM-DOCK.left
 (Command registration)
 - atom.commands.add => commandRegistry.addSelectorBasedListener =>
   - commandRegistered =>
-    - window.addEventListener(commandName, this.handleCommandEvent,true)
+    - window.addEventListener(commandName, this.handleCommandEvent, true)
 
 (Example: user presses 'ctrl-t' (fuzzy-finder:toggle-file-finder)) =>
 - windowEventHandler.handleDocumentKeyEvent =>
@@ -503,8 +504,12 @@ ATOM-DOCK.left
       - target.dispatchEvent(event) (this will be "captured" by commandRegistry.handleCommandEvent)
     - (check if commandEvent.abortKeyBinding is called. if it's called, continue next matched command)
 
-- commandRegistry.handleCommandEvent =>
-  - ?
+- commandRegistry.handleCommandEvent(event) =>
+  - new CustomEvent (but delegate method call to the given event too. e.g. stopPropagation, abortKeyBinding)
+  - (loop starting from event.target to parentNode until reaching window or propagation stopped)
+    - filtering and sorting registered listener command (inlineListenersByCommandName and selectorBasedListenersByCommandName)
+      based on current target
+    - call each matched listener's callback (unless immediatePropagationStopped)
 ```
 
 
