@@ -161,8 +161,11 @@
 
 - inet_create (for given "struct socket") =>
   - (look for matching protocol from inetsw, e.g. tcp_proto)
-  - sk_alloc (will get "struct sock") => sk_prot_alloc
-  - inet_sk (cast from "struct sock" to "struct inet_sock")
+  - assign sock->ops (e.g inet_stream_ops)
+  - sk_alloc (will get "struct sock") =>
+    - sk_prot_alloc
+    - assign sk->sk_proto (e.g. tcp_proto)
+  - inet_sk (cast from "struct sock" to "struct inet_sock")
   - sock_init_data =>
     - sk_set_socket
   - sk->sk_prot->init (e.g. tcp_v4_init_sock) (SEE BELOW)
@@ -174,11 +177,41 @@
 
 
 [ bind ]
+SYSCALL
+- sockfd_lookup_light
+- sock->ops->bind (e.g. inet_strram_ops.bind i.e. inet_bind)
+
+inet_bind =>
+- (there's no tcp_proto->bind, so continue)
+- sk->sk_proto->get_port (e.g. tcp_proto i.e. inet_csk_get_port)
+- sk_dst_reset
+
+inet_csk_get_port =>
+- ...?
 
 [ listen ]
+SYSCALL
+- sock->ops->listen
+
+inet_listen =>
+- inet_csk_listen_start =>
+  - reqsk_queue_alloc ?
+  - hash ?
 
 [ accept ]
+SYSCALL
+- newsock = sock_alloc amd copy type and ops
+- 
 
+inet_accept =
+inet_csk_accept =>
+- (check if icsk already has established connection)
+- if not inet_csk_wait_for_connect =>
+  - ?
+- newsk = rq.sk
+
+Q. how does it sleep and who wakes up? (some wait queue?)
+  - driver side of tcp (ip) subsytem is supposed to wake up process?
 
 [ connect ]
 [ recv ]
