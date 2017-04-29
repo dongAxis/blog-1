@@ -3,58 +3,15 @@
   "title": "File system",
   "date": "2017-04-10T21:09:50+09:00",
   "category": "",
-  "tags": ["linux"],
+  "tags": ["linux", "filesystem"],
   "draft": true
 }
 -->
 
-# TODO, Summery
 
-- follow system calls (mount, open, read, write)
-- file system module
-- block device driver
-- user space implementation (FUSE)
-- can it work without `CONFIG_BLOCK` ?
+# Virtual file system
 
-
-# File system
-
-```
-[ Register file system ]
-register_filesystem
-
-[ syscall mount ]
-- SYSCALL_DEFINE5(mount, ...) => do_mount => do_new_mount =>
-  - vfs_kern_mount (returns struct vfsmount) =>
-    - mount_fs (returns struct dentry *) =>
-      - file_system_type.mount =>
-  - do_add_mount => ?
-
-[ syscall open ]
-SYSCALL_DEFINE3(open, ...) => do_sys_open => ?
-
-[ syscall read ]
-
-[ syscall getdents ]
-
-[ Data structure ]
-```
-
-# FUSE (Filesystem in USEr space)
-
-```
-(fs/fuse/inode.c)
-- module_init(fuse_init) =>
-  - fuse_fs_init => register_filesystem(&fuse_fs_type)
-```
-
-# Block device subsystem
-
-Later...
-
-# Reference
-
-- Linux source
+Linux source:
 
 ```
 - fs/
@@ -75,3 +32,60 @@ Later...
   - dcache.h (struct dentry, dentry_operations)
   - mount.h (struct vfsmount)
 ```
+
+
+Following some parts:
+
+```
+[ file system registration ]
+register_filesystem
+
+[ mount ]
+- SYSCALL_DEFINE5(mount, ...) => do_mount => do_new_mount =>
+  - vfs_kern_mount (returns struct vfsmount) =>
+    - mount_fs (returns struct dentry *) =>
+      - file_system_type.mount =>
+  - do_add_mount => ?
+
+[ open ]
+SYSCALL_DEFINE3(open, ...) => do_sys_open => ?
+
+[ read ]
+
+[ write ]
+
+[ getdents ]
+```
+
+
+# Block Subsystem
+
+- partition table
+  - mbr, gpt
+  - fdisk ?
+  - logical volume
+- bio
+- block device driver
+
+
+# Btrfs
+
+- on disk format
+- follow read/write
+
+
+# FUSE (Filesystem in USEr space)
+
+```
+(fs/fuse/inode.c)
+- module_init(fuse_init) =>
+  - fuse_fs_init => register_filesystem(&fuse_fs_type)
+```
+
+
+# Reference
+
+- LDD3
+  - block things ...
+- https://btrfs.wiki.kernel.org/index.php/Main_Page
+- http://www.rodsbooks.com/gdisk/index.html
