@@ -30,64 +30,30 @@
 
 # Linux source
 
+Random selection of a source file and some definition I think is important.
+
 ```
-- include/linux/
-  - netdevice.h
-    - struct net_device
-    - struct net_device_ops
-    - struct packet_type
-    - struct header_ops
-  - net_namespace.h
-    - struct net
-  - skbuff.h
-    - struct sk_buff
-  - net.h
-    - struct socket
-    - struct proto_ops
-  - etherdevice.h
-    - alloc_etherdev
-
-- include/net/
-  - sock.h
-    - struct sock
-    - struct proto (socket layer to transport layer interface)
-  - tcp.h
-    - struct tcp_sock
-
-- include/uapi/linux/
-  - if_ether.h
-    - ETH_P_LOOP, ETH_P_IP, ETH_P_ARP
-    - struct ethhdr
-
-
 - net/
   - socket.c
+    - SYSCALLs socket, bind, ...
     - sock_register
 
 - net/core/
-  - dev.c
-    - dev_add_pack
-  - sock.c
-    - proto_register
+  - dev.c (dev_add_pack)
+  - sock.c (proto_register)
 
 - net/ethernet/
-  - eth.c
-    - ether_setup
-    - eth_header_ops
+  - eth.c (ether_setup)
 
 - net/ivp4/
-  - af_inet.c
-    - inet_init
-  - tcp.c
-    - tcp_init
-    - tcp_init_sock
-    - tcp_recvmsg, tcp_sendmsg
-  - tcp_ipv4.c
-    - tcp_v4_init
-    - tcp_sk_ops
-    - tcp_prot
-  - tcp_input.c
-  - tcp_output.c  
+  - af_inet.c (struct proto_ops inet_stream_ops)
+  - route.c (ip_route_input_slow)
+  - ip_input.c (ip_rcv)
+  - inet_connection_sock.c (inet_csk_xxx e.g inet_csk_accept)
+  - tcp_ipv4.c (struct proto tcp_prot)
+  - tcp.c (?)
+  - tcp_input.c (?)
+  - tcp_output.c (?)
 ```
 
 
@@ -115,6 +81,9 @@
     - tcp_v4_init =>
       - register_pernet_subsys(&tcp_sk_ops)
   - dev_add_pack(&ip_packet_type) (type is ETH_P_IP)
+
+(literally global variables?)
+struct inet_hashinfo tcp_hashinfo
 
 [ Socket ]
 - core_initcall(sock_init) =>
@@ -186,7 +155,8 @@
     - sk->sk_prot->get_port (again ?)
     - sk->sk_prot->hash (e.g. inet_hash) =>
 
-- inet_hash =>
+- inet_hash => __inet_hash =>
+  - struct inet_hashinfo *hashinfo = sk->sk_prot->h.hashinfo (e.g. tcp_hashinfo)
   - hlist_add_head_rcu(&sk->sk_node, &ilb->head)
   - sock_prot_inuse_add
 
@@ -215,7 +185,7 @@
       - if reqsk_queue_empty loop this block as long as timeout allows
   - reqsk_queue_remove and get newsk = req->sk
 
-Q.
+Q?
 - find who's gonna modify icsk->icsk_accept_queue.
 - does anyone actively wakeup sleeping process ?
 - someone generate request_sock.
@@ -241,9 +211,9 @@ Q.
     - tcp_ecn_send_syn
     - tcp_send_syn_data or tcp_transmit_skb
 
-Q.
-- who modifies sock.sk_state ?
-- what's available transition sock.sk_state ?
+- Q? who modifies sock.sk_state ?
+- Q? how do we see ECONNREFUSED 111 ?
+- Q?0 who sets up TCP_ESTABLISHED ?
 
 
 [ recv ]
@@ -251,7 +221,7 @@ Q.
 ```
 
 
-# Packet life cycle
+# IP/TCP Packet life cycle
 
 ```
 [ ingress ]
@@ -266,16 +236,50 @@ Q.
   - (validate checksum...)
   - NF_HOOK(NFPROTO_IPV4, NF_INET_PRE_ROUTING, ..., ip_rcv_finish) => ip_rcv_finish =>
     - struct net_protocol *ipprot = rcu_dereference(inet_protos[iph->protocol])
-    - ipprot->early_demux (possibly tcp_v4_early_demux) =>
-      - struct sock *sk = __inet_lookup_established
-      - skb_dst_set_noref(skb, sk->sk_rx_dst)
-      - (Q. somewhere before inet_sk_rx_dst_set ?)
-    - dst_input => skb_dst(skb)->input(skb) (dst_entry.input) =>
+    - ipprot->early_demux (possibly tcp_v4_early_demux) (how could this path not even consider ip routing ?)=>
+      - cast to iphdr and tcphdr
+      - struct sock *sk = __inet_lookup_established =>
+        - (this is not the sense of "established" connection but that of TCP_ESTABLISHED ?)
+        - find socket INET_MATCH from tcp_hashinfo
+      - if sk_fullsock (i.e. ~(TCPF_TIME_WAIT | TCPF_NEW_SYN_RECV))
+        - skb_dst_set_noref(skb, sk->sk_rx_dst)
+    - if not skb_valid_dst(skb)
+      - ip_route_input_noref(skb, ...) => (SEE BELOW)
+    - rt = skb_rtable(skb) and do something depending on rt->rt_type ...
+    - dst_input(skb) => skb_dst(skb)->input(skb) (dst_entry.input) (SEE BELOW for "local delivery")
 
-- Q. how to delegate to tcp stack ?
-  - obviously, tcp socket has to be created beforehand and __inet_lookup_established will catch it?
+- ip_route_input_noref =>
+  - ip_route_input_slow =>
+    - fib_lookup (foward information base) => ?
+    - if fib_result.type == RTN_LOCAL
+      - fib_validate_source => ?
+      - goto local_input
+        - FIB_RES_NH(res).nh_rth_input
+        - rt_dst_alloc =>
+          - struct rtable *rt = dst_alloc
+          - rt->dst.output = ip_output
+          - rt->dst.input = ip_local_deliver if RTCF_LOCAL
+        - skb_dst_set(skb, &rth->dst)  
+
+
+[ ingress: local delivery ]
+- ip_local_deliver => Q?1 follow until we pass skbuff to tcp layer
+
+
+[ ingress: forwarding ]
+- branch off from (ip_rcv => ... => ip_route_input_noref) =>
+  - ip_route_input_slow =>
+    - if not res.type == RTN_LOCAL
+      - ip_mkroute_input => __mkroute_input =>
+        - rt_dst_alloc
+        - rth->dst.input = ip_forward
+        - skb_dst_set(skb, &rth->dst)
+
+- ip_forward => ...
+
 
 [ egress ]
+- Q? (tcp send, tcp connect)
 ```
 
 
