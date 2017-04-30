@@ -4,7 +4,7 @@
   "date": "2017-04-26T17:51:50+09:00",
   "category": "",
   "tags": ["linux", "ip", "tcp", "ethernet"],
-  "draft": true
+  "draft": false
 }
 -->
 
@@ -12,20 +12,14 @@
 
 - Goal
   - walk through tcp server/client example
-    - e.g. user space tcp interface
+    - i.e. user space tcp interface
       - socket, bind
       - connect
       - listen, accept
       - send/recv
   - tcp, ip, ethernet stack (kernel)
   - ethernet device driver (kernel)
-  - iptables, ip route, ip link, ip address
-
-- Things on my PC, which looks relevant
-  - net/wireless/cfg80211: Linux wireless LAN (802.11) configuration API
-  - net/mac80211: hardware independent IEEE 802.11 networking stack
-  - drivers/net/ethernet/intel/e1000e: Intel(R) PRO/1000 PCI-Express Gigabit Ethernet suppor
-  - drivers/net/wireless/intel/iwlwifi: Intel Wireless WiFi Link Next-Gen AGN
+  - link layer and ip routing utility: iptables, ip route, ip link, ip address
 
 
 # Linux source
@@ -51,9 +45,15 @@ Random selection of a source file and some definition I think is important.
   - ip_input.c (ip_rcv)
   - inet_connection_sock.c (inet_csk_xxx e.g inet_csk_accept)
   - tcp_ipv4.c (struct proto tcp_prot)
-  - tcp.c (?)
-  - tcp_input.c (?)
+  - tcp_input.c (tcp_rcv_state_process)
   - tcp_output.c (?)
+  - tcp.c (?)
+
+(Things on my machine, which looks relevant)
+- net/wireless/cfg80211: Linux wireless LAN (802.11) configuration API
+- net/mac80211: hardware independent IEEE 802.11 networking stack
+- drivers/net/ethernet/intel/e1000e: Intel(R) PRO/1000 PCI-Express Gigabit Ethernet suppor
+- drivers/net/wireless/intel/iwlwifi: Intel Wireless WiFi Link Next-Gen AGN
 ```
 
 
@@ -73,7 +73,7 @@ Random selection of a source file and some definition I think is important.
 - fs_initcall(inet_init) =>
   - proto_register(&tcp_prot, 1) (tcp_prot defined in tcp_ipv4.c)
   - sock_register(&inet_family_ops) (PF_INET protocol family registration)
-  - inet_add_protocol(&tcp_protocol, IPPROTO_TCP)
+  - inet_add_protocol(&tcp_protocol, IPPROTO_TCP) => update global inet_protos
   - inet_register_protosw for each inet_protosw in inetsw_array (e.g. SOCK_STREAM, tcp_prot)
   - ip_init (ip_output.c) =>
     - ip_rt_init (route.c) => ?
@@ -82,8 +82,10 @@ Random selection of a source file and some definition I think is important.
       - register_pernet_subsys(&tcp_sk_ops)
   - dev_add_pack(&ip_packet_type) (type is ETH_P_IP)
 
-(literally global variables?)
+(global variables)
 struct inet_hashinfo tcp_hashinfo
+struct net_protocol *inet_protos[]
+
 
 [ Socket ]
 - core_initcall(sock_init) =>
@@ -92,7 +94,9 @@ struct inet_hashinfo tcp_hashinfo
 ```
 
 
-# Socket life cycle
+# User side
+
+[The kernel side](#kernel-side) of activities follows this section.
 
 ```
 [ socket ]
@@ -119,6 +123,7 @@ struct inet_hashinfo tcp_hashinfo
     - assign sk->sk_proto (e.g. tcp_proto)
   - inet_sk (cast from "struct sock" to "struct inet_sock")
   - sock_init_data =>
+    - sk->sk_state =	TCP_CLOSE
     - sk_set_socket
     - sk->sk_wq	=	sock->wq
   - sk->sk_prot->init (e.g. tcp_v4_init_sock) (SEE BELOW)
@@ -182,13 +187,10 @@ struct inet_hashinfo tcp_hashinfo
       - again if reqsk_queue_empty
         - schedule_timeout
       - after wake up if !reqsk_queue_empty it returns
-      - if reqsk_queue_empty loop this block as long as timeout allows
+      - if reqsk_queue_empty, loop this block as long as timeout allows
   - reqsk_queue_remove and get newsk = req->sk
 
-Q?
-- find who's gonna modify icsk->icsk_accept_queue.
-- does anyone actively wakeup sleeping process ?
-- someone generate request_sock.
+- Q. I see only fastopen_sk pushed into icsk_accept_queue. is it really so?
 
 
 [ connect ]
@@ -201,9 +203,10 @@ Q?
   - if sock.sk_state is SYN_SENT or SYN_RECV, inet_wait_for_connect =>
     - while sock.sk_state is SYN_SENT or SYN_RECV
       - wait_woken(&wait, TASK_INTERRUPTIBLE, timeo)
+  - sock->state = SS_CONNECTED if it goes succesfully
 
 - tcp_v4_connect =>
-  - (ip route overwrites stuff ?)
+  - (ip routing overwrites stuff ?)
   - tcp_set_state(sk, TCP_SYN_SENT)
   - tcp_connect =>
     - sk_stream_alloc_skb
@@ -211,17 +214,13 @@ Q?
     - tcp_ecn_send_syn
     - tcp_send_syn_data or tcp_transmit_skb
 
-- Q? who modifies sock.sk_state ?
-- Q? how do we see ECONNREFUSED 111 ?
-- Q?0 who sets up TCP_ESTABLISHED ?
-
 
 [ recv ]
 [ send ]
 ```
 
 
-# IP/TCP Packet life cycle
+# Kernel side
 
 ```
 [ ingress ]
@@ -239,7 +238,6 @@ Q?
     - ipprot->early_demux (possibly tcp_v4_early_demux) (how could this path not even consider ip routing ?)=>
       - cast to iphdr and tcphdr
       - struct sock *sk = __inet_lookup_established =>
-        - (this is not the sense of "established" connection but that of TCP_ESTABLISHED ?)
         - find socket INET_MATCH from tcp_hashinfo
       - if sk_fullsock (i.e. ~(TCPF_TIME_WAIT | TCPF_NEW_SYN_RECV))
         - skb_dst_set_noref(skb, sk->sk_rx_dst)
@@ -263,7 +261,48 @@ Q?
 
 
 [ ingress: local delivery ]
-- ip_local_deliver => Q?1 follow until we pass skbuff to tcp layer
+- ip_local_deliver =>
+  - if ip_is_fragment, ip_defrag
+  - ip_local_deliver_finish =>
+    - int protocol = ip_hdr(skb)->protocol
+    - struct net_protocol *ipprot = inet_protos[protocol]
+    - ipprot->handler(skb) (e.g. tcp_protocol.handler is tcp_v4_rcv)
+
+- tcp_v4_rcv =>
+  - struct sock *sk = __inet_lookup_skb
+  - tcp_v4_inbound_md5_hash
+  - tcp_filter
+  - tcp_v4_do_rcv (mostly comes here ?) =>
+    - tcp_rcv_state_process =>
+      - struct tcphdr *th = tcp_hdr(skb)
+      - (if sk->sk_state == TCP_LISTEN and th->syn)
+        - icsk->icsk_af_ops->conn_request(sk, skb) (e.g. tcp_v4_conn_request) =>
+          - tcp_conn_request(&tcp_request_sock_ops, &tcp_request_sock_ipv4_ops, sk, skb) => (SEE BELOW)
+        - consume_skb(skb) (freeing stuff)
+        - return 0
+      - tcp_check_req => ?
+      - tcp_ack
+      - (if sk->sk_state == TCP_SYN_RECV)
+        - tcp_init_congestion_control
+        - tcp_set_state(sk, TCP_ESTABLISHED)
+        - sk_wake_async(sk, SOCK_WAKE_IO, POLL_OUT) (comment says this is not for waking up listening/accepting socket)
+
+- tcp_conn_request =>
+  - inet_reqsk_alloc =>
+    - struct request_sock *req = reqsk_alloc
+  - tcp_openreq_init
+  - af_ops->init_req (i.e. tcp_v4_init_req)
+  - af_ops->send_synack (i.e. tcp_v4_reqsk_send_ack) =>
+    - tcp_v4_send_ack => ip_send_unicast_reply => ip_push_pending_frames =>
+      - ip_finish_skb
+      - ip_send_skb => ip_local_out => __ip_local_out =>
+        - (let's not follow ip egress routine anymore...)
+  - (Q. what's fastopen? anyway, let's assume it whatever that is.)
+  - struct sock *fastopen_sk = tcp_try_fastopen      
+  - inet_csk_reqsk_queue_add =>
+    - req->sk = fastopen_sk
+    - update icsk_accept_queue (this queue is watched by socket accept syscall)
+  - Q?. when do we update sk->sk_state to TCP_SYN_RECV or something ?
 
 
 [ ingress: forwarding ]
@@ -279,14 +318,16 @@ Q?
 
 
 [ egress ]
-- Q? (tcp send, tcp connect)
+- Q? egress path as in ip_send_unicast_reply
+- Q? egress path as in active OPEN (e.g. connect)
+- Q? where does ip routing come in ? (something like ip_route_input_noref for output ?)
 ```
 
 
 # Interface management
 
-```
-```
+
+# IP Routing management
 
 
 # Reference
