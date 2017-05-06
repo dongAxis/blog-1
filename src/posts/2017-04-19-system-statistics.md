@@ -120,14 +120,26 @@ Roughly follow from main:
 
 # Storage and (block) file system
 
+- /proc/partitions
+- /proc/diskstats
+  - same to /sys/block/<dev>/stat (e.g. /sys/block/sda/stat)
+
 - utility
   - df, fdisk
   - iostat (from systat)
   - iotop
 
-- /sys/block/<dev>/stat
 
-- kernel subsystem
+```
+# util-linux: build from source
+$ mkdir out/Default/_install
+$ cd out/Default
+$ ../../configure --prefix=$PWD/_install \
+                  --with-bashcompletiondir=$PWD/_install/usr/share/bash-completion/completions \
+                  --with-systemdsystemunitdir=$PWD/_install/lib/systemd/system \
+                  --disable-use-tty-group \
+                  CC=clang
+```
 
 
 # Reference
