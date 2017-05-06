@@ -56,6 +56,8 @@
   - Wayland protocol
 - Machine Architecture
   - ARM
+- Compression
+- Software Licence and legal things
 
 
 # Principles

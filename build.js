@@ -33,6 +33,7 @@ const processPost = (mdFile) => {
     disableForced4SpacesIndentedSublists: true,
     parseImgDimensions: true,
     literalMidWordUnderscores: true,
+    ghCompatibleHeaderId: true,
   })).makeHtml(mdStr);
   const meta = extractMeta(mdFile);
   const contentHtml = template('src/templates/_post.html', { meta, mdHtml });
@@ -86,4 +87,3 @@ const escapePosts = () => {
     }
   }
 })();
-
