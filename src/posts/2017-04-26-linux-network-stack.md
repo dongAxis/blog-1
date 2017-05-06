@@ -20,6 +20,7 @@
   - tcp, ip, ethernet stack (kernel)
   - ethernet device driver (kernel)
   - link layer and ip routing utility: iptables, ip route, ip link, ip address
+  - qdisc (tc(1))
 
 
 # Linux source
