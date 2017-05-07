@@ -20,6 +20,9 @@ css: out/index.css
 out/index.css: $(shell find src/scss -name '*.scss')
 	node-sass src/scss/index.scss > out/index.css
 
+assets:
+	ln -sf $(PWD)/src/assets $(PWD)/out
+
 ifndef BUILD
 BUILD = index css posts
 endif
@@ -35,6 +38,7 @@ deploy: build
 prepare:
 	npm install
 	mkdir -p out/posts
+	make assets
 
 start:
 	nf start builder,server
