@@ -52,11 +52,6 @@ register_filesystem
       - ... namespace and all that
 
 
-[ mount implementation ]
-- ? =>
-  - leads to mount_bdev with some fill_super ?
-
-
 [ open ]
 - SYSCALL_DEFINE3(open, ...) => do_sys_open =>
   - build_open_flags (could return error for invalid flag)
@@ -92,22 +87,28 @@ Q.
 - do we get multibyte character file path right ?
   - as long as we can recognize "/" and "." as single byte, is it fine ?
 - use of inode_operations.lookup
-- open special files (e.g. character or block devices)
+- how to open character or block devices files (udev filesystem ?)
 - use of dcache api (e.g. d_lookup, d_add, d_instantiate)
 
 
-[ open implementation ]
-- (find example ...)
-
-
 [ read ]
-
+- SYSCALL_DEFINE3(read,...) =>
+  - fdget_pos => ... get struct file from curret->files
+  - file_pos_read
+  - vfs_read => __vfs_read =>
+    - file->f_op->read => [ read impl ]
+  - file_pos_write
 
 [ write ]
-
+- SYSCALL_DEFINE3(write,...) =>
+  - vfs_write =>
+    - file_start_write => __sb_start_write ?
+    - __vfs_write => file->f_op->write
 
 [ getdents ]
-
+- SYSCALL_DEFINE3(getdents,...) =>
+  - struct getdents_callback with filldir
+  - iterate_dir => file->f_op->iterate => ...
 
 
 [ Data structures ]
@@ -166,37 +167,128 @@ Some relevant kernel source:
 - include/linux
   - types.h (sector_t)
 
-- drivers/ata/ahci.c,.h, libahci.c,.h
+- drivers/ata/ahci.c, libahci.c
+- drivers/scsi/sd.c
 
 - fs/ext4/
 ```
 
 
-## Initialization
+## Block device file/driver
 
-Driver
-
-```
-- module_pci_driver(ahci_pci_driver) (macro to module_init)
-- ahci_init_one (as ahci_pci_driver.probe) =>
-  - (a bunch of pdev->vendor checking)
-  - ahci_host_activate => ???
-
-- ? register_blkdev
-- ? alloc_disk, add_disk
-- ?  blk_init_queue(foo_strategy
-
-- boot phase or initram ?
-- Q. How does it expose paritions ?
-```
+Q. what's about ahci and scsi ?
+Q. what kind of kernel help does udevd need ?
+  - netlink
+  - it's not really symlink files under /dev ?
+  - what does it mean `df` shows `udev` filesystem but there's not in /proc/filesystems ?
 
 ```
-[ open and mount ]
-- dentry_open => blkdev_open => ...?
+[ Initialization ]
+- init_sd =>
+  - register_blkdev
+  - blk_register_region(sd_default_probe, ...) =>
+  - class_register
+  - scsi_register_driver => driver_register
 
-[ read ]
+- scsi_add_device (I don't know how this bus's device is detected...)
+  - __scsi_add_device
+    - scsi_probe_and_add_lun
+      - scsi_alloc_sdev =>
+        - struct scsi_device *sdev = kzalloc
+        - sdev->request_queue = scsi_alloc_queue =>
+          - struct request_queue *q = blk_alloc_queue_node
+          - q->request_fn = scsi_request_fn
+          - blk_queue_xxx calls
+      - scsi_probe_lun =>
+        - scsi_execute
+          - blk_execute_rq => (is this really going to trigger sd_probe ...?)
 
-[ write ]
+- sd_probe (as sd_template.gendrv.probe) =>
+  - (Q. when did we allocate memory for struct scsi_device ? e.g. request_queue field)
+  - struct gendisk *gd = alloc_disk
+  - blk_queue_rq_timeout
+  - device_initialize, device_add, dev_set_drvdata
+  - async_schedule_domain(sd_probe_async, ...) =>
+    - (then maybe later on)
+    - sd_probe_async =>
+      - gd->fops = &sd_fops
+      - gd->queue = sdkp->device->request_queue
+      - sd_revalidate_disk => sd_spinup_disk ?
+      - device_add_disk =>
+        - blk_register_region
+        - register_disk =>
+          - device_add
+          - disk_part_iter_init =>
+        - blk_register_queue =>
+          - blk_wb_init
+          - elv_register_queue
+
+- Q. when did we allocate struct block_device ?
+
+
+[ open impl ]
+(path lookup (or dentry/inode discovery phase))
+- ramfs_get_inode (just guessing this is somehow called ...)
+  - init_special_inode =>
+   - inode->i_fop = &def_blk_fops
+
+- SYSCALL_DEFINE3(open, ...) => ... =>
+  - vfs_open => do_dentry_open =>
+    - f->f_op->open (i.e. blkdev_open) =>
+      - struct block_device *bdev = bd_acquire =>
+      - blkdev_get => __blkdev_get =>
+        - struct gendisk *disk = get_gendisk
+        - disk->fops->open (i.e. sd_open) =>
+          - (sd_open only does some checking ?)
+
+[ read impl ]
+
+[ write impl ]
+```
+
+
+## Block-based filesystem (Ext4)
+
+- on-disk format: https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout
+- on-memory data structure: ?
+- fsck.ext4 (e2fsck) implementation
+- mkfs.ext4 (mke2fs) implementation
+- understand ex4 feature
+  - journaling ?
+
+```
+[ registration ]
+- module_init(ext4_init_fs) =>
+  - init_waitqueue_head
+  - register_filesystem(&ext4_fs_type)
+
+
+[ mount impl ]
+- SYSCALL_DEFINE5(mount, ...) => ... => mount_fs => ... =>
+  - struct dentry *root = file_system_type.mount (i.e. ext4_mount) =>
+    - mount_bdev(ext4_fill_super, ...) =>
+      - struct block_device *bdev = blkdev_get_by_path =>
+        - lookup_bdev and blkdev_get (we saw this above "block device file open impl")
+      - struct super_block *s = sget => sget_userns =>
+        - struct super_block *s = alloc_super => kzalloc
+      - ext4_fill_super (as fill_super) =>
+        - ... ?
+        - sb->s_op = &ext4_sops
+        - sb->s_root ?
+
+[ inode and dentry lookup ]
+
+[ inode and dentry creation ]
+
+[ open impl ]
+
+[ read impl ]
+? generic_file_read
+readpage
+
+
+[ write impl ]
+? generic_file_write
 ```
 
 
@@ -205,6 +297,19 @@ Driver
 - how does kernel dispatch work to block device driver ?
  - kernel thread ? work queue ?
  - kblockd ?  kblockd_workqueue ?
+
+- sector
+  - the location of stuff on disk ?
+  - sector_t
+- block (of file system)
+  - memory for contigous sectors
+  - unit of file system (or any block layer user?) IO operation
+  - buffer_head
+  - logical block number ?
+  - is this `bio_vec` (before possible merge) ?
+- segment
+  - unit of device driver IO operation (for scatter-gather, they handel multiple segments)
+  - is this single `bio_vec` (after merge) ?
 
 ```
 [ Data structure ]
@@ -215,6 +320,7 @@ gendisk
       '-* bio_vec
         '-' page
 '-* hd_struct (partitions)
+  '-' device
 
 block_device
 '-' block_device (parent if this is partition)
@@ -269,137 +375,6 @@ here, entry point can be:
 ```
 
 
-## Simple example without filesystem
-
-```
-$ sudo head -c 1K /dev/sda | hd
-...
-00000200  45 46 49 20 50 41 52 54  00 00 01 00 5c 00 00 00  |EFI PART....\...|
-
-Q.
-- try some similar write operation with some USB flash
-```
-
-```
-- syscall open '/dev/sda'
-- syscall read
-```
-
-
-## Some stats on my machine
-
-Q.
-- sector
-  - the location of stuff on disk ?
-  - sector_t
-- block (of file system)
-  - memory for contigous sectors
-  - unit of file system (or any block layer user?) IO operation
-  - buffer_head
-  - logical block number ?
-  - is this `bio_vec` (before possible merge) ?
-- segment
-  - unit of device driver IO operation (for scatter-gather, they handel multiple segments)
-  - is this single `bio_vec` (after merge) ?
-
-```
-$ lspci -s 00:17.0 -v
-00:17.0 SATA controller: Intel Corporation Sunrise Point-LP SATA Controller [AHCI mode] (rev 21) (prog-if 01 [AHCI 1.0])
-	Subsystem: Lenovo Sunrise Point-LP SATA Controller [AHCI mode]
-	Flags: bus master, 66MHz, medium devsel, latency 0, IRQ 277
-	Memory at f1148000 (32-bit, non-prefetchable) [size=8K]
-	Memory at f1150000 (32-bit, non-prefetchable) [size=256]
-	I/O ports at e080 [size=8]
-	I/O ports at e088 [size=4]
-	I/O ports at e060 [size=32]
-	Memory at f114e000 (32-bit, non-prefetchable) [size=2K]
-	Capabilities: <access denied>
-	Kernel driver in use: ahci
-	Kernel modules: ahci
-
-$ modinfo ahci | head
-filename:       /lib/modules/4.8.0-49-generic/kernel/drivers/ata/ahci.ko
-version:        3.0
-license:        GPL
-description:    AHCI SATA low-level driver
-author:         Jeff Garzik
-srcversion:     E0A87435109F7A1BCF367EB
-alias:          pci:v*d*sv*sd*bc01sc06i01*
-alias:          pci:v00001C44d00008000sv*sd*bc*sc*i*
-alias:          pci:v0000144Dd0000A800sv*sd*bc*sc*i*
-alias:          pci:v0000144Dd00001600sv*sd*bc*sc*i*
-
-$ lsmod | grep ahci
-ahci                   36864  3
-libahci                32768  1 ahci
-
-$ blkid
-/dev/sda1: LABEL="SYSTEM" UUID="2068-1F24" TYPE="vfat" PARTUUID="e0e41ced-be5f-4291-bd68-2d5de843a588"
-/dev/sda2: UUID="0b6a2d2e-2e49-49cf-ba06-e29322624dc9" TYPE="swap" PARTUUID="3d667494-9f0b-4460-b5ee-50c71ab21359"
-/dev/sda3: UUID="53fb1dc7-e008-4dfc-ae2c-ce8e8849992e" TYPE="ext4" PARTUUID="73770d23-7412-445b-b5dd-76c1ae54f457"
-
-$ sudo fdisk -l /dev/sda
-Disk /dev/sda: 465.8 GiB, 500107862016 bytes, 976773168 sectors
-Units: sectors of 1 * 512 = 512 bytes
-Sector size (logical/physical): 512 bytes / 512 bytes
-I/O size (minimum/optimal): 512 bytes / 512 bytes
-Disklabel type: gpt
-Disk identifier: 81FF4D55-217A-4DD9-B57A-902F86F5A487
-
-Device        Start       End   Sectors  Size Type
-/dev/sda1      2048    534527    532480  260M EFI System
-/dev/sda2    534528  17311743  16777216    8G Linux swap
-/dev/sda3  17311744 554182655 536870912  256G Linux filesystem
-```
-
-
-# Block-based filesystem
-
-- ext4
-- on disk format
-- mount process
-- inode and dentry (creation deletion)
-- read and write
-
-
-```
-$ (create new partition /dev/sda4 from cfdisk)
-$ sudo partprobe /dev/sda
-$ sudo fdisk -l | grep /dev/sda4
-/dev/sda4  554182656 562571263   8388608    4G Linux filesystem
-$ sudo mkfs.btrfs -f /dev/sda4
-btrfs-progs v4.7.3
-See http://btrfs.wiki.kernel.org for more information.
-
-Detected a SSD, turning off metadata duplication.  Mkfs with -m dup if you want to force metadata duplication.
-Performing full device TRIM (4.00GiB) ...
-Label:              (null)
-UUID:               
-Node size:          16384
-Sector size:        4096
-Filesystem size:    4.00GiB
-Block group profiles:
-  Data:             single            8.00MiB
-  Metadata:         single            8.00MiB
-  System:           single            4.00MiB
-SSD detected:       yes
-Incompat features:  extref, skinny-metadata
-Number of devices:  1
-Devices:
-   ID        SIZE  PATH
-    1     4.00GiB  /dev/sda4
-$ mkdir -p ~/btrfs_test_root
-$ sudo mount -t btrfs /dev/sda4 ~/btrfs_test_root
-$ cd ~/btrfs_test_root
-$ sudo mkdir -p user_dir
-$ sudo chown -R $(whoami):$(whoami) user_dir
-$ echo 'hello world' > user_dir/test.txt
-$ cat user_dir/test.txt
-$ sudo head -c 100K /dev/sda4 | hd
-00010040  5f 42 48 52 66 53 5f 4d  0f 00 00 00 00 00 00 00  |_BHRfS_M........|
-```
-
-
 # LVM or RAID implementation
 
 
@@ -410,11 +385,6 @@ $ sudo head -c 100K /dev/sda4 | hd
 - module_init(fuse_init) =>
   - fuse_fs_init => register_filesystem(&fuse_fs_type)
 ```
-
-
-# TODO
-
-- implementation of fdisk, partprobe, mkfs.xxx
 
 
 # Reference
