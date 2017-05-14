@@ -250,9 +250,9 @@ Q. what kind of kernel help does udevd need ?
 ## Block-based filesystem (Ext4)
 
 - on-disk format: https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout
-- on-memory data structure: ?
-- fsck.ext4 (e2fsck) implementation
-- mkfs.ext4 (mke2fs) implementation
+- on-memory vs on-disk
+  - e.g. ext4_sb_info (memory) and ext4_super_block (disk)
+- start from e2fsprogs (e.g. e2fsck, mke2fs, dumpe2fs)
 - understand ex4 feature
   - journaling ?
 
@@ -272,9 +272,27 @@ Q. what kind of kernel help does udevd need ?
       - struct super_block *s = sget => sget_userns =>
         - struct super_block *s = alloc_super => kzalloc
       - ext4_fill_super (as fill_super) =>
-        - ... ?
+        - ext4_fsblk_t sb_block = get_sb_block(&data) (by default 1, but mount option could change it)
+        - struct ext4_sb_info *sbi = kzalloc
+        - assuming block_size is 4096, then after some simple arithmetic,
+          logical_sb_block = 0
+          offset = 1024
+        - struct buffer_head *bh = sb_bread_unmovable(sb, logical_sb_block) => __bread_gfp
+        - struct ext4_super_block *es = (struct ext4_super_block *) (bh->b_data + offset)
+        - ... huge configuration check ...
         - sb->s_op = &ext4_sops
-        - sb->s_root ?
+        - root = ext4_iget(sb, EXT4_ROOT_INO) (i.e. 2) => (SEE BELOW)
+        - sb->s_root = d_make_root(root) => __d_alloc and d_instantiate (dcache api, I'll look after later...)
+        - ext4_setup_super =>
+        - ext4_register_sysfs(sb) =>
+
+- ext4_iget =>
+  - struct inode *inode = iget_locked => when it's not cached alloc_inode
+  - struct ext4_inode_info *ei = EXT4_I(inode)
+    - (this cannot be the first time? we have to allocate ext4_inode_info and give it to vfs?)
+  - __ext4_get_inode_loc(struct ext4_iloc *iloc) => ...
+  - struct ext4_inode *raw_inode = ext4_raw_inode => ...
+
 
 [ inode and dentry lookup ]
 
@@ -390,8 +408,11 @@ here, entry point can be:
 # Reference
 
 - LDD3
-  - block things ...
-- https://btrfs.wiki.kernel.org/index.php/Main_Page
+  - block device
+- Understanding the Linux Kernel
+  - VFS, Block layer, ext2/ext3
+- https://ext4.wiki.kernel.org/index.php/Main_Page  
+- https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git
 - http://www.rodsbooks.com/gdisk/index.html
 - Documentation/filesystems
   - vfs.txt
