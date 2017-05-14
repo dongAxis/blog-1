@@ -117,7 +117,7 @@ $ ./_install/netdata/usr/sbin/netdata
 	enabled = yes
 	data source = average
 	type = graphite
-	destination = localhost:2003
+	destination = localhost:19998
 	prefix = netdata
 	hostname = hiogawa-ubuntu-thinkpad13
 	update every = 10
@@ -126,10 +126,13 @@ $ ./_install/netdata/usr/sbin/netdata
 
 $ influxd run -config $PWD/influxdb.conf
 # influxdb.conf
+reporting-disabled = false
+bind-address = ":19997"
+
 [[graphite]]
   enabled = true
-  bind-address = ":2003"
-  database = "graphite"
+  bind-address = ":19998"
+  database = "netdata-backend"
   retention-policy = ""
   protocol = "tcp"
   batch-size = 5000
@@ -138,11 +141,29 @@ $ influxd run -config $PWD/influxdb.conf
   consistency-level = "one"
   separator = "."
   udp-read-buffer = 0
+  templates = [
+    "prefix.host.measurement.measurement.field*",
 
+    # netdat's input: <prefix>.<host>.<chart>.<dimension>
+    # for example,
+    # netdata.hiogawa-ubuntu-thinkpad13.system.ram.used
+    # (here "system.ram" is <chart> )
+    # this template will convert netdata to influxdb as in:
+    #
+    # > select * from "system.ram"
+    # name: system.ram
+    # time                buffers     cached       free        host                      prefix  used
+    # ----                -------     ------       ----        ----                      ------  ----
+    # 1494223890000000000 163.462109  1269.52695   431.31052   hiogawa-ubuntu-thinkpad13 netdata 6016.0363
+    # 1494223900000000000 162.761328  1269.47616   366.54805   hiogawa-ubuntu-thinkpad13 netdata 6081.5504
+    # 1494223920000000000 161.5555578 1265.8823778 368.1983556 hiogawa-ubuntu-thinkpad13 netdata 6084.6997778
+    # <--- field --------------------------------------------> <------- tag -------------------> <-- field -->
+  ]
 
 $ ./bin/grafana-server
-# from dashboard editor in browser, put something like
-# SELECT mean("value") FROM "$prefix.system.ram.free" WHERE $timeFilter GROUP BY time($__interval) fill(null)
+# - setup datasource to be influxdb
+# - create graph from dashboard. query can be something like:
+# SELECT mean("buffers") FROM "system.ram" WHERE $timeFilter GROUP BY time($__interval) fill(null)
 ```
 
 
