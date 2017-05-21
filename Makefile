@@ -21,7 +21,7 @@ out/index.css: $(shell find src/scss -name '*.scss')
 	node-sass src/scss/index.scss > out/index.css
 
 assets:
-	ln -sf $(PWD)/src/assets $(PWD)/out
+	ln -frs src/assets out
 
 ifndef BUILD
 BUILD = index css posts
