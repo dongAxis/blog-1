@@ -36,7 +36,27 @@ From top (wayland client) to bottom (kernel, gpu)
   - when wayland server implementation use kms, then it's called drm backend. so wayland protocol itself doesn't have to
     mention drm or anything.
 - intel gpu spec
-  - ? i915
+  - https://dri.freedesktop.org/wiki/Intel/
+  - https://dri.freedesktop.org/wiki/
+  - https://01.org/linuxgraphics/documentation/hardware-specification-prms/2015-2016-intel-processors-based-skylake-platform
+  - https://01.org/linuxgraphics/documentation/hardware-specification-prms
+  - https://en.wikipedia.org/wiki/List_of_Intel_graphics_processing_units
+  - https://en.wikipedia.org/wiki/Intel_HD_and_Iris_Graphics
+
+  ```
+  $ lspci -v -s 00:02.0
+    00:02.0 VGA compatible controller: Intel Corporation HD Graphics 520 (rev 07) (prog-if 00 [VGA controller])
+    	Subsystem: Lenovo HD Graphics 520
+    	Flags: bus master, fast devsel, latency 0, IRQ 279
+    	Memory at f0000000 (64-bit, non-prefetchable) [size=16M]
+    	Memory at e0000000 (64-bit, prefetchable) [size=256M]
+    	I/O ports at e000 [size=64]
+    	[virtual] Expansion ROM at 000c0000 [disabled] [size=128K]
+    	Capabilities: <access denied>
+    	Kernel driver in use: i915
+    	Kernel modules: i915
+  ```
+
 - ? libinput
 - how does wayland expose egl platform ?
   - this is via mesa. and client can detect it on the fly somehow ?
@@ -78,6 +98,7 @@ server (compositor) and client both does GL call but how are they different ?
 - create_wl_buffer (platform_wayland.c) =>
   - wl_create_buffer
 ```
+
 
 # Driver
 
