@@ -17,7 +17,7 @@
 - seccomp(2)
 - policykit
 - logind
-- pam
+- pam, gnome keyring
 - Documentation/security/
 - selinux
 
