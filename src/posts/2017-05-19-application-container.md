@@ -14,8 +14,8 @@
   - network
   - namespace
   - cgroup
-  - pty attaching
-
+  - pty attaching
+- Q. so, network configuration cannot be in oci runtime spec?
 
 # Docker family
 
