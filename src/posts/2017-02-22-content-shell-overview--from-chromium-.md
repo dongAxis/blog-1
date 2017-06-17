@@ -119,7 +119,7 @@ $ lldb -p $(pgrep -f 'content_shell --type=renderer')
                 - WindowTreeHost::Show =>
                   - DesktopWindowHostTreeX11::ShowImpl =>
                     - ShowWindowWithState (this actually create window on my PC)
-                    - aura::Window::Show 
+                    - aura::Window::Show
                 - Shell::PlatformSetContents =>
                   - ShellWindowDelegateView::SetWebContents =>
                     - new views::WebView
@@ -128,13 +128,20 @@ $ lldb -p $(pgrep -f 'content_shell --type=renderer')
               - Shell::LoadURL (with GURL "https://www.google.com/") => LoadURLForFrame =>
                 - NavigationControllerImpl::LoadURLWithParams =>
                   - CreateNavigationEntry
-                  - LoadEntry => NavigateToPendingEntry => NavigateToPendingEntryInterval => NavigatorImpl::NavigateToPendingEntry/NavigateToEntry => RenderFrameHostManager::Navigate/ReinitializeRenderFrame/InitRenderView => ... => RenderProcessHostImpl::Init (supposed to spawn renderer via zygote)
-                  - RenderFrameHostManager::InitRenderView => WebContentsImpl::CreateRenderViewForRenderManager => RenderViewHostImpl::CreateRenderView => content::mojom::RendererProxy::CreateView (is this from content/common/renderer.mojom ?)
-                - WebContentsImpl::Focus => ... => RenderWidgetHostViewAura::Focus => ... => wm::FocusController::FocusAndActivateWIndow => ... => RenderProcessHostImpl::Send(new ViewMsg_SetActive)
+                  - LoadEntry => NavigateToPendingEntry => NavigateToPendingEntryInterval =>
+                    NavigatorImpl::NavigateToPendingEntry/NavigateToEntry =>
+                    RenderFrameHostManager::Navigate/ReinitializeRenderFrame/InitRenderView => ... =>
+                    RenderProcessHostImpl::Init (supposed to spawn renderer via zygote)
+                  - RenderFrameHostManager::InitRenderView => WebContentsImpl::CreateRenderViewForRenderManager =>
+                    RenderViewHostImpl::CreateRenderView =>
+                    content::mojom::RendererProxy::CreateView (content/common/renderer.mojom) =>
+                    ::content::mojom::internal::Renderer_CreateView_Params_Data::New (TODO: follow renderer's reaction)
+                - WebContentsImpl::Focus => ... => RenderWidgetHostViewAura::Focus => ... =>
+                  wm::FocusController::FocusAndActivateWIndow => ... => RenderProcessHostImpl::Send(new ViewMsg_SetActive)
     - BrowserMainRunner::Run =>
       - BrowserMainLoop::RunMainMessageLoopParts => MainMessageLoopRun => base::RunLoop::Run (see below for main loop flow)
-        - g_main_context_iteration => 
-          - when this line passed, my ubuntu's dock icon is highlighted, why ?? 
+        - g_main_context_iteration =>
+          - when this line passed, my ubuntu's dock icon is highlighted, why ??
           - when try to step in, segmentation fault happens !?
         - MessageLoop::DoWork => DeferOrRunPendingTask => RunTask => debug::TaskAnnotator::RunTask => RunMixin::Run
           - ContextCacheController::OnIdle is called ??

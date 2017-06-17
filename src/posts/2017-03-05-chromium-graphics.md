@@ -9,33 +9,46 @@
 -->
 
 ```
-# Class Diagrams
+[Data structure]
 
 content::Shell
 '-* Shell (windows_)
 '-' views::Widget
 '-' gfx::NativeWindow (aka aura::Window)
-'-' WebContents
+'-' WebContentsImpl (< WebContents)
+  '-' NavigationControllerImpl
+  '-' WebContentsViewAura (< WebContentsView)
+  '-* RenderWidgetHostImpl (< cc::mojom::MojoCompositorFrameSink)
+    '-' RenderWidgetHostViewAura (< RenderWidgetHostViewBase < RenderWidgetHostView)
+      '-' aura::Window (< ui::LayerOwner)
+        '-' ui::Layer
+          '-' cc::Layer (is this going to be under ui::Compositor ?, if so how ?)
+    '-' cc::mojom::MojoCompositorFrameSinkClient
+  '-' FrameTree
+    '-' FrameTreeNode _root
+    '-' RenderFrameHostManager
+      '-' RenderFrameHostImpl
 
 views::Widget
 '-' RootView
 '-' DesktopNativeWidgetAura (as NativeWidget)
-    '-' aura::Window
-        '-' ui::Layer (since aura::Window is LayerOwner)
-    '-' DesktopWindowTreeHostX11 (as DesktopWindowTreeHost and as aura::WindowTreeHost)
-        '-' XID (represents XWindow)
-        '-' ui::Compositor
-            '-' ui::Layer (root_layer)
-                '-' cc::Layer
-            '-' cc::LayerTreeHost (single threaded version, no impl thread)
-            '-' cc::Layer (root_web_layer)
-            '-' GpuProcessTransportFactory (as ui::ContextFactory)
-            '-' cc::FrameSinkId
-            '-' (some x handle) (as gfx::AcceleratedWidget)
+  '-' aura::Window
+    '-' ui::Layer (since aura::Window is LayerOwner)
+  '-' DesktopWindowTreeHostX11 (as DesktopWindowTreeHost and as aura::WindowTreeHost)
+    '-' XID (represents XWindow)
+    '-' ui::Compositor (< LayerTreeHostClient)
+      '-' ui::Layer (root_layer)
+        '-* ui::Layer (as children)
+        '-' cc::Layer
+      '-' cc::LayerTreeHost (single threaded version, no impl thread)
+      '-' cc::Layer (root_web_layer ?)
+      '-' GpuProcessTransportFactory (as ui::ContextFactory)
+      '-' cc::FrameSinkId
+      '-' (some x handle) (as gfx::AcceleratedWidget)
 
 GpuChildProcess
 '-' ui::GpuService
-    '-' gpu::GpuChannelManager
+  '-' gpu::GpuChannelManager
 '-' GpuServiceFactory
 
 
@@ -105,9 +118,9 @@ GpuChildProcess
 - (ScheduleRequestNewCompositorFrameSink's callback) => RequestNewCompositorFrameSink =>
   cc::LayerTreeHost::xxx => ui::Compositor::xxx (as LayerTreeHostClient) =>
   - GpuProcessTransportFactory::CreateCompositorFrameSink (as ContextFactory) =>
-    BrowserGpuChannelHostFactory::EstablishGpuChannel (register callback GpuProcessTransportFactory::EstablishGpuChannel)
+    BrowserGpuChannelHostFactory::EstablishGpuChannel (register callback GpuProcessTransportFactory::EstablishedGpuChannel)
 
-- (as callback) => GpuProcessTransportFactory::EstablishGpuChannel
+- (as callback) => GpuProcessTransportFactory::EstablishedGpuChannel
   - CreateContextCommon => new ContextProviderCommandBuffer
   - ContextProviderCommandBuffer::BindToCurrentThread =>
     CommandBufferProxyImpl::Create => Initialize => Send(GpuChannelMsg_CreateCommandBuffer)
@@ -216,10 +229,35 @@ cc::Display (in GPU process ?)
 ui::Display, ui::DisplayManager (I don't believe it's used...)
 
 content::RendererFrameManager (singleton!)
+
+
+TODO: how does browser (ui::compositor) receives renderer's frame ?
+  - ui::Compositor (< LayerTreeHostClient)
+    - browser's top layer tree
+  - RenderWidgetCompositor (< LayerTreeHostClient)
+    - renderer's top layer tree
+  - RenderWidgetHostImpl registers its cc::Layer to ui::Compositor (via ui::Layer) ?
+
+
+(this code path should let browser know the renderer's final frame ?)
+- LayerTreeHost::RequestNewCompositorFrameSink () =>
+  - RenderWidgetCompositor::RequestNewCompositorFrameSink =>
+    - RenderWidget::RequestNewCompositorFrameSink =>
+      - RenderThreadImpl::RequestNewCompositorFrameSink =>
+        - gpu_channel_host = EstablishGpuChannelSync
+        - new ui::ContextProviderCommandBuffer
+        - FrameSinkProviderImpl::CreateForWidget =>
+          - RenderWidgetHostImpl::RequestMojoCompositorFrameSink
+
+
+- ?? (other process?) MojoCompositorFrameSinkProxy::SubmitCompositorFrame ==...==>
+- ?? (browser) MojoCompositorFrameSinkStubDispatch::Accept =>
+  - case internal::kMojoCompositorFrameSink_SubmitCompositorFrame_Name
+    - RenderWidgetHostImpl::SubmitCompositorFrame (as MojoCompositorFrameSink) =>
+      - RenderWidgetHostViewAura::SubmitCompositorFrame =>
+        - DelegatedFrameHost::SubmitCompositorFrame =>
+          - ImageTransportFactory* factory = ImageTransportFactory::GetInstance
+          - CompositorFrameSinkSupport::SubmitCompositorFrame =>
+          - ui::Layer::SetShowPrimarySurface =>
+            - new_layer = cc::SurfaceLayer::Create
 ```
-
-# Reference
-
-- glx, x11 things
-    - https://cgit.freedesktop.org/xorg/proto/glproto/tree/glxproto.h
-    - https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXIntro.xml
