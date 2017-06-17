@@ -68,10 +68,15 @@
       Order#finalize! => OrderUpdater#update_payment_state
 
 - Order#canceled_by => #cancel! =>
-  - (event :cancel transition to: :canceled)
+  - (event :cancel transition to: :canceled, if: :allow_cancel?)
   - (after_transition to: :canceled, do: :after_cancel)
     Order#after_cancel =>
     - Payment#cancel! (as Payment::Processing) =>
       - Gateway::Stripe#cancel => ActiveMerchant::Billing::StripeGateway#void =>
         - commit(:post, "charges/#{CGI.escape(identification)}/refunds, ...)
+
+- Payment#refund ??
+  - Gateway::StripeGateway#credit =>
+    - ActiveMerchant::Billing::StripeGateway#refund =>
+      - commit(:post, "charges/#{CGI.escape(identification)}/refunds", ...)
 ```
