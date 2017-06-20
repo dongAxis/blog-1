@@ -1,6 +1,6 @@
 <!--
 {
-  "title": "Android Application",
+  "title": "Android Platform",
   "date": "2017-05-18T12:28:03+09:00",
   "category": "",
   "tags": ["android"],
