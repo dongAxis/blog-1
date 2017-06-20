@@ -11,13 +11,16 @@
 
 # TODO
 
-- Application process main function
-  - ActivityThread
-  - follow Zygote steps (ZygoteConnection.Arguments)
-- IPC architecture (Binder)
-- WindowManager, SurfaceFlinger
-- who/when launches SystemServer app ?
-
+- Follow user app lifecycle especially
+  - Process .apk
+  - AndroidManifest.xml parsing
+  - `Activity.onCreate`
+  - `Activity.setContentView`
+- SystemServer main
+- IPC architecture (Binder, in-kernel driver)
+- Userspace bootstrap
+- Build system
+- Debugging infrastructure
 
 ```
 [ Data structure (App) ]
@@ -41,6 +44,7 @@ ActivityManagerService (< ActivityManagerNative < Binder)
 ServiceManagerProxy < IServiceManager
 '-' BpBinder (cpp) < IBinder, < IServiceManager
 
+
 [ Data structure (around IPC) ]
 Binder < IBinder
 BpBinder < IBinder
@@ -49,6 +53,7 @@ IPCThreadState
 
 
 [ SystemServer main code path ]
+
 - SystemServer.main =>
   - new SystemServer
   - SystemServer.run =>
@@ -112,10 +117,8 @@ IPCThreadState
     - Looper.loop
 
 
-
-
 [ Application main code path ]
-- ((static init ?))
+
 - ActivityThread.main =>
   - Looper.prepareMainLooper =>
     - prepare => sThreadLocal.set(new Looper)
@@ -167,4 +170,53 @@ IPCThreadState
     - for (;;)
       - Message msg = queue.next
       - msg.target.dispatchMessage => ...
+```
+
+
+# Build system
+
+Android source arthicture and build artifacts:
+
+```
+- system/core/
+  - init/            ( android PID1 )
+  - rootdir/         ( PID1 config files )
+    - init.rc, init.zygote64.rc
+- frameworks/base/
+  - core/            ( application SDK e.g. Android.app.Activity )
+  - services/        ( com.android.server.SystemServer package )
+- frameworks/native/
+  - opengl/, libs/binder ( C part of SDK ? )
+  - services/            ( other system deamons )
+    - surfaceflinger/
+    - ...
+- prebuilts/
+  - android-emulator/
+  - qemu-kernel/
+```
+
+
+# Userspace boot steps
+
+```
+# list all init config files (here I picked up some)
+$ find . -name '*.rc'
+./frameworks/native/services/nativeperms/nativeperms.rc
+./frameworks/native/services/surfaceflinger/surfaceflinger.rc
+./frameworks/native/services/inputflinger/host/inputflinger.rc
+./bootable/recovery/etc/init.rc
+./device/generic/goldfish/init.goldfish.rc
+./device/generic/qemu/init.ranchu.rc
+./external/mtpd/mtpd.rc
+./system/core/logcat/logcatd.rc
+./system/core/rootdir/init.rc
+./system/core/rootdir/init.zygote64.rc
+...
+```
+
+```
+- PID1 (*.rc execution)
+- Zygote
+  - init.zygote64.rc (service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server)
+- SystemServer
 ```
