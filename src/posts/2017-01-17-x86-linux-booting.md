@@ -14,7 +14,7 @@
   - bootstrap
   - how does cpu reach start_kernel ?
   - arch/x86/boot, arch/x86/boot/compressed
-  - setup_64, 
+  - setup_64,
   - initrd, initramfs
   - real mode to protected mode
   - swapper process
@@ -49,7 +49,8 @@ $(obj)/compressed/vmlinux:
 
 # Basic flow of this Makefile
 # - object files =(setup.ld)=> setup.elf ==(objcopy)==> setup.bin
-# - vmlinux (under compressed) ==(objcopy)==> vmlinux.bin (under boot) ==(build setup.bin vmlinux.bin zoffset.h)==> bzImage
+# - vmlinux (under compressed) ==(objcopy)==> vmlinux.bin (under boot)
+#   ==(build setup.bin vmlinux.bin zoffset.h)==> bzImage
 
 ## arch/x86/boot/compressed/Makefile ##
 vmlinux-objs-y:= piggy.o, ...
@@ -70,7 +71,8 @@ $(obj)/piggy.S: $(obj)/vmlinux.bin.$(suffix-y) $(obj)/mkpiggy FORCE
 	$(call if_changed,mkpiggy)
 
 # Basic flow of this Makefile
-# - vmlinux (under root) ==(objcopy)==> vmlinux.bin (under compressed) ==(gzip)==> vmlinux.bin.gz ==(mkpiggy)==> piggy.S ==(as .incbin)==> piggy.o
+# - vmlinux (under root) ==(objcopy)==> vmlinux.bin (under compressed) ==(gzip)==>
+#   vmlinux.bin.gz ==(mkpiggy)==> piggy.S ==(as .incbin)==> piggy.o
 # - *.o ==(vmlinux.lds)==> vmlinux (under compressed)
 ```
 
@@ -92,7 +94,7 @@ $(obj)/piggy.S: $(obj)/vmlinux.bin.$(suffix-y) $(obj)/mkpiggy FORCE
 
 - EFI
   - what firmware (nvram) supposed to do
-  - how to configure those things from linux user space 
+  - how to configure those things from linux user space
   - how to write efi applications (is that elf?)
   - `efibootmgr -v`
 
