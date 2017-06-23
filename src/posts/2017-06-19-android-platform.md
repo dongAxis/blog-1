@@ -64,6 +64,18 @@ Android source arthicture and build artifacts:
 ```
 
 
+# Logging
+
+- ActivityManagerDebugConfig (is this build-time only configuration ?)
+
+```
+# - show only system log
+# - output long format
+# - filter only ActivityManager's log (others are "S"ilent)
+$ adb shell logcat -b system -v long ActivityManager:* *:S
+```
+
+
 # Userspace bootstrap
 
 ```
@@ -72,9 +84,9 @@ $ adb root
 
 # Filter out kernel thread and format
 $ adb shell ps | awk '$3!=2' | awk '{ printf "%-20s%-10s%-10s%-10s\n", $1, $2, $3, $9 }'
-USER                PID       PPID                
+USER                PID       PPID
 root                1         0         /init                         <= PID1
-root                2         0         kthreadd  
+root                2         0         kthreadd
 root                917       1         /sbin/ueventd
 logd                1244      1         /system/bin/logd
 root                1252      1         /system/bin/debuggerd
@@ -88,7 +100,7 @@ system              1296      1         /system/bin/servicemanager    <= service
 system              1297      1         /system/bin/surfaceflinger
 shell               1301      1         /system/bin/sh                <= shell
 root                1350      1         zygote64                      <= zygote
-root                1351      1         zygote    
+root                1351      1         zygote
 audioserver         1352      1         /system/bin/audioserver
 cameraserver        1353      1         /system/bin/cameraserver
 drm                 1354      1         /system/bin/drmserver
@@ -130,7 +142,7 @@ u0_a51              3081      1351      com.google.android.talk:matchstick
 u0_a65              3142      1350      com.android.printspooler
 u0_a1               3619      1350      android.process.acore
 u0_a70              3666      1350      net.hiogawa.androidstarter        <= My test app
-root                3686      2866      ps        
+root                3686      2866      ps
 ```
 
 
@@ -168,7 +180,14 @@ TODO
     - (for pid == 0 (i.e. for child))
       - handleSystemServerProcess =>
         - ZygoteInit.zygoteInit => RuntimeInit.applicationInit => invokeStaticMain
-  - ZygoteServer.runSelectLoop => ?
+  - ZygoteServer.runSelectLoop =>
+    - peers = new ArrayList<ZygoteConnection>()
+    - while (true)
+      - Os.poll
+      - ZygoteConnection.runOnce =>
+        - pid = Zygote.forkAndSpecialize => nativeForkAndSpecialize
+        - (for pid == 0)
+          - handleChildProc => ZygoteInit.zygoteInit => ...
 ```
 
 
@@ -282,23 +301,104 @@ IPCThreadState
 
 # ActivityManagerService
 
-```
-$ am start com.example.android/.MainActivity
+Notes
 
-- main => run => onRun =>
-  - onRun
-  - ComponentName.unflattenFromString("com.example.android/.MainActivity") =>
-    - ComponentName("com.example.android", "com.example.android.MainActivity")
+- Activity stack management
+- Activity view transition/animation
+- thanks to http://dsas.blog.klab.org/archives/52003951.html#startActivityLocked3
+
+```
+[ Data structure ]
+ActivityManagerService
+'-' ActivityStarter
+  '-' ActivityRecord mStartActivity
+  '-' ActivityStack mSourceStack, mTargetStack
+  '-' ActivityStackSupervisor
+    '-' IStatusBarService
+    '-' ActivityStack mHomeStack, mFocusedStack
+    '-' mXXXActivities (e.g. mStoppingActivities, mFinishingActivities)
+    '-' RecentTasks (< ArrayList<TaskRecord>)
+
+TaskRecord
+'-' ActivityStack
+  '-' mXXXActivity
+'-' ArrayList<ActivityRecord>
+  '-* ActivityRecord
+    '-' ActivityInfo
+    '-' Intent
+    '-' ActivityRecord (resultTo)
+    '-' ProcessRecord (hosting process)
+
+
+[ Starting activity from shell]
+("am start net.hiogawa.androidstarter/.MainActivity")
+- Am.main => new Am, Am.run => onRun =>
+  - mAm = ActivityManagerNative.getDefault
+  - mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"))
+  - runStart =>
+    - makeIntent => Intent.parseCommandArgs =>
+      - new Intent
+      - ComponentName.unflattenFromString("com.example.android/.MainActivity") =>
+        - ComponentName("com.example.android", "com.example.android.MainActivity")
+      - Intent.setComponent
+    - (if intent is not explicit one (i.e. Intent.getComponent is null), which is not the current case)
+      - IPackageManager.queryIntentActivities ...
+    - IActivityManager.startActivityAsUser => (IPC to SystemServer ...)
+
+- ActivityManagerService.startActivityAsUser =>
+  - ActivityStarter.startActivityMayWait =>
+    - ActivityInfo aInfo = mSupervisor.resolveActivity
+    - startActivityLocked =>
+      - .. bunch of checking (e.g. ActivityStackSupervisor.checkStartAnyActivityPermission) ..
+      - r = new ActivityRecord(..)
+      - startActivityUnchecked (with doResume = true) =>
+        - setInitialState =>
+          - mStartActivity = r
+          - mDoResume = doResume
+        - setTaskToCurrentTopOrCreateNewTask ? =>
+          - mTargetStack = computeStackFocus
+        - ActivityStack.startActivityLocked =>
+          - TaskRecord.addActivityToTop
+          - TaskRecord.setFrontOfTask
+          - ProcessRecord proc = r.app
+          - (if proc == null) showStartingIcon = true
+          - WindowManagerService.prepareAppTransition => ?
+          - ActivityRecord.showStartingWindow =>
+            - WindowManagerService.setAppStartingWindow => ?
+        - ActivityManagerService.setFocusedActivityLocked => ...
+        - ActivityStackSupervisor.resumeFocusedStackTopActivityLocked =>
+          - ActivityStack.resumeTopActivityUncheckedLocked =>
+            - resumeTopActivityInnerLocked(prev ..) =>
+              - ActivityRecord next = topRunningActivityLocked
+              - (TODO: huge code, I wanna see all with ActivityManagerDebugConfig turned on ...)
+              - if next.app == null (i.e. there's no activity hosting this activity)
+                - ActivityStackSupervisor.startSpecificActivityLocked =>
+                  - ProcessRecord app = newProcessRecordLocked
+                  - startSpecificActivityLocked =>
+                    - ActivityManagerService.startProcessLocked(ProcessRecord app ..) =>
+                      - isActivityProcess = (entryPoint == null)
+                      - entryPoint = "android.app.ActivityThread"
+                      - startResult = Process.start(entryPoint ..) =>
+                        - ZygoteProcess.start => startViaZygote =>
+                          - zygoteSendArgsAndGetResult => (IPC with Zygote process, SEE ABOVE)
+                      - mPidsSelfLocked.put(startResult.pid, app)
 ```
 
 
 # User application
 
-```
-[ Application main code path ]
-(am start -W net.hiogawa.androidstarter/.MainActivity)
+- lifecycle
+  - [x] package
+  - [x] process
+  - threads
+  - components
+  - [x] activity
+  - view
 
-- ActivityThread.main =>
+```
+[ process initialization ]
+
+- ActivityThread.main (SEE ABOVE for this entry from ActivityManagerService) =>
   - Looper.prepareMainLooper =>
     - prepare => sThreadLocal.set(new Looper)
     - sMainLooper = myLooper
@@ -307,7 +407,11 @@ $ am start com.example.android/.MainActivity
     - mAppThread = new ApplicationThread() =>
       - ApplicationThreadNative => Binder.attachInterface(this, "android.app.IApplicationThread")
     - mLooper = Looper.myLooper()
-  - ActivityThread.attach(false) =>
+    - mH = new H (< Handler) =>
+      - mLooper = Looper.myLooper
+      - mQueue = mLooper.mQueue
+      - mAsynchronous = false
+  - ActivityThread.attach(false) (false means non system server process) =>
     - RuntimeInit.setApplicationObject(mAppThread.asBinder())
     - ActivityManagerNative.getDefault => Singleton<IActivityManager>.get => create =>
       - IBinder b = ServiceManager.getService("activity") =>
@@ -323,7 +427,7 @@ $ am start com.example.android/.MainActivity
             - BpBinder.queryLocalInterface ?? or
             - new ServiceManagerProxy => mRemote = (BpBinder)
         - ServiceManagerProxy.getService("activity") =>
-          - mRemote.transact(GET_SERVICE_TRANSACTION, ..) (TODO: what is "activity" remote process ?)=>
+          - mRemote.transact(GET_SERVICE_TRANSACTION, ..) =>
             - (cpp) BpBinder.transact =>
               - IPCThreadState::transact =>
                 - writeTransactionData => ...
@@ -332,21 +436,121 @@ $ am start com.example.android/.MainActivity
                     - do while ioctl(mProcess->mDriverFD, BINDER_WRITE_READ, &bwr)
       - IActivityManager am = asInterface(b) => new ActivityManagerProxy(b) => mRemote = b
     - ActivityManagerProxy.attachApplication =>
-      - mRemote.transact(ATTACH_APPLICATION_TRANSACTION, ..) => (IPC ?) =>
+      - mRemote.transact(ATTACH_APPLICATION_TRANSACTION, ..) => ((IPC to service)) =>
         - ActivityManagerNative.onTransact (case ATTACH_APPLICATION_TRANSACTION) =>
           - ActivityManagerService.attachApplication => attachApplicationLocked(IApplicationThread thread, int pid) =>
             - ProcessRecord app = mPidsSelfLocked.get(pid)
-            - ProcessRecord.makeActive =>
-              - baseProcessTracker = ProcessStatsService.getProcessStateLocked =>
-                - ProcessStats.getProcessStateLocked => ?? ProcessState ..?
-              - baseProcessTracker.makeActive => ?
-            - updateProcessForegroundLocked ?
-            - thread.bindApplication => (IPC ?) => ApplicationThread.bindApplication
-              - mRemote.transact(BIND_APPLICATION_TRANSACTION, )
-            - mStackSupervisor.attachApplicationLocked => ?
-            - mServices.attachApplicationLocked => ?
+            - ProcessRecord.makeActive => ...
+            - thread.bindApplication => ((IPC to app)) =>
+              - ApplicationThread.bindApplication(processName, appInfo, .. instrumentationName ..) =>
+                - new AppBindData
+                - data.processName = processName
+                - data.appInfo = appInfo
+                - data.instrumentationName = instrumentationName
+                - Handler.sendMessage(H.BIND_APPLICATION ..) =>
+                  - (another thread ?) H.handleMessage => handleBindApplication =>
+                    - data.info (LoadedApk) = getPackageInfoNoCheck
+                    - appContext = ContextImpl.createAppContext(this ..) => ?
+                    - Application app = LoadedApk.makeApplication =>
+                      - Instrumentation.newApplication =>
+                        - Class.newInstance => new android.app.Application
+                        - Application.attach => ContextWrapper.attachBaseContext
+                    - Instrumentation.callApplicationOnCreate => Application.onCreate
+            - ActivityStackSupervisor.attachApplicationLocked(app) =>
+              - ActivityRecord hr = ..
+              - realStartActivityLocked(hr, app ..) =>
+                - r.app = app
+                - app.activities.add(r)
+                - app.thread.scheduleLaunchActivity(new Intent(r.intent) ..) => ((IPC to app)) =>
+                  - scheduleLaunchActivity =>
+                    - r = new ActivityClientRecord
+                    - sendMessage(H.LAUNCH_ACTIVITY, r) => handleLaunchActivity =>
+                      - Activity a = performLaunchActivity =>
+                        - ComponentName component = Intent.getComponent
+                        - Instrumentation.newActivity =>
+                          - Class.newInstance => new new.hiogawa.androidstarter.MainActivity
+                        - Activity.attach =>
+                          - mWindow = new PhoneWindow (< Window)
+                          - mUiThread = Thread.currentThread
+                          - mWindow.setWindowManager => ..
+                          - mWindowManager = mWindow.getWindowManager
+                        - Instrumentation.callActivityOnCreate =>
+                          - Activity.performCreate =>
+                            - MainActivity.onCreate =>
+                              - (application code for example)
+                              - super.onCreate => .. mCalled = true
+                              - Activity.setContentView => (SEE BELOW for view detail)
+                            - performCreateCommon =>
+                              - ActivityTransitionState.setEnterActivityOptions
+                        - r.activity = activity
+                      - handleResumeActivity =>
+                        - performResumeActivity => ..
+                        - ViewManager wm = a.getWindowManager
+                        - wm.addView => WindowManagerImpl.addView => WindowManagerGlobal.addView =>
+                          - root = new ViewRootImpl =>
+                            - mTraversalRunnable = new TraversalRunnable (non-static init)
+                            - mWindowSession = WindowManagerGlobal.getWindowSession
+                            - mAttachInfo = new View.AttachInfo
+                            - mChoreographer = Choreographer.getInstance
+                            - mDisplayManager = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE)
+                            - ...
+                          - root.setView =>
+                            - mDisplayManager.registerDisplayListener(mDisplayListener, mHandler) ?
+                            - requestLayout => scheduleTraversals =>
+                              - mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable ..)
+                            - mInputChannel = new InputChannel
+                            - mWindowSession.addToDisplay => (IPC ?)
+                            - mInputEventReceiver = new WindowInputEventReceiver(mInputChannel, ..)
+            - ActiveServices.attachApplicationLocked => ..
   - Looper.loop =>
     - for (;;)
       - Message msg = queue.next
-      - msg.target.dispatchMessage => ...
+      - msg.target.dispatchMessage =>
+        - (Actually above main thread handler is called here ?)
+```
+
+
+- View lifecycle
+  - https://developer.android.com/topic/performance/rendering/profile-gpu.html#sam
+  - https://developer.android.com/training/material/animations.html#Touch
+  - https://developer.android.com/training/transitions/overview.html
+  - is there any chromium-like LayerTreeHostImpl ?
+  - input hit testing and callback
+    - input is not passed from ActivityManagerService ?
+    - inputflinger, InputManagerService, WindowManagerService ?
+  - View.onLayout, View.onDraw
+  - ViewRootImpl (scheduleTraversals, doTraversal, performLayout, draw ..)
+  - View.AttachInfo
+
+```
+- WindowManagerImpl.addView =>
+  - WindowManagerGlobal.addView =>
+    -
+
+- ? => ViewRootImpl =>
+  - mAttachInfo = new View.AttachInfo
+
+- Activity.setContentView =>
+  - PhoneWindow.setContentView =>
+    - installDecor =>
+      - mDecor = generateDecor =>
+        - new DecorContext =>
+        - new DecorView => FrameLayout => ViewGroup => View =>
+          - ...
+          - mRenderNode = RenderNode.create => new RenderNode =>
+            - mNativeRenderNode = nCreate => (cpp) android_view_RenderNode_create =>
+              - new RenderNode (Skia wrapper ?)
+      - mContentParent = generateLayout =>
+        - ..
+      - mXXXTransition = ... (e.g. mEnterTransition)
+    - (forget FEATURE_CONTENT_TRANSITIONS for now)
+    - mContentParent.addView (i.e. ViewGroup.addView) =>
+      - requestLayout (View.requestLayout) =>
+        - ViewRootImpl.requestLayoutDuringLayout => mLayoutRequesters.add(view)
+        - AttachInfo.mViewRequestingLayout = this
+      - invalidate => invalidateInternal => .. propagate damage to parent
+      - addViewInner =>
+        - mTransition.addChild
+        - child.assignParent
+        - ..
 ```
