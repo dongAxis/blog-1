@@ -464,43 +464,7 @@ TaskRecord
                 - app.thread.scheduleLaunchActivity(new Intent(r.intent) ..) => ((IPC to app)) =>
                   - scheduleLaunchActivity =>
                     - r = new ActivityClientRecord
-                    - sendMessage(H.LAUNCH_ACTIVITY, r) => handleLaunchActivity =>
-                      - Activity a = performLaunchActivity =>
-                        - ComponentName component = Intent.getComponent
-                        - Instrumentation.newActivity =>
-                          - Class.newInstance => new new.hiogawa.androidstarter.MainActivity
-                        - Activity.attach =>
-                          - mWindow = new PhoneWindow (< Window)
-                          - mUiThread = Thread.currentThread
-                          - mWindow.setWindowManager => ..
-                          - mWindowManager = mWindow.getWindowManager
-                        - Instrumentation.callActivityOnCreate =>
-                          - Activity.performCreate =>
-                            - MainActivity.onCreate =>
-                              - (application code for example)
-                              - super.onCreate => .. mCalled = true
-                              - Activity.setContentView => (SEE BELOW for view detail)
-                            - performCreateCommon =>
-                              - ActivityTransitionState.setEnterActivityOptions
-                        - r.activity = activity
-                      - handleResumeActivity =>
-                        - performResumeActivity => ..
-                        - ViewManager wm = a.getWindowManager
-                        - wm.addView => WindowManagerImpl.addView => WindowManagerGlobal.addView =>
-                          - root = new ViewRootImpl =>
-                            - mTraversalRunnable = new TraversalRunnable (non-static init)
-                            - mWindowSession = WindowManagerGlobal.getWindowSession
-                            - mAttachInfo = new View.AttachInfo
-                            - mChoreographer = Choreographer.getInstance
-                            - mDisplayManager = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE)
-                            - ...
-                          - root.setView =>
-                            - mDisplayManager.registerDisplayListener(mDisplayListener, mHandler) ?
-                            - requestLayout => scheduleTraversals =>
-                              - mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable ..)
-                            - mInputChannel = new InputChannel
-                            - mWindowSession.addToDisplay => (IPC ?)
-                            - mInputEventReceiver = new WindowInputEventReceiver(mInputChannel, ..)
+                    - sendMessage(H.LAUNCH_ACTIVITY, r) => handleLaunchActivity => (SEE BELOW Activity lifecycle)
             - ActiveServices.attachApplicationLocked => ..
   - Looper.loop =>
     - for (;;)
@@ -510,26 +474,73 @@ TaskRecord
 ```
 
 
+- Activity lifecycle
+
+```
+- handleLaunchActivity =>
+  - Activity a = performLaunchActivity =>
+    - ComponentName component = Intent.getComponent
+    - Instrumentation.newActivity =>
+      - Class.newInstance => new new.hiogawa.androidstarter.MainActivity
+    - Activity.attach =>
+      - mWindow = new PhoneWindow (< Window)
+      - mUiThread = Thread.currentThread
+      - mWindow.setWindowManager => ..
+      - mWindowManager = mWindow.getWindowManager
+    - Instrumentation.callActivityOnCreate =>
+      - Activity.performCreate =>
+        - MainActivity.onCreate =>
+          - (application code for example)
+          - super.onCreate => .. mCalled = true
+          - Activity.setContentView => (SEE BELOW for view detail)
+        - performCreateCommon =>
+          - ActivityTransitionState.setEnterActivityOptions
+    - r.activity = activity
+  - handleResumeActivity =>
+    - performResumeActivity => .. Activity.onResume
+    - ViewManager wm = a.getWindowManager
+    - wm.addView => WindowManagerImpl.addView => WindowManagerGlobal.addView =>
+      - root = new ViewRootImpl =>
+        - (non-static init)
+          - mTraversalRunnable = new TraversalRunnable
+          - mHandler = new ViewRootHandler
+        - mWindowSession = WindowManagerGlobal.getWindowSession
+        - mAttachInfo = new View.AttachInfo(.. mHandler)
+        - mChoreographer = Choreographer.getInstance
+        - mDisplayManager = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE)
+        - ...
+      - root.setView =>
+        - mDisplayManager.registerDisplayListener(mDisplayListener, mHandler) ?
+        - requestLayout => scheduleTraversals =>
+          - mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable ..) =>
+            - postCallbackDelayed => postCallbackDelayedInternal =>
+              - mCallbackQueues[callbackType].addCallbackLocked
+              - scheduleFrameLocked => scheduleVsyncLocked =>
+                - FrameDisplayEventReceiver.scheduleVsync (< DisplayEventReceiver) => nativeScheduleVsync ...
+        - mInputChannel = new InputChannel
+        - mWindowSession.addToDisplay => (IPC ?)
+        - mInputEventReceiver = new WindowInputEventReceiver(mInputChannel, ..)
+```
+
+
 - View lifecycle
   - https://developer.android.com/topic/performance/rendering/profile-gpu.html#sam
   - https://developer.android.com/training/material/animations.html#Touch
   - https://developer.android.com/training/transitions/overview.html
-  - is there any chromium-like LayerTreeHostImpl ?
-  - input hit testing and callback
+  - https://skia.org/
+  - input hit testing and callback (or scheduling)
     - input is not passed from ActivityManagerService ?
     - inputflinger, InputManagerService, WindowManagerService ?
-  - View.onLayout, View.onDraw
-  - ViewRootImpl (scheduleTraversals, doTraversal, performLayout, draw ..)
-  - View.AttachInfo
+  - View.onLayout, View.onDraw (follow TextView for example (harfbuzz, freetype backend ?))
+  - what's the cpu work for skia gpu backend mode ?
+    - mask bits creation from path or glyph is cpu work
+    - how about translation, rotate ?
+      - I think these transformation too since these transformation affects mask creation and at least anti aliasing
+      - but, actually we're doing those kinds of animation on GPU, aren't we ?
+    - all SkPaint effects can be on GPU (maybe not for crazy path filter)
+  - ViewRootImpl.doTraversal scheduling by Choreographer
 
 ```
-- WindowManagerImpl.addView =>
-  - WindowManagerGlobal.addView =>
-    -
-
-- ? => ViewRootImpl =>
-  - mAttachInfo = new View.AttachInfo
-
 - Activity.setContentView =>
   - PhoneWindow.setContentView =>
     - installDecor =>
@@ -553,4 +564,17 @@ TaskRecord
         - mTransition.addChild
         - child.assignParent
         - ..
+
+- DisplayEventReceiver.dispatchVsync (from cpp, different thread for this event receiver ?) =>
+  - FrameDisplayEventReceiver.onVsync =>
+    - FrameHandler.sendMessage ..
+      - Choreographer.doFrame =>
+        - doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos) => (TODO: who queues this type of task ?)
+        - doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos) => (TODO: who queues this type of task ?)
+        - doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos) =>
+          - mCallbackQueues[callbackType].extractDueCallbacksLocked
+          - ViewRootImpl.TraversalRunnable.run (this is queued from ViewRootImpl.scheduleTraversals) =>
+            - doTraversal => performTraversals =>
+              - TODO: ...
+        - doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos) => (TODO: who queues this type of task ?)
 ```
