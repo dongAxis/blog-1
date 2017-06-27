@@ -8,6 +8,41 @@
 }
 -->
 
+# TODO
+
+- lucene score implementation
+  - tfidf: https://lucene.apache.org/core/6_6_0/core/org/apache/lucene/search/similarities/TFIDFSimilarity.html#formula_tf
+- index format on disk
+- non goals
+  - http server impl
+  - clustering
+
+
+# Scoring
+
+- https://lucene.apache.org/core/6_6_0/core/org/apache/lucene/search/similarities/TFIDFSimilarity.html#formula_tf
+
+Small example from my company's data:
+
+```
+# Example score of query "title_en:ramen"
+# on document X with title_en "Ichiran Ramen: One of the Best Ramen in Japan"
+#
+# idf * tfNorem (= 4.2 * 1.2)   <= boost is multiplied to this if any (on-field or on-query-term)
+# where
+# idf = 1 + log(docCount + 1 / docFreq + 1) = 4.2
+#   - docFreq=34              <= the smaller the higher
+#   - docCount=2459
+# tfNorm = sqrt(termFreq) * ??? = 1.2
+#   - termFreq=2
+#   - avgFieldLength=2.6      <= the smaller the higher ?
+#   - fieldLength=7.1         <= the smaller the higher
+#   - some params k1=1.2, b=0.75
+```
+
+
+# Code reading
+
 ```
 [ Data structure ]
 bootstrap.Elasticsearch (< EnvironmentAwareCommand < Command)
@@ -119,12 +154,3 @@ Searching for: indexsearcher
 9. /home/hiogawa/code/others/lucene-solr/lucene/core/src/java/org/apache/lucene/search/Rescorer.java
 10. /home/hiogawa/code/others/lucene-solr/lucene/core/src/test/org/apache/lucene/search/TestBooleanScorer.java
 ```
-
-
-# TODO
-
-- use lucene directly
-- data format on disk
-- non goals
-  - http server impl
-  - clustering
