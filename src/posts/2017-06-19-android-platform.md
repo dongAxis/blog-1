@@ -1,7 +1,7 @@
 <!--
 {
   "title": "Android Platform",
-  "date": "2017-05-18T12:28:03+09:00",
+  "date": "2017-06-19T12:28:03+09:00",
   "category": "",
   "tags": ["android"],
   "draft": true
@@ -396,6 +396,10 @@ TaskRecord
   - view
 
 ```
+[ Data structure ]
+ActivityThread, Window (PhoneWindow), ViewRootImpl, ...TODO
+Activity
+
 [ process initialization ]
 
 - ActivityThread.main (SEE ABOVE for this entry from ActivityManagerService) =>
@@ -498,8 +502,9 @@ TaskRecord
     - r.activity = activity
   - handleResumeActivity =>
     - performResumeActivity => .. Activity.onResume
+    - View decor = r.window.getDecorView
     - ViewManager wm = a.getWindowManager
-    - wm.addView => WindowManagerImpl.addView => WindowManagerGlobal.addView =>
+    - wm.addView(decor) => WindowManagerImpl.addView => WindowManagerGlobal.addView =>
       - root = new ViewRootImpl =>
         - (non-static init)
           - mTraversalRunnable = new TraversalRunnable
@@ -511,6 +516,12 @@ TaskRecord
         - ...
       - root.setView =>
         - mDisplayManager.registerDisplayListener(mDisplayListener, mHandler) ?
+        - enableHardwareAcceleration => mAttachInfo.mHardwareRenderer = ThreadedRenderer.create =>
+          - new ThreadedRenderer =>
+            - long rootNodePtr = nCreateRootRenderNode => ?
+            - mRootNode = RenderNode.adopt
+            - mNativeProxy = nCreateProxy => ?
+            - ProcessInitializer.sInstance.init => ?
         - requestLayout => scheduleTraversals =>
           - mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable ..) =>
             - postCallbackDelayed => postCallbackDelayedInternal =>
@@ -538,9 +549,18 @@ TaskRecord
       - I think these transformation too since these transformation affects mask creation and at least anti aliasing
       - but, actually we're doing those kinds of animation on GPU, aren't we ?
     - all SkPaint effects can be on GPU (maybe not for crazy path filter)
-  - ViewRootImpl.doTraversal scheduling by Choreographer
+  - renderer, drawable setup ?
 
 ```
+[ Data structure ]
+ViewRootImpl
+'-' AttachInfo
+  '-' ThreadedRenderer (mHardwareRenderer)
+'-' Surface (this has some deal with ThreadedRenderer's existence ?)
+'-' IWindowSession
+
+
+[ Procedure ]
 - Activity.setContentView =>
   - PhoneWindow.setContentView =>
     - installDecor =>
@@ -569,12 +589,81 @@ TaskRecord
   - FrameDisplayEventReceiver.onVsync =>
     - FrameHandler.sendMessage ..
       - Choreographer.doFrame =>
-        - doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos) => (TODO: who queues this type of task ?)
-        - doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos) => (TODO: who queues this type of task ?)
+        - doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos) => ?
+        - doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos) => ?
         - doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos) =>
           - mCallbackQueues[callbackType].extractDueCallbacksLocked
           - ViewRootImpl.TraversalRunnable.run (this is queued from ViewRootImpl.scheduleTraversals) =>
             - doTraversal => performTraversals =>
-              - TODO: ...
-        - doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos) => (TODO: who queues this type of task ?)
+              - measureHierarchy ? (this could call performMeasure ?)
+              - relayoutWindow => IWindowSession.relayout => ?
+              - mAttachInfo.mHardwareRenderer.initialize(mSurface) => ?
+              - mSurface.allocateBuffers => ?
+              - mAttachInfo.mHardwareRenderer.setup (ThreadedRenderer.setup) => ?
+              - performMeasure => mView.measure (i.e. DecorView.measure) => View.measure =>
+                - DecorView.onMeasure => FrameLayout.onMeasure (as super) =>
+                  - View.setMeasuredDimension => ...
+                  - for children, child.measure ... (recursively) (SEE BELOW for TextView's example, which is leaf case)
+              - performLayout =>
+                - DecorView.layout (as View.layout) => DecorView.onLayout => FrameLayout.onLayout (as super) => child.layout ...
+                - (there could be mLayoutRequesters and go to DecorView.layout again, but doing something smart here)
+              - mAttachInfo.mTreeObserver.dispatchOnPreDraw (for example TextView register this callback)
+              - performDraw =>
+                - draw =>
+                  - scrollToRectOrFocus => ...
+                  - mAttachInfo.mHardwareRenderer.draw(mView, mAttachInfo, this) (as ThreadedRenderer.draw) =>
+                    - updateRootDisplayList(view) =>
+                      - updateViewTreeDisplayList => view.updateDisplayListIfDirty =>
+                        - DisplayListCanvas canvas = renderNode.start(width, height) => ...
+                        - (if layerType == LAYER_TYPE_SOFTWARE) canvas.drawBitmap ...
+                        - (otherwise) draw(canvas) =>
+                          - onDraw (as DecorView.onDraw) => ...
+                          - dispatchDraw (as ViewGroup.dispatchDraw) =>
+                            - for each mChildren (View[]), drawChild(canvas, child ..) => child.draw(canvas) (recursively ..)
+                          - onDrawForeground =>
+                            - onDrawScrollIndicators =>
+                            - onDrawScrollBars =>
+                            - foreground.draw => ...
+                      - DisplayListCanvas canvas = mRootNode.start
+                      - canvas.drawRenderNode => ?
+                    - nSyncAndDrawFrame => (cpp) ?
+        - doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos) => ? (is this custom animation specific concept ?)
+```
+
+
+- Example: TextView
+
+```
+[ Data structure ]
+View
+'-' RenderNode
+'-' ForegroundInfo
+  '-' Drawable
+'-' Context
+'-' ListenerInfo
+  '-' OnClickListener
+  '-' OnLongClickListener
+  '-' ...
+'-' mMeasuredWidth, mMeasuredHeight (measure pass's result)
+'-' mLeft, mRight, mTop, ... (layout pass's result)
+
+
+TextView < View
+'-' mTextColor, mHintTextColor (additional styles)
+'-' Drawables
+  '-' Drawable[4]
+'-' text.Layout
+'-' CharSequence (mHint)
+'-' TextPaint
+'-' Editor
+
+
+[ Procedure ]
+- TextView.onMeasure() =>
+  -
+
+- TextView.onLayout()
+
+- TextView.onDraw =>
+  -
 ```
