@@ -529,8 +529,10 @@ Activity
               - scheduleFrameLocked => scheduleVsyncLocked =>
                 - FrameDisplayEventReceiver.scheduleVsync (< DisplayEventReceiver) => nativeScheduleVsync ...
         - mInputChannel = new InputChannel
-        - mWindowSession.addToDisplay => (IPC ?)
-        - mInputEventReceiver = new WindowInputEventReceiver(mInputChannel, ..)
+        - mWindowSession.addToDisplay(.. mInputChannel) => (TODO: IPC ?)
+        - mInputEventReceiver = new WindowInputEventReceiver(mInputChannel, Looper.myLooper())
+        - (input stage setup e.g. new ViewPostImeInputStage, NativePreImeInputStage ...)
+        - mFirstInputStage = nativePreImeStage
 ```
 
 
@@ -559,6 +561,11 @@ ViewRootImpl
 '-' Surface (this has some deal with ThreadedRenderer's existence ?)
 '-' IWindowSession
 
+DisplayListCanvas (< Canvas)
+'-' RenderNode
+'-' mWidth, mHeight
+'-' long mNativeCanvasWrapper (from Canvas)
+
 
 [ Procedure ]
 - Activity.setContentView =>
@@ -570,12 +577,12 @@ ViewRootImpl
           - ...
           - mRenderNode = RenderNode.create => new RenderNode =>
             - mNativeRenderNode = nCreate => (cpp) android_view_RenderNode_create =>
-              - new RenderNode (Skia wrapper ?)
+              - new RenderNode
       - mContentParent = generateLayout =>
         - ..
       - mXXXTransition = ... (e.g. mEnterTransition)
     - (forget FEATURE_CONTENT_TRANSITIONS for now)
-    - mContentParent.addView (i.e. ViewGroup.addView) =>
+    - mContentParent.addView (i.e. ViewGroup.addView) (TODO: when did we instantiate child views ??) =>
       - requestLayout (View.requestLayout) =>
         - ViewRootImpl.requestLayoutDuringLayout => mLayoutRequesters.add(view)
         - AttachInfo.mViewRequestingLayout = this
@@ -614,24 +621,29 @@ ViewRootImpl
                   - mAttachInfo.mHardwareRenderer.draw(mView, mAttachInfo, this) (as ThreadedRenderer.draw) =>
                     - updateRootDisplayList(view) =>
                       - updateViewTreeDisplayList => view.updateDisplayListIfDirty =>
-                        - DisplayListCanvas canvas = renderNode.start(width, height) => ...
+                        - DisplayListCanvas canvas = renderNode.start(width, height) =>
+                          - DisplayListCanvas.obtain(this, ...) =>
+                            - new DisplayListCanvas(width, height) => nCreateDisplayListCanvas => (cpp) ..
                         - (if layerType == LAYER_TYPE_SOFTWARE) canvas.drawBitmap ...
                         - (otherwise) draw(canvas) =>
                           - onDraw (as DecorView.onDraw) => ...
                           - dispatchDraw (as ViewGroup.dispatchDraw) =>
                             - for each mChildren (View[]), drawChild(canvas, child ..) => child.draw(canvas) (recursively ..)
+                              (SEE BELOW for drawing example (aka sk picture recording))
                           - onDrawForeground =>
-                            - onDrawScrollIndicators =>
-                            - onDrawScrollBars =>
+                            - onDrawScrollIndicators => ..
+                            - onDrawScrollBars => ..
                             - foreground.draw => ...
-                      - DisplayListCanvas canvas = mRootNode.start
-                      - canvas.drawRenderNode => ?
-                    - nSyncAndDrawFrame => (cpp) ?
+                    - nSyncAndDrawFrame => (cpp) .. (SEE BELOW for sk picture playback)
         - doCallbacks(Choreographer.CALLBACK_COMMIT, frameTimeNanos) => ? (is this custom animation specific concept ?)
 ```
 
 
 - Example: TextView
+  - follow Canvas.drawText
+  - skia font management
+  - harfbuzz layout
+  - freetype rasterization
 
 ```
 [ Data structure ]
@@ -666,4 +678,103 @@ TextView < View
 
 - TextView.onDraw =>
   -
+```
+
+- Render implementation
+  - base/libs/hwui/
+    - renderthread/ (RenderProxy.cpp)
+    - hwui/ (Canvas.cpp)
+
+```
+[ Data structure ]
+RenderThread
+'-' TaskQueue
+  '-* RenderTask
+'-' DisplayInfo
+'-' DisplayEventReceiver
+'-' EglManager
+
+RenderProxy
+'-' DrawFrameTask (< RenderTask)
+  '-' RenderNode
+  '-' std::vector< sp<DeferredLayerUpdater> > mLayers ?
+'-' CanvasContext
+
+RootRenderNode (< RenderNode)
+
+RenderNode
+'-' layer_t* mLayer
+'-' DisplayList* mDisplayList;
+'-' DisplayList* mStagingDisplayList;
+'-' RenderProperties mProperties;
+'-' RenderProperties mStagingProperties;
+
+RenderTask
+'-'
+
+
+[ Procedure ]
+
+(Setup: RenderNode, ThreadedRenderer, DisplayListCanvas)
+- ViewRootImpl.setView => new ThreadedRenderer =>
+  - long rootNodePtr = nCreateRootRenderNode =>
+    - (cpp) android_view_ThreadedRenderer_createRootRenderNode =>
+      - new RootRenderNode
+  - mRootNode = RenderNode.adopt => new RenderNode as long pointer
+  - mNativeProxy = nCreateProxy =>
+    - (cpp) android_view_ThreadedRenderer_createProxy =>
+      - ContextFactoryImpl factory => ?
+      - new RenderProxy =>
+        - SETUP_TASK => task = new MethodInvokeRenderTask(Bridge_createContext)
+        - postAndWait =>
+          - (talk with who ??)
+          - Bridge_createContext => new CanvasContext ??
+        - DrawFrameTask.setContext
+  - ProcessInitializer.sInstance.init => ?
+
+(Recording)
+- Canvas.drawXXX =>
+  - DisplayListCanvas.dra
+
+- DisplayListCanvas.drawRenderNode => nDrawRenderNode =>
+  - (cpp) android_view_DisplayListCanvas_drawRenderNode =>
+    - DisplayListCanvas::drawRenderNode (as Canvas) =>
+      - new DrawRenderNodeOp
+      - addRenderNodeOp => ..
+
+(Playback)
+- ThreadedRenderer.nSyncAndDrawFrame =>
+  - (cpp) android_view_ThreadedRenderer_syncAndDrawFrame =>
+    - RenderProxy::syncAndDrawFrame => DrawFrameTask.drawFrame =?
+      - postAndWait => mRenderThread->queue(this) => ?
+```
+
+- UI Event dispatching
+
+```
+(Initialization)
+- new WindowInputEventReceiver(inputChannel, looper) => InputEventReceiver =>
+  - mInputChannel = inputChannel
+  - mMessageQueue = looper.getQueue()
+  - mReceiverPtr = nativeInit =>
+    - (cpp) ??
+
+(Dispatching)
+- ?? =>
+  - WindowInputEventReceiver.onInputEvent =>
+    - enqueueInputEvent(event .. true) =>
+      - doProcessInputEvents => deliverInputEvent =>
+        - mFirstInputStage.deliver (i.e. nativePreImeStage) =>
+          - ... (stage pipelines TODO) ... =>
+            - ViewPostImeInputStage.onDeliverToNext =>
+              - mView.dispatchKeyEvent (i.e. DecorView.dispatchKeyEvent) =>
+                - ???
+
+(TODO: doesn't event always come through Choreographer.postCallback(CALLBACK_INPUT) ?)
+- ?? =>
+  - ViewRootImpl.scheduleConsumeBatchedInput =>
+    - mChoreographer.postCallback(Choreographer.CALLBACK_INPUT, mConsumedBatchedInputRunnable ..)
+
+- (Choreographer traversal) mConsumedBatchedInputRunnable.run => doConsumeBatchedInput =>
+  - mInputEventReceiver.consumeBatchedInputEvents
 ```
