@@ -17,6 +17,8 @@
 # TODO
 
 - POSIX thread implementation
+  - pthread_cond_wait
+  - pthread_create
 - user stack separation implementation ?
   - is that in VM ?
 - thread local storage implementation ?
