@@ -26,6 +26,12 @@
   - c++ standard `thread_local`
 - is libc function posix thread safe ? (e.g. malloc)
 
+
+# Example
+
+- blender and cycles
+
+
 # Reference
 
 - clone(2), pthread(7)
