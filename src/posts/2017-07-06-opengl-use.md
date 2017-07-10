@@ -12,7 +12,7 @@
 
 - gouraud shading (interporation)
   - how does opengl pipeline provides surface/vertex normal information to us ?
-- mirror, reflection, refraction effect
+- mirror, reflection, refraction effect, object's shadow
   - does this require multiple drawing pass ?
 - blender viewport (eevee)
 - skia backend (what's interesting here ?)
