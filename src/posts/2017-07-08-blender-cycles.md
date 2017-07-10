@@ -17,6 +17,7 @@
       - tiling
   - BVH
   - shader, shader graph, shader node
+- [ ] osl
 - [ ] on gpu (opencl)
 
 
@@ -25,7 +26,7 @@
 ```
 $ mkdir -p out/Debug/_install
 $ cd out/Debug
-$ cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ../..
+$ cmake -G Ninja -DWITH_CYCLES_OSL=ON -DCMAKE_BUILD_TYPE=Debug ../..
 $ ninja -j2
 $ ./bin/cycles ../../examples/scene_cube_surface.xml
 ```
@@ -208,14 +209,10 @@ const NodeType *DiffuseBsdfNode::register_type() {
                 - bvh_intersect (macro BVH_FUNCTION_NAME in bvh_traversal.h) =>
                   - BVH_FUNCTION_FULL_NAME(BVH) => ..(TODO: read theory first)
               - (if hit)
-                - kernel_path_surface_bounce (which modifies ray for next iteration) =>
-                  - (if SD_BSDF)
-                    - float3 bsdf_omega_in
-                    - shader_bsdf_sample(.. &bsdf_omega_in ..) => ..
-                    - path_radiance_bsdf_bounce => ..
-                    - path_state_next
-                    - ray->D = normalize(bsdf_omega_in)
-                    - ..
+                - (SEE BELOW for this case in detail (surface case and volume case))
+                - shader_setup_from_ray
+                - shader_eval_surface
+                - kernel_path_surface_bounce (which modifies ray for next iteration)
               - (otherwise go for background)
                 - float3 L_background = indirect_background(kg, &emission_sd, &state, &ray) =>
                   - shader_setup_from_background(.. emission_sd ..) => ..
@@ -233,11 +230,12 @@ const NodeType *DiffuseBsdfNode::register_type() {
 
 
 (worker thread: DeviceTask::FILM_CONVERT)
-TODO: thread_film_convert
+TODO: thread_film_convert (for tonemap. then what is tonemap ?)
 
 
 (worker thread: DeviceTask::SHADER)
-TODO: thread_shader
+TODO: thread_shader (for BakeManager::bake, MeshManager::displace, shade_background_pixels)
+      are thsese for non-ray-trace shading ?
 ```
 
 
@@ -263,14 +261,49 @@ TODO: thread_shader
 ```
 
 
-# Shader
+# Shader (OSL)
 
-TODO: write one or follow one example
+Surface
+
+```
+[ Data structure ]
+ShaderData
+'-' P     (position where view ray hits)
+'-' N, Ng (smooth version and true version of Normal)
+'-' I     (view/incoming vector)
+'-* ShaderClosure (how did we get this ?)
+
+
+[ Procedure (SEE ABOVE for rough overview how to come this function) ]
+- kernel_path_integrate(.. Ray ray)
+  - ShaderData sd, emission_sd, PathState state, Intersection isect
+  - bool hit = scene_intersect(.. ray .. &isect ..) => (assume ray "hit"s something)
+  - shader_setup_from_ray(kg, &sd, &isect, &ray) =>
+    - ?
+  - shader_eval_surface(kg, &sd, rng, &state, rbsdf, state.flag, SHADER_CONTEXT_MAIN) =>
+    - ?
+  - kernel_path_surface_bounce(..  &sd, &throughput, &state, L, &ray) =>
+    - float bsdf_pdf, BsdfEval bsdf_eval, float3 bsdf_omega_in
+    - shader_bsdf_sample(.. &bsdf_omega_in &bsdf_eval &bsdf_pdf ..) =>
+      - ShaderClosure *sc = &sd->closure[sampled]
+      - bsdf_sample( sc .. omega_in .. pdf ) => ?
+      - bsdf_eval_init( .. bsdf_eval ) => ?
+    - path_radiance_bsdf_bounce( .. &bsdf_eval ) => ?
+    - path_state_next
+    - ray->D = normalize(bsdf_omega_in)
+```
+
+Volume
+
+```
+??
+```
 
 
 # Reference
 
+- https://docs.blender.org/manual/en/dev/render/cycles/index.html
 - https://wiki.blender.org/index.php/Dev:Source/Render/Cycles
-- blender integration
-  - [my code reading](./2017-06-30-blender.html)
+- https://github.com/imageworks/OpenShadingLanguage
+- blender integration ([my code reading](./2017-06-30-blender.html))
 - Computer Graphics: Principles and Practive (Chapter 15. Ray Casting and Rasterization)
