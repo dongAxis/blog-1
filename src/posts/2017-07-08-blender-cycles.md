@@ -4,7 +4,7 @@
   "date": "2017-07-08T08:49:31+09:00",
   "category": "",
   "tags": [],
-  "draft": true
+  "draft": false
 }
 -->
 
@@ -398,4 +398,5 @@ Volume
 - https://wiki.blender.org/index.php/Dev:Source/Render/Cycles
 - https://github.com/imageworks/OpenShadingLanguage
 - blender integration ([my code reading](./2017-06-30-blender.html))
+- OpenShadingLanguage ([my code reading](./2017-07-13-open-shading-language.html))
 - Computer Graphics: Principles and Practive (Chapter 15. Ray Casting and Rasterization)
