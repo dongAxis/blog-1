@@ -18,6 +18,7 @@
   - BVH
   - shader, shader graph, shader node
 - [ ] osl
+  - builtin bsdf ?
 - [ ] on gpu (opencl)
 
 
@@ -113,10 +114,10 @@ class DiffuseBsdfNode .. {
 
   static Node *create(const NodeType *type);
   static const NodeType *node_type;
-	DiffuseBsdfNode();
-	virtual ShaderNode *clone() const { return new DiffuseBsdfNode(*this); } \
-	virtual void compile(SVMCompiler& compiler); \
-	virtual void compile(OSLCompiler& compiler); \
+  DiffuseBsdfNode();
+  virtual ShaderNode *clone() const { return new DiffuseBsdfNode(*this); } \
+  virtual void compile(SVMCompiler& compiler); \
+  virtual void compile(OSLCompiler& compiler); \
 }
 
 (nodes.cpp)
@@ -124,7 +125,7 @@ NODE_DEFINE(DiffuseBsdfNode)
 {
   NodeType* type = NodeType::add("diffuse_bsdf", create, NodeType::SHADER)
   ..
-	SOCKET_IN_COLOR(color, "Color", make_float3(0.8f, 0.8f, 0.8f));
+  SOCKET_IN_COLOR(color, "Color", make_float3(0.8f, 0.8f, 0.8f));
   SOCKET_OUT_CLOSURE(BSDF, "BSDF"); ??
   ..
   return type
@@ -141,11 +142,11 @@ template<typename T>
 const NodeType *DiffuseBsdfNode::register_type() {
   NodeType* type = NodeType::add("diffuse_bsdf", create, NodeType::SHADER)
   ..
-	{
-		static float3 defval = make_float3(0.8f, 0.8f, 0.8f);
-		type->register_input(ustring("color"), ustring("Color"), SocketType::COLOR,
+  {
+    static float3 defval = make_float3(0.8f, 0.8f, 0.8f);
+    type->register_input(ustring("color"), ustring("Color"), SocketType::COLOR,
                          SOCKET_OFFSETOF(T, color), &defval, NULL, NULL, SocketType::LINKABLE);
-	}
+  }
   ..
   return type
 }
@@ -263,6 +264,21 @@ TODO: thread_shader (for BakeManager::bake, MeshManager::displace, shade_backgro
 
 # Shader (OSL)
 
+NOTE:
+
+- OSL global variable from OSL spec Chapter 6.5
+  - P, I, N, Ng, Ci ..
+
+TODO:
+
+- follow how OSL calls bsdf_diffuse_prepare
+  - osl execution means reduce OSL shader representation into some set of Closure representation
+  - witin this process, OSL will see builtin closure (e.g. "diffuse"), which supposed to trigger bsdf_diffuse_prepare
+
+```
+$ ./bin/cycles --shadingsys osl --threads 1 ../../examples/scene_cube_surface.xml
+```
+
 Surface
 
 ```
@@ -271,32 +287,108 @@ ShaderData
 '-' P     (position where view ray hits)
 '-' N, Ng (smooth version and true version of Normal)
 '-' I     (view/incoming vector)
-'-* ShaderClosure (how did we get this ?)
+'-* ShaderClosure
+
+CClosurePrimitive > CBSDFClosure > DiffuseClosure
+
+DiffuseBsdf (< ShaderClosure (inheritance via SHADER_CLOSURE_BASE))
+'-' float3 weight
+'-' ClosureType type (e.g. CLOSURE_BSDF_DIFFUSE_ID)
+'-' float sample_weight
+'-' float3 N
 
 
-[ Procedure (SEE ABOVE for rough overview how to come this function) ]
-- kernel_path_integrate(.. Ray ray)
+[ Closure definition ]
+
+BSDF_CLOSURE_CLASS_BEGIN(Diffuse, diffuse, DiffuseBsdf, LABEL_DIFFUSE)
+  CLOSURE_FLOAT3_PARAM(DiffuseClosure, params.N),
+BSDF_CLOSURE_CLASS_END(Diffuse, diffuse)
+
+ ||
+\||/  (macro)
+ \/
+
+class DiffuseClosure : public CBSDFClosure {
+public:
+  DiffuseBsdf params;
+  float3 unused;
+  void setup(ShaderData *sd, int path_flag, float3 weight) {
+    if(!skip(sd, path_flag, LABEL_DIFFUSE)) {
+      DiffuseBsdf *bsdf = (DiffuseBsdf*)bsdf_alloc_osl(sd, sizeof(DiffuseBsdf), weight, &params);
+      sd->flag |= (bsdf) ? bsdf_diffuse_setup(bsdf) : 0;
+    }
+  }
+}
+static ClosureParam *bsdf_diffuse_params() {
+  static ClosureParam params[] = {
+    { TypeDesc::TypeVector, (int)reckless_offsetof(DiffuseClosure, params.N), NULL, sizeof(OSL::Vec3) },
+    { TypeDesc::TypeString, (int)reckless_offsetof(DiffuseClosure, label), "label", fieldsize(DiffuseClosure, label) },
+    { TypeDesc(), sizeof(DiffuseClosure), NULL, 0 }
+  };
+  return params;
+}
+static void bsdf_diffuse_prepare(RendererServices *, int id, void *data) {
+  memset(data, 0, sizeof(DiffuseClosure));
+  new (data) DiffuseClosure();
+}
+
+
+[ Procedure ]
+
+- ShaderManager::create => new OSLShaderManager => OSLShaderManager::shading_system_init =>
+  - new OSL::ShadingSystem
+  - OSLShader::register_closures =>
+    - register_closure(ss, "diffuse", id++, bsdf_diffuse_params(), bsdf_diffuse_prepare) =>
+      - OSL::ShadingSystem::register_closure => (TODOO: OSL API)
+
+- kernel_path_integrate(.. Ray ray) ( (SEE ABOVE for rough overview how to come to this function))
   - ShaderData sd, emission_sd, PathState state, Intersection isect
   - bool hit = scene_intersect(.. ray .. &isect ..) => (assume ray "hit"s something)
-  - shader_setup_from_ray(kg, &sd, &isect, &ray) =>
-    - ?
+  - shader_setup_from_ray(kg, &sd, &isect, &ray) => ?
   - shader_eval_surface(kg, &sd, rng, &state, rbsdf, state.flag, SHADER_CONTEXT_MAIN) =>
-    - ?
+    - OSLShader::eval_surface =>
+      - OSLThreadData *tdata = kg->osl_tdata;
+      - shaderdata_to_shaderglobals(kg, sd, state, path_flag, tdata);
+      - int shader = sd->shader & SHADER_MASK
+      - OSL::ShadingSystem *ss = (OSL::ShadingSystem*)kg->osl_ss
+      - OSL::ShaderGlobals *globals = &tdata->globals
+      - OSL::ShadingContext *octx = tdata->context[(int)ctx]
+      - ShadingSystem::execute(octx .. kg->osl->surface_state[shader] .. globals) =>
+        - (TODO: OSL API. possibly calling bsdf_diffuse_prepare from here ?)
+      - flatten_surface_closure_tree(ShaderData *sd, ..  OSL::ClosureColor *closure) =>
+        - CClosurePrimitive *prim (e.g. ccl::DiffuseClosure)
+        - DiffuseClosure::setup =>
+          - DiffuseBsdf *bsdf = bsdf_alloc_osl =>
+            - ShaderClosure sc = closure_alloc (we have fixed 64 entries array already)
+            - memcpy(sc, &params)
+          - bsdf_diffuse_setup =>
+            - bsdf->type = CLOSURE_BSDF_DIFFUSE_ID
+            - return SD_BSDF|SD_BSDF_HAS_EVAL
+  - kernel_path_surface_connect_light => (some cycles global direct light, skip it for now)
   - kernel_path_surface_bounce(..  &sd, &throughput, &state, L, &ray) =>
     - float bsdf_pdf, BsdfEval bsdf_eval, float3 bsdf_omega_in
     - shader_bsdf_sample(.. &bsdf_omega_in &bsdf_eval &bsdf_pdf ..) =>
       - ShaderClosure *sc = &sd->closure[sampled]
-      - bsdf_sample( sc .. omega_in .. pdf ) => ?
-      - bsdf_eval_init( .. bsdf_eval ) => ?
-    - path_radiance_bsdf_bounce( .. &bsdf_eval ) => ?
+      - bsdf_sample( sc .. omega_in .. pdf ) =>
+        - (case sc->type is CLOSURE_BSDF_DIFFUSE_ID) bsdf_diffuse_sample =>
+          - DiffuseBsdf *bsdf = (const DiffuseBsdf*)sc
+          - sample_cos_hemisphere(bsdf->N .. omega_in, pdf) =>
+            - (sampleing following Lambert's low, then we get omega_in and pdf)
+    - path_radiance_bsdf_bounce( .. &bsdf_eval ) => *throughput *= bsdf_eval->diffuse*inverse_pdf
     - path_state_next
     - ray->D = normalize(bsdf_omega_in)
 ```
 
+
 Volume
 
 ```
-??
+- kernel_path_integrate =>
+  - .. after hit ..
+  - VolumeIntegrateResult result = kernel_volume_integrate(
+          kg, &state, &sd, &volume_ray, L, &throughput, rng, heterogeneous)
+  - .. connect
+  - .. bounce (indirect)
 ```
 
 
