@@ -6,6 +6,12 @@
 }
 -->
 
+# Myself
+
+- Linux desktop enthusiast
+- Archlinux user
+
+
 # Interests
 
 - Linux Kernel
