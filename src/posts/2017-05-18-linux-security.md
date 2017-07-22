@@ -29,7 +29,8 @@
     - pam_start("login", cxt->username, &cxt->conv, &pamh) => ??
   - loginpam_auth =>
     - loginpam_get_username => pam_get_item(pamh, PAM_USER, &item)
-    - pam_authenticate => ??
+    - pam_authenticate =>
+      - .. misc_conv (from <security/pam_misc.h>) ??
   - loginpam_acct =>
     - pam_acct_mgmt(pamh, 0) => ??
   - cxt.pwd = get_passwd_entry(cxt.username ..) =>
