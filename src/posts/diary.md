@@ -69,10 +69,62 @@ pitch notation |  C-1  C0     C1  C2  C3  C4        C5  C6   C7   C8   C9     C1
 # 2017-09-03
 
 - Fast Fourier Transform
-  - cf. discrete fourier transform, (complex) fourier series, (generalized) fourier series, complete (bi)orthogonal system
-  - https://en.wikipedia.org/wiki/Fast_Fourier_transform
-  - http://mathworld.wolfram.com/FourierTransform.html
-  - TODO: how does phase change appear in fourier transformed form ?
-  - TODO: proof of cos(nx) and sin(nx) being complete biorthognal system (biorthognality is trivial)
-  - TODO: practical factors (sample rate, human perceivable sound fequency range)
-  - TODO: DFT by yourself
+    - cf. complete (bi)orthogonal system, (complex) fourier series, (generalized) fourier series, discrete fourier transform
+    - should study from fourier series http://mathworld.wolfram.com/FourierSeries.html
+    - how does phase change appear in fourier transformed form ?
+        - phase change is linear combination of same frequency, as in
+          cos(x+a) = cos(x)cos(a) - sin(x)sin(a) (or e^{i(x+a)} = e^{ix} * e^{ia})
+    - proof of cos(nx) and sin(nx) being complete biorthognal system (biorthognality is trivial) (TODO)
+    - interpretation in real world (complex coefficient, minus frequency, sample rate, perceivable sound fequency range)
+        - periodic L, upto coefficient N, sample rate r (it is L = N for any reference, but it helps understanding DFT better when explicitly having them separate)
+        - X_n represents ((n / L) * r) frequency part of coefficient (seems not realy like this ..)
+        - non-complex value input
+            - X_n (complex fourier series's coefficients) can be represented as a_n, b_n (fourier series's coefficients)
+        - how to interpret decibel ??
+    - what's the "validity" of DFT ?
+        - it's just a result of "mathematically correct derivation".
+        - it "works practically" only because human perceives sound in frequency damain for whatever reason (or god made us in that way.)
+        - does human perceives phase difference ? (eg, how about sin(x) vs ((sin(x) + cos(x)) / 2) ?)
+        - shoot, actually, sqrt(2) / 2 * cos(x - pi/4) = 1 / 2 * (sin(x) + cos(x))
+    - Cooley–Tukey FFT algorithm: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
+
+- lv2 ui plugin architecture
+    - ex. jalv gtk host (suil), calf analyzer plugin
+    - (rt -> ui)
+        - (rt) suil_instance_port_event, jalv_emit_ui_events, jalv->plugin_events (control output, event output)
+        - (ui) port_event callback
+        - how does "port notification audio port" work (as in calf analyzer) ?
+          jalv doesn't look handling it.
+    - (ui -> rt)
+        - (ui) changes control input port value via LV2UI_Write_Function
+        - (rt) read port value as usual
+    - does calf analyzer really follow this principles ?
+        - calf uses instance-access extension (see methods around plugin_proxy_base (eg get_line_graph_iface ..))
+        - follow gui_instantiate (lv2gui.cpp) and see how they renders stuff (see 2017-07-25-lv2.md)
+
+- gtk
+    - following calf line graph (calf_line_graph_class_init)
+    - GTK_WIDGET_CLASS (vtables under this eg expose_event, button_press_event ..)
+    - gtk_widget_queue_draw
+
+
+# 2017-09-04
+
+- implement fft
+    - https://gitlab.com/hiogawa/fft
+    - cmake: integrate git submodule, target_compile_options
+    - setup googletest
+    - in-place Cooley–Tukey FFT algorithm: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
+    - cf. [image0](./assets/2017-09-04-fft0.jpg), [image1](./assets/2017-09-04-fft1.jpg)
+
+
+# Next time
+
+- speaker/headphone/microphone mechanics and implementation
+  - http://education.lenardaudio.com/en/05_speakers.html
+  - http://education.lenardaudio.com/en/10_mics.html
+
+- qt lv2 plugin ui
+    - QCustomPlot
+
+- 3D audio https://en.wikipedia.org/wiki/Head-related_transfer_function

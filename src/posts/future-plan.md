@@ -17,19 +17,16 @@
     - tap distortion
     - chorus
     - flanger
-- speaker/headphone/microphone mechanics and implementation
+    - 3D https://en.wikipedia.org/wiki/Head-related_transfer_function
 - Game engine architecture
   - source mod
   - Urho3d
   - unreal 4
-- audio
-  - effects
-  - 3D https://en.wikipedia.org/wiki/Head-related_transfer_function
 - arm device (raspberry pi) kernel build
 - Desktop environment architecture/implementation
 
 
-# a bit long term
+# a bit long term plan
 
 - booting (beforel loading kernel, x86_64, aarch64)
 - USB bus, PCI bus (spec and driver implementation)
