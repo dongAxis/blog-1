@@ -16,3 +16,4 @@
   - how could heap be accessed concurrently
   - gc thread ?
 - green thread (GHC, Go?)
+- ruby example sleep
