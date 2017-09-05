@@ -117,14 +117,140 @@ pitch notation |  C-1  C0     C1  C2  C3  C4        C5  C6   C7   C8   C9     C1
     - in-place Cooley–Tukey FFT algorithm: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
     - cf. [image0](./assets/2017-09-04-fft0.jpg), [image1](./assets/2017-09-04-fft1.jpg)
 
+- what's voltage ? how could it exist in the first place ?
+    - electrical potential between two points, so how does it happen ?
+    - ok, it's just fundamental nature then
+        - https://en.wikipedia.org/wiki/Electromagnetismthis
+        - https://en.wikipedia.org/wiki/Fundamental_interaction
+    - btw, how is "stuff" electrically charged (for force to be exist) ?
+    - elctric charge is just a fundamental conserved property of some subatomic particles, so don't question it ?
+        - https://en.wikipedia.org/wiki/Electric_charge
+    - V: work per electric charge cf.
+        - force (kg*m/s^2)   (as F = mass*acceralation)
+        - work  (kg*m^2/s^2) (as W = F*displacement) (energy's unit is work)
+        - power (watt) (kg*m^2/s^3) (as P = V*(electriccharges)/second)
+    - aka electric potential, aka how much there is a "tension" to drive electric charge
+    - cf. magnetic field (force): results from moving electric charges and elementary particle's spin
+    - how do we have voltage (in the sense of daily life) ?
+        - a whole bunch of ways to convert other energy into electric power: https://en.wikipedia.org/wiki/Power_station
+        - battery drives electric charges, possibly with rechargeable characteristics, possibly using chemical reaction
+          (which in tern is driven by atom or molucule level electric (aka ion) interaction)
+          cf  https://en.wikipedia.org/wiki/Electric_power
+
+- some fundamental stuff
+    - fundamental (elementary) particle: a particle whose substructure is unknown by definition
+    - https://en.wikipedia.org/wiki/Elementary_particle
+    - atom: nucleus, electron (via electromagnetic force)
+    - nucleus: proton, neutron (via nuclear force (aka residual strong force))
+    - proton, neutron: some quarks (via strong force)
+    - molecule: atoms (via chemical bond ie covalent bond (isn't it still eletromagnetic force?) or electromagnetic force)
+    - photon
+
+- speaker/headphone/microphone thoery and implementation
+    - dynamic loudspeaker: https://en.wikipedia.org/wiki/Loudspeaker#Driver_design:_dynamic_loudspeakers
+        - analog audio signal change -(a)-> magnetic force change -(b)-> sound pressure
+        - (a) electromagnetic induction (Maxwell's equations) (TODO)
+        - (b) is this that simple ?
+        - dynamic microphone is opposite of this (condenser microphone is different)
+    - condenser (capacitor) microphone: https://en.wikipedia.org/wiki/Microphone#Condenser
+        - sound pressure -(a)-> change in distance betw. capacitor plates -(b)-> capacitance C change -(c)-> voltage change
+    - frequency characteristics consideration ?
+    - what's special in headphone compared to speaker ? not really in terms of mechanism.
+    - some kind of standard which determines the loudness (decibel response) for given voltage ?
+        - I mean, people don't won't to change PC sound volume when they change headphone.
+        - "Sensitivity": db measured at 1meter from speaker with 1 watt power
+    - http://education.lenardaudio.com/en/05_speakers.html
+    - http://education.lenardaudio.com/en/10_mics.html
+    - example
+        - speaker: ?
+        - headphone: ?
+        - recorder: https://www.zoom-na.com/products/field-video-recording/field-recording/zoom-h1-handy-recorder#specs
+
+
+# 2017-09-05
+
+- 3D audio
+    - https://en.wikipedia.org/wiki/Dummy_head_recording#Technical
+    - https://en.wikipedia.org/wiki/Head-related_transfer_function
+    - https://en.wikipedia.org/wiki/Sound_localization
+    - other sense: visual cue, skin feeling of sound wave
+    - amplitude change (panning)
+    - phase/timing change
+    - frequency filter based on human head and ear geometry
+    - directional characteristics of original sound source matters too
+    - what about in the existence of reverbation ? can it help/affect localization a lot ?
+        - but, naive reverb effect implementation doesn't consider HRTF (and could break implemented HRTF effect)
+
+- voltage (work per electric charge), watt (work per second) familiar examples
+    - Laptop: http://psref.lenovo.com/Product/ThinkPad_13 (my pc)
+        - 45-watt AC adapter (so, if we give 100V, PC will charge 45/100 ampere of electric current to chrge battery?)
+        - Battery 42Wh       (power * time = work, so can this be represented as mAh ??)
+    - Smartphone: https://www.asus.com/Phone/ZenFone-2-Laser-ZE500KL/specifications/ (my smartphone)
+        - Battery 2400 mAh
+        - USB as charger (just using V_bus pin ?)
+    - USB: http://www.usb.org/developers/docs/ (Section 11.4, Power Distribution)
+        - V_bus pin: 5V DC
+        - unit load: 150mA (then determines W = 0.75watt)
+        - separated standard for battery charging ?
+    - AC plug in Japan: 100V, 50Hz (my country)
+    - what is amperer (electric current I) ?
+        - P = V * Q / time = V * I
+        - I = V / R
+        - assume V is given (eg battery's characteristics), then W is determined by I and I is determined by R or something.
+        - what really comes first ? I mean, when USB standard says "device only allowed to draw 150mA", how/who impose/implement that?
+        - people call it "Realization" when talking about the way to realize certain physical value (eg amperer I)
+          from other value (eg voltage V) via physical laws.
+        - controlling/understanding that sort of physical nature is science and engineering.
+    - amperer hour: the amount of electric charges it can move (not voltage (or tension to drive electric chargs))
+        - 2400mAh means if there is electric current 240mA, it will last 10h (= 2400mAh/240mA)
+        - it sounds weird to use this as battery's quality since if voltage is higher,
+          that will result in more work overall, but that sounds physically wrong.
+    - watt hour: the amount of "work" it can do
+        - 42Wh means if it is suuplying 42W, it will last 1h.
+        - it sounds weird to use this as battery's quality since depending on voltage and electric current,
+          it result in the different amount of electric charges battery moves overall.
+          No?, voltage and electric curent anyway inter relates each other, so it's fine.
+    - anyway, battery has unwritten voltage characteristics, so you can calcualate mAh and Wh from one to another ?
+
+- boot linux on raspberry pi 3 model b
+    - https://github.com/raspberrypi/firmware
+    - https://www.raspberrypi.org/documentation/hardware/raspberrypi/bootmodes/
+        - OTP (One time programmable memory) (why do you mention about this if it's not programmable by user ?)
+        - MSD (Mass storage device (as in USB class standard))
+    - https://www.raspberrypi.org/documentation/configuration/config-txt/
+    - https://www.raspberrypi.org/forums/viewtopic.php?f=2&t=3042
+    - http://www.denx.de/wiki/view/DULG/UBoot
+    - http://elinux.org/RPi_U-Boot
+    - https://archlinuxarm.org/platforms/armv8/generic
+    - https://archlinuxarm.org/platforms/armv8/broadcom/raspberry-pi-3
+    - let's see if there's any sketchy arch package (just looking around /var/lib/pacman/local after extracted tar archive):
+        - raspberrypi-bootloader (https://archlinuxarm.org/packages/any/raspberrypi-bootloader)
+            - this is just raspberrypi's upstream firmware
+        - uboot-raspberrypi (https://archlinuxarm.org/packages/aarch64/uboot-raspberrypi)
+            - hell yeah!, this does `cp u-boot.bin ${pkgdir}/boot/kernel8.img`.
+    - So, the story is something like this:
+        - GPU boots
+        - GPU probes filesystem in SD card to get firmware and load it
+        - GPU also read config.txt and do some hardware setup
+        - GPU triggeres booting ARM CPU boots with some other firmware
+        - ARM firmware loads kernel8.img (which is supposed to be linux kernel but it actually is u-boot)
+        - ARM CPU executes u-boot
+        - execute boot.scr
+        - load kernel
+
+- human ear mechanics: https://en.wikipedia.org/wiki/Ear
+- human voice mechanics: https://en.wikipedia.org/wiki/Ear
+
 
 # Next time
 
-- speaker/headphone/microphone mechanics and implementation
-  - http://education.lenardaudio.com/en/05_speakers.html
-  - http://education.lenardaudio.com/en/10_mics.html
+- analog/digital circuit
+  - fpga
+
+- instrument mechanics
+  - electric guitar
+  - piano
+  - saxophone
 
 - qt lv2 plugin ui
     - QCustomPlot
-
-- 3D audio https://en.wikipedia.org/wiki/Head-related_transfer_function
