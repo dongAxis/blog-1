@@ -9,9 +9,8 @@
 # near future
 
 - video + audio data format: streaming (capture and playback), opus
-- boot archlinux in raspberry pi 3 model b
-    - test on qemu
-    - device tree
+    - streaming implementation
+    - synchronize video/audio implementation
 - audio effects
     - bit reduction
     - tap distortion
@@ -19,11 +18,12 @@
     - flanger
     - 3D https://en.wikipedia.org/wiki/Head-related_transfer_function
 - Game engine architecture
-  - source mod
-  - Urho3d
-  - unreal 4
-- arm device (raspberry pi) kernel build
+    - source mod
+    - Urho3d
+    - unreal 4
 - Desktop environment architecture/implementation
+- analog/digital circuit
+  - fpga
 
 
 # a bit long term plan

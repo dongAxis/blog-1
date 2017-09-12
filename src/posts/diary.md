@@ -173,6 +173,14 @@ pitch notation |  C-1  C0     C1  C2  C3  C4        C5  C6   C7   C8   C9     C1
     - https://en.wikipedia.org/wiki/Dummy_head_recording#Technical
     - https://en.wikipedia.org/wiki/Head-related_transfer_function
     - https://en.wikipedia.org/wiki/Sound_localization
+    - brain compensates overall perception those small things even though we are not trying to perceive that factor "intentionally".
+    - just like, without our intention, diff betw. two images from eyes are used by brain
+      to make us understand the depth part of object's location.
+        - https://en.wikipedia.org/wiki/Stereopsis#Geometrical_basis
+        - a lot more factor than I thought https://en.wikipedia.org/wiki/Depth_perception
+        - some of them must be also used for sound perception
+            - eg "Familiar size": if huge-track-driving like sound's amplitude is small, human would feel that effect as distance of track
+        - so, in computer graphics or AI, we need to implement such "brain" to do that part of processing.
     - other sense: visual cue, skin feeling of sound wave
     - amplitude change (panning)
     - phase/timing change
@@ -180,6 +188,18 @@ pitch notation |  C-1  C0     C1  C2  C3  C4        C5  C6   C7   C8   C9     C1
     - directional characteristics of original sound source matters too
     - what about in the existence of reverbation ? can it help/affect localization a lot ?
         - but, naive reverb effect implementation doesn't consider HRTF (and could break implemented HRTF effect)
+    - let's see how software openal driver is implemented. and try via blender.
+    - so I wanna experiment putting an earplug on one of my ear and how I can (not) recognize sound localization.
+    - http://education.lenardaudio.com/en/10_mics.html
+        - high frequency: amplitude difference
+        - low frequency: phase difference
+    - sound energy loss is affected only for high frequency factor ??
+        - inverse square low ?
+        - https://en.wikipedia.org/wiki/Inverse-square_law#Sound_in_a_gas
+
+- Sound
+    - https://en.wikipedia.org/wiki/Sound
+    - reference sound pressure
 
 - voltage (work per electric charge), watt (work per second) familiar examples
     - Laptop: http://psref.lenovo.com/Product/ThinkPad_13 (my pc)
@@ -238,19 +258,213 @@ pitch notation |  C-1  C0     C1  C2  C3  C4        C5  C6   C7   C8   C9     C1
         - execute boot.scr
         - load kernel
 
+
+# 2017-09-06, 2017-09-07
+
+- basic audio effects
+    - reverb: [image](./assets/2017-09-05-reverb.md)
+    - chorus: enhance 3D-ness (is this because our brain is deceived in that way ? cf. sound localization)
+    - distortion:
+        - crusher (bitreduction, samplereduction): does work for classical piano, sample reduction sounds magical, but saturator works more natural sometimes
+        - saturator (tap_distorgion): doesn't work for classical piano sound but this is so good for rhodes
+    - filter: freaking magical biquad formulas
+
+- random idea: osc on web project
+    - https://gitlab.com/hiogawa/osc-on-web
+    - http to osc proxy
+    - interface in browser
+    - browser ui interface drove me crazy, but I think that standard is very solid. (I'm curious how gtk, qt guys deals with this).
+    - werkzeug: looks good. code is easy to follow so far (around run_simple reloading mechanism, Request/Response interface)
+        - wsgi architecture is exactly same as ruby rack, so no problem with that.
+    - python liblo: cython compiles python into c, that's impressive but I don't feel that's good architecture.
+    - osc protocol is transport layer independent
+      I prefer much thinner layering around that, like SWIG (as used in tensorflow) ?
+    - so now, I don't have to use jack keyboard to play with sound effect in coffee shop.
+
+- explore percussive sound and effects on it (or timbre of percussive sound)
+    - bass
+    - snare
+    - symbal
+
+- synthesize basic sound
+    - pad
+    - string
+    - picky string
+
 - human ear mechanics: https://en.wikipedia.org/wiki/Ear
-- human voice mechanics: https://en.wikipedia.org/wiki/Ear
+
+- qt
+    - http://doc.qt.io/qt-4.8/designer-ui-file-format.html
+
+- sound
+    - https://www.digido.com/portfolio-item/level-practices-part-2/
+    - https://en.wikipedia.org/wiki/Cross-correlation
+    - https://en.wikipedia.org/wiki/Precedence_effect
+
+- cxx
+    - http://en.cppreference.com/w/cpp/language/destructor
+        - members and base classes destructor will be called recursively
+        - eg. QXXX -> QScopedPointer<QXXPrivate>
+
+# 2017-09-09
+
+- lv2ui plugin with qt5
+  - ui and rt communication (as far as I can tell from jalv)
+
+- ruby fiber
+
+- browser javascript multi process concurrency primitives
+  - sharedbuffer, atomic
+  - it sounds like it's not really sharing a memory
+
+- hdr
+    - ? spec
+
+# 2017-09-10
+
+- amazing carla's architecture
+  - qt app as separate process via pipe bridging
+
+- systemd-coredump, sysctl corepattern,
+
+```
+$ coredumpctl gdb
+           PID: 2942 (jalv)
+           UID: 1000 (hiogawa)
+           GID: 1000 (hiogawa)
+        Signal: 11 (SEGV)
+     Timestamp: Sun 2017-09-10 23:18:56 JST (9min ago)
+  Command Line: jalv -s http://hiogawa.net/lv2plugins/some_analyzer
+    Executable: /usr/bin/jalv
+ Control Group: /user.slice/user-1000.slice/session-c1.scope
+          Unit: session-c1.scope
+         Slice: user-1000.slice
+       Session: c1
+     Owner UID: 1000 (hiogawa)
+       Boot ID: 98da1e0c3f624b0c86a1ec659bbaef1a
+    Machine ID: c6f78d94a873436a916fea9d5065cba9
+      Hostname: hiogawa-arch2
+       Storage: /var/lib/systemd/coredump/core.jalv.1000.98da1e0c3f624b0c86a1ec659bbaef1a.2942.1505053136000000.lz4
+       Message: Process 2942 (jalv) of user 1000 dumped core.
+
+                Stack trace of thread 2942:
+                #0  0x00007f71e5bd4120 _ZNKSt13__atomic_baseIiE4loadESt12memory_order (libQt5Core.so.5)
+                #1  0x00007f71e5be446d _ZN7QStringD4Ev (libQt5Core.so.5)
+                #2  0x00007f71e5bc4f89 _ZN9QHashData11free_helperEPFvPNS_4NodeEE (libQt5Core.so.5)
+                #3  0x00007f71e5bdb471 _ZZN12_GLOBAL__N_123Q_QGS_globalEngineCache13innerFunctionEvEN6HolderD2Ev (libQt5Core.so.5)
+                #4  0x00007f71f1cb2488 __run_exit_handlers (libc.so.6)
+                #5  0x00007f71f1cb24da exit (libc.so.6)
+                #6  0x00007f71f1c9bf71 __libc_start_main (libc.so.6)
+                #7  0x000055fc9ba4709a n/a (jalv)
+
+                ... other threads ...
+
+... gdb starts here ...
+GNU gdb (GDB) 8.0.1
+...
+Core was generated by `jalv -s http://hiogawa.net/lv2plugins/some_analyzer'.
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  std::__atomic_base<int>::load (__m=std::memory_order_relaxed, this=0x7f71f01ff720) at /usr/include/c++/7.1.1/bits/atomic_base.h:396
+396     /usr/include/c++/7.1.1/bits/atomic_base.h: No such file or directory.
+[Current thread is 1 (Thread 0x7f71f32c3b80 (LWP 2942))]
+(gdb) bt
+#0  0x00007f0a60be8120 in std::__atomic_base<int>::load(std::memory_order) const (__m=std::memory_order_relaxed, this=0x7f0a622bb720)
+    at /usr/include/c++/7.1.1/bits/atomic_base.h:396
+#1  0x00007f0a60be8120 in QAtomicOps<int>::load<int>(std::atomic<int> const&) (_q_value=...)
+    at ../../include/QtCore/../../src/corelib/arch/qatomic_cxx11.h:227
+#2  0x00007f0a60be8120 in QBasicAtomicInteger<int>::load() const (this=0x7f0a622bb720)
+    at ../../include/QtCore/../../src/corelib/thread/qbasicatomic.h:102
+#3  0x00007f0a60be8120 in QtPrivate::RefCount::deref() (this=0x7f0a622bb720) at ../../include/QtCore/../../src/corelib/tools/qrefcount.h:66
+#4  0x00007f0a60bf846d in QString::~QString() (this=0x5604a2d1b500, __in_chrg=<optimized out>)
+    at ../../include/QtCore/../../src/corelib/tools/qstring.h:1084
+#5  0x00007f0a60bf846d in QRegExpEngineKey::~QRegExpEngineKey() (this=<optimized out>, __in_chrg=<optimized out>) at tools/qregexp.cpp:873
+#6  0x00007f0a60bf846d in QHashNode<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>::~QHashNode() (this=<optimized out>, __in_chrg=<optimized out>) at ../../include/QtCore/../../src/corelib/tools/qhash.h:149
+#7  0x00007f0a60bf846d in QHash<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>::deleteNode2(QHashData::Node*) (node=0x5604a2d1b4f0)
+    at ../../include/QtCore/../../src/corelib/tools/qhash.h:536
+#8  0x00007f0a60bd8f89 in QHashData::free_helper(void (*)(QHashData::Node*)) (this=0x5604a2b9e880, node_delete=0x7f0a60bf8460 <QHash<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>::deleteNode2(QHashData::Node*)>) at tools/qhash.cpp:595
+#9  0x00007f0a60bef471 in QHash<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>::freeData(QHashData*) (this=<synthetic pointer>, x=0x5604a2b9e880) at ../../include/QtCore/../../src/corelib/tools/qhash.h:576
+#10 0x00007f0a60bef471 in QHash<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>::~QHash() (this=<synthetic pointer>, __in_chrg=<optimized out>) at ../../include/QtCore/../../src/corelib/tools/qhash.h:254
+#11 0x00007f0a60bef471 in QHash<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>::operator=(QHash<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>&&) (other=..., this=0x7f0a611c4ef0 <(anonymous namespace)::Q_QGS_globalEngineCache::innerFunction()::holder+16>)
+    at ../../include/QtCore/../../src/corelib/tools/qhash.h:260
+#12 0x00007f0a60bef471 in QHash<QRegExpEngineKey, QCache<QRegExpEngineKey, QRegExpEngine>::Node>::clear() (this=0x7f0a611c4ef0 <(anonymous namespace)::Q_QGS_globalEngineCache::innerFunction()::holder+16>) at ../../include/QtCore/../../src/corelib/tools/qhash.h:582
+#13 0x00007f0a60bef471 in QCache<QRegExpEngineKey, QRegExpEngine>::clear() (this=0x7f0a611c4ee0 <(anonymous namespace)::Q_QGS_globalEngineCache::innerFunction()::holder>) at tools/qcache.h:125
+#14 0x00007f0a60bef471 in QCache<QRegExpEngineKey, QRegExpEngine>::~QCache() (this=0x7f0a611c4ee0 <(anonymous namespace)::Q_QGS_globalEngineCache::innerFunction()::holder>, __in_chrg=<optimized out>) at tools/qcache.h:93
+#15 0x00007f0a60bef471 in (anonymous namespace)::Q_QGS_globalEngineCache::Holder::~Holder() (this=0x7f0a611c4ee0 <(anonymous namespace)::Q_QGS_globalEngineCache::innerFunction()::holder>, __in_chrg=<optimized out>) at tools/qregexp.cpp:3817
+#16 0x00007f0a6cc13488 in __run_exit_handlers () at /usr/lib/libc.so.6
+#17 0x00007f0a6cc134da in  () at /usr/lib/libc.so.6
+#18 0x00007f0a6cbfcf71 in __libc_start_main () at /usr/lib/libc.so.6
+#19 0x00005604a1e8f09a in  ()
+```
+
+- is this related ? https://stackoverflow.com/questions/21363494/need-to-change-include-path-for-clang#26841599
+- looks similar http://kde-bugs-dist.kde.narkive.com/l1qXUpya/frameworks-kio-bug-373779-new-qfiledialog-integration-causes-crashes-on-program-exit
+- https://stackoverflow.com/questions/8667234/why-does-my-application-crash-sometimes-with-a-sigsegv-when-it-gets-closed
+- try valgrind !
+
+- then this happens on carla
+  - similar? https://bugreports.qt.io/browse/QTBUG-59721
+
+
+# 2017-09-11
+
+- chorus
+  - calf's system (aka multichorus_audio_module)
+    - modules_mod.cpp,h, multichorus.cpp,h, audio_fx.cpp,h
+    - multichorus_audio_module
+    - dsp::multichorus<.. sine_multi_lfo<float, 8> .. filter_sum<biquad_d2, biquad_d2 > ..> left, right
+    - here filter_sum<biquad_d2, biquad_d2 > is only for post filter so don't mind it
+    - multichorus : chorus_base : modulation_effect (inheritance)
+    - procedures
+      - multichorus_audio_module::params_changed =>
+        - chorus_base::set_rate, set_min_delay, set_mod_depth,
+        - sine_multi_lfo::set_voices, set_overlap, vphase, phase (stereo phase is setup here)
+        - left.post.f1.set_bp_rbj .. (setup 2 band pass filters for left and right (only for post process))
+      - multichorus_audio_module::process =>
+        - left and right process completely separately
+        - multichorus::process =>
+          - delay.put
+          - for each "voices"
+            - calculate number of samples to delay using delay, modulatin depth and sine_multi_lfo::get_value =>
+              - calculate lfo value from voice index and vphase and overlapness and all that..
+            - add up output gotten by delay.get_interp
+  - parameters (lfo frequency, delay, depth, voice, overlap)
+  - lfo's phase (stereo phase (betw. left and right), voice phase (betw. sine_multi_lfos))
+  - looks like comb filter is modulating (which is from delay parameter)
+    - depth (by ms) is about the depth of modurating "delay"
+  - overlap?
+  - understanding in terms of human sound localization
+
+- https://en.wikipedia.org/wiki/Electric_guitar
+  - similar to dynamic microphone (ie opposite of dynamic speaker)
+
+- timbre (aka tone color)
+  - https://en.wikipedia.org/wiki/Timbre
+  - identification of "instrument" ?
+  - how does machine learning tackle this now ?
+  - lol
+
+    > the psychoacoustician's multidimensional waste-basket category for everything that cannot be labeled pitch or loudness
+
+
+# 2017-09-12
+
+- distortion
+  - calf crusher
+    - sample reduction
+    - bit reduction
 
 
 # Next time
 
-- analog/digital circuit
-  - fpga
-
 - instrument mechanics
-  - electric guitar
-  - piano
-  - saxophone
+    - human voice
+    - piano
+    - saxophone
+
+- basic audio effects
+    - bit reduction
+    - tap distortion
+    - flanger
 
 - qt lv2 plugin ui
     - QCustomPlot
