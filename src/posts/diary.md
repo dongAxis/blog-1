@@ -424,8 +424,9 @@ Program terminated with signal SIGSEGV, Segmentation fault.
         - multichorus::process =>
           - delay.put
           - for each "voices"
-            - calculate number of samples to delay using delay, modulatin depth and sine_multi_lfo::get_value =>
+            - sine_multi_lfo::get_value =>
               - calculate lfo value from voice index and vphase and overlapness and all that..
+            - calculate number of samples to delay using delay, modulatin depth and lfo value
             - add up output gotten by delay.get_interp
   - parameters (lfo frequency, delay, depth, voice, overlap)
   - lfo's phase (stereo phase (betw. left and right), voice phase (betw. sine_multi_lfos))
@@ -448,10 +449,99 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 
 # 2017-09-12
 
-- distortion
-  - calf crusher
-    - sample reduction
-    - bit reduction
+- calf crusher
+  - sample reduction
+  - bit reduction
+    - number of bits
+    - mode (linear or logarithm)
+    - anti-aliasing
+
+- crusher_audio_module::process =>
+  - samplereduction::process (stateful. support float number of samples by m*f >= m*round(f)+1)
+  - bitreduction::process (stateless)
+    - waveshape (anti alias, discretization (number of bits, log, linear mode))
+
+- gtk (glib, gobject, gdk)
+  - https://www.gtk.org/documentation.php
+  - https://developer.gnome.org/gobject/stable/chapter-gtype.html
+  - classic
+      - https://developer.gnome.org/gtk3/stable/chap-drawing-model.html
+      - https://developer.gnome.org/gtk3/stable/chap-input-handling.html
+  - https://developer.gnome.org/gobject/stable/howto-gobject.html
+      - I usually don't mind boilerplate, but this is a bit too much ...
+        I'd use it if there's a tool to generate declaration header on build time.
+        (gob is closer to it, but not nice enough ?)
+        (vala can be used in that way ?)
+  - how gtkmm is implemented (or other any oop language binding) ?
+  - this is really cool: http://helgo.net/simon/introspection-tutorial/index.xhtml
+  - https://www.dwheeler.com/secure-programs/Secure-Programs-HOWTO/index.html
+
+- openal
+  - http://openal.org/documentation/openal-1.1-specification.pdf
+  - context
+    - context as in GL. oh, that means context is implicit argument for the most operation ..
+  - one listener per context (attributes: orientation (at vector, up vector))
+  - multiple sources (attributes: buffer, location, direction, cone, playback offset, distance attenuation model, etc..)
+  - openal context, device
+      - (how is "device" different from backend ? read below.)
+      - static struct BackendInfo PlaybackBackend, CaptureBackend;
+      - static struct BackendInfo BackendList[] (eg jack, pulse, alsa, ..)
+      - alcOpenDevice(devicename) =>
+        - NOTE: devicename is only for application side naming and associated configuration (not about backend)
+        - DO_INITCONFIG => alc_initconfig =>
+          - ReadALConfig
+          - aluInitMixer
+          - filter BackendList by configuration "drivers" or env var "ALSOFT_DRIVERS"
+          - ALCbackendFactory::init for each factory from BackendList until init successes
+            - setup PlaybackBackend, CaptureBackend
+            - NOTE: alcOpenDevice's argument devicename don't matter at all for the way choosing backend
+            - eg. ALCjackBackendFactory_init => check if jack_client_open succeeds
+          - InitEffectFactoryMap
+          - InitEffect
+        - alloc ALCdevice
+        - PlaybackBackend.createBackend (NOTE: assume jack is used) =>
+          - ALCjackBackendFactory_createBackend =>
+            - alloc ALCjackPlayback
+            - ALCjackPlayback_Construct => ALCbackend_Construct ..
+        - setup openal parameters (eg channel, format (aka sample-type), freq ..)
+          - use value corresponding to given "devicename" if it exists
+        - Backend.open => ALCjackPlayback_open =>
+          - jack_client_open, jack_set_process_callback, jack_set_buffer_size_callback
+      - alcCreateContext (from device) => InitContext =>
+        - initialize Context->Listener
+        -
+      - alcProcessContext (not really used really ?)
+      - alSourcePlay => ??
+      - alGenBuffers, alBufferData => ??
+  - what are these standard effects for ? (Alc/effects)
+    - ALC_EXT_EFX ?
+  - capture: don't talk about it, means nothing much
+  - example programs (use sdl only as audio file decoding (abviously NOT forsound playback wrapper))
+  - usage of ambisonic, hrtf definition files
+  - https://github.com/neXyon/audaspace
+    - this has utility+alpha kinds of functionality
+    - use openal to give audio source location effect
+    - hrtf effect (as convolution) is impemented without openal
+    - blender's intern/audaspace is c binding version audaspace
+  - hrtf representation/implementation ? (convolution ?)
+  - velocity (for doppler effect) ?
+  - how orientation, location, cone affects sound ? (is this just changing amplitude ?)
+  - http://openal-soft.org/
+  - http://sound.media.mit.edu/resources/KEMAR.html
+
+- https://wiki.libsdl.org/CategoryAudio
+  - this is so nostalgic for me.. my first audio application was playback wav file using sdl api.
+    I've looked through independent thread callback based api implementation with pulse backend.
+  - lol, it wasn't that long time ago https://github.com/hi-ogawa/sound-stack
+
+- clang/llvm
+  - tokienize, preprocessor
+  - ast
+
+- frequency characteristics of basic wave form
+  - square
+  - saw
+  - triangle
 
 
 # Next time
@@ -462,9 +552,4 @@ Program terminated with signal SIGSEGV, Segmentation fault.
     - saxophone
 
 - basic audio effects
-    - bit reduction
-    - tap distortion
     - flanger
-
-- qt lv2 plugin ui
-    - QCustomPlot
