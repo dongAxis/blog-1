@@ -478,10 +478,11 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 
 - openal
   - http://openal.org/documentation/openal-1.1-specification.pdf
-  - context
-    - context as in GL. oh, that means context is implicit argument for the most operation ..
-  - one listener per context (attributes: orientation (at vector, up vector))
-  - multiple sources (attributes: buffer, location, direction, cone, playback offset, distance attenuation model, etc..)
+  - http://openal-soft.org/
+  - http://sound.media.mit.edu/resources/KEMAR.html
+  - context: context as in GL. oh, that means context is implicit argument for the most operation ..
+  - one listener per context (attributes: position, velocity, orientation (at vector, up vector))
+  - multiple sources (attributes: position, velocity, direction, cone, distance attenuation model, buffer, etc..)
   - openal context, device
       - (how is "device" different from backend ? read below.)
       - static struct BackendInfo PlaybackBackend, CaptureBackend;
@@ -494,57 +495,183 @@ Program terminated with signal SIGSEGV, Segmentation fault.
           - filter BackendList by configuration "drivers" or env var "ALSOFT_DRIVERS"
           - ALCbackendFactory::init for each factory from BackendList until init successes
             - setup PlaybackBackend, CaptureBackend
-            - NOTE: alcOpenDevice's argument devicename don't matter at all for the way choosing backend
-            - eg. ALCjackBackendFactory_init => check if jack_client_open succeeds
+            - NOTE: alcOpenDevice's argument devicename doesn't matter at all for the way choosing backend
+            - eg. ALCalsaBackendFactory_init => alsa_load => (load libasound.so)
           - InitEffectFactoryMap
           - InitEffect
         - alloc ALCdevice
-        - PlaybackBackend.createBackend (NOTE: assume jack is used) =>
-          - ALCjackBackendFactory_createBackend =>
-            - alloc ALCjackPlayback
-            - ALCjackPlayback_Construct => ALCbackend_Construct ..
+        - PlaybackBackend.createBackend =>
+          - NEW_OBJ(backend, ALCplaybackAlsa)
+          - ALCplaybackAlsa_Construct => ALCbackend_Construct ..
         - setup openal parameters (eg channel, format (aka sample-type), freq ..)
           - use value corresponding to given "devicename" if it exists
-        - Backend.open => ALCjackPlayback_open =>
-          - jack_client_open, jack_set_process_callback, jack_set_buffer_size_callback
-      - alcCreateContext (from device) => InitContext =>
-        - initialize Context->Listener
-        -
-      - alcProcessContext (not really used really ?)
-      - alSourcePlay => ??
-      - alGenBuffers, alBufferData => ??
-  - what are these standard effects for ? (Alc/effects)
-    - ALC_EXT_EFX ?
+        - Backend.open => ALCplaybackAlsa_open => snd_pcm_open
+      - alcCreateContext (from device) =>
+        - UpdateDeviceParams =>
+          - aluInitRenderer => hrtf, ambdec
+          - V0(device->Backend,start) (ie ALCplaybackAlsa_start) =>
+            - althrd_create(.. ALCplaybackAlsa_mixerProc) (SEE BELOW for what this does)
+        - AllocateVoices => ALvoice, ALvoiceProps (what are these ?)
+        - InitContext =>
+          - setup defaut parameters (or attributes) of Context and Context->Listener
+        - UpdateListenerProps => context->Listener->FreeList
+      - alcMakeContextCurrent => ..
+      - alGenSources => al_calloc(16, sizeof(ALsource)) ..
+      - alSourcei(source, ..) (eg buffer, source position, velocity)=>
+        - DO_UPDATEPROPS (macro UpdateSourceProps) =>
+      - alSourcePlay => alSourcePlayv =>
+        - AllocateVoices ..
+  - processing thread: ALCplaybackAlsa_mixerProc (THIS IS MAIN PART) =>
+    - loop until self->killNow
+      - snd_pcm_start,
+      - snd_pcm_avail_update,
+      - if avail < device->UpdateSize (aka period size), snd_pcm_wait(self->pcmHandle, 1000)
+      - snd_pcm_mmap_begin
+      - aluMixData =>
+        - for each context in device->ContextList
+          - UpdateContextSources => for each voice, CalcSourceParams =>
+            - CalcAttnSourceParams =>
+              - distance, orientation attenuation ..
+              - doppler pitch correction ..
+              - CalcPanningAndFilters =>
+                - some correction based on original sound data's format (channels)
+                - GetHrtfCoeffs => calculate HRIR for given elevation, azimuth angles (TODO: FOLLOW THE DETAIL)
+                - CalcDirectionCoeffs(.. coeffs[MAX_AMBI_COEFFS]) => .. What's this ?? (only for effect ?)
+          - for each voice in ctx->Voices
+            - MixSource(voice, source, device ..) =>
+              - ALfloat \*SrcData = Device->SourceData
+              - LoadSamples ..
+              - voice->Resampler ..
+              - DoFilters ..
+              - if voice->Flags&VOICE_HAS_HRTF
+                - MixHrtfBlendSamples, MixHrtfSamples (aka MixHrtf) => ApplyCoeffs (convolution with hrir)
+          - apply effect V(state,process)(SamplesToDo, slot->WetBuffer, state->OutBuffer)
+        - MixDirectHrtf => ? (what's the reason for this ?)
+        - ApplyDistanceComp(.. device->NFCtrlData)
+        - WriteXX(Buffer, OutBuffer ..)
+      - snd_pcm_mmap_commit
+  - extensions
+    - AL_EXT_SOURCE_RADIUS
+    - AL_EXT_STEREO_ANGLES (alhrtf example uses this)
+    - ALC_EXT_EFX (Alc/effects)
   - capture: don't talk about it, means nothing much
-  - example programs (use sdl only as audio file decoding (abviously NOT forsound playback wrapper))
-  - usage of ambisonic, hrtf definition files
+  - example programs (use sdl only for audio file decoding (abviously NOT for sound playback wrapper))
+  - consideration for speaker setup and headphone setup ? (ambdec compensates speaker position, angle via AmbiDecoder)
+  - hrtf definition files (refers docs/hrtf.txt)
+    - TODO: visualize frequency response of .mhr file data (just covolving with plain sine data of each frequency should work ?)
+  - when exactly non backend processing thread (or any al api call) could block by proccessing thread
+    - I think al api call won't be blocked by processing because processing thread use solid atomic operation and CAS to update
+      its own copy of data to mix sound.
+  - size of single processing block (ie least amount number of samples where sound is rendered with parameters unchanged)
+  - btw, in arch, sdl_sound is linked to sdl, but openal-examples is linked to sdl2, so those example doesn't work.
+    compile with SDL would make it work, but alffplay.cpp doesn't compile for SDL.
   - https://github.com/neXyon/audaspace
     - this has utility+alpha kinds of functionality
     - use openal to give audio source location effect
-    - hrtf effect (as convolution) is impemented without openal
-    - blender's intern/audaspace is c binding version audaspace
-  - hrtf representation/implementation ? (convolution ?)
-  - velocity (for doppler effect) ?
-  - how orientation, location, cone affects sound ? (is this just changing amplitude ?)
-  - http://openal-soft.org/
-  - http://sound.media.mit.edu/resources/KEMAR.html
+    - hrtf effect (as convolution) is impemented outside of openal
+    - blender's intern/audaspace is c binding version audaspace ?
+  - Urho3D also has cool 3d audio setup (with SDL backend), I like this. very clean oop.
+    - https://github.com/urho3d/Urho3D/tree/master/Source/Urho3D/Audio
+    - openal's has much more feature but I should've read urho3d first for starter.
+
 
 - https://wiki.libsdl.org/CategoryAudio
   - this is so nostalgic for me.. my first audio application was playback wav file using sdl api.
     I've looked through independent thread callback based api implementation with pulse backend.
   - lol, it wasn't that long time ago https://github.com/hi-ogawa/sound-stack
 
-- clang/llvm
-  - tokienize, preprocessor
-  - ast
+
+# 2017-09-13
+
+- extract raw audio from soundfont as wav file
+  - at least, polyphone does read sf2
+  - or maybe I want to read through fluidsynth (fluid_synth_sfload). or linuxsampler ?
+  - 1. extract raw audio data which literally living in soundfont file
+  - 2. extract all available sounds from sf2 (which includes pitch compensentated keys and modulation effect etc..)
+  - oh, libgig might do that already ? yes, it does. try sf2extract, sf2dump.
+
+- soundfont (fluidsynth)
+  - fluid_settings_t, fluid_synth_t, fluid_audio_driver_t, fluid_sequencer_t
+  - do they internally have separate thread for event loop ? (eg, schedule_noteon, fluid_event_timer, sequencer_callback)
+      - it doesn't seem that important for our usage (eg. in calf)
+  - from the usage in calf (as always)
+    - there's a fluid_synth_write_float(fluid_synth_t* synth, ..) interface for realtime integration
+  - pitch compensation (fluid_sample_t.origpitch to fluid_voice_t.key)
+  - does polyphony playback do something special ? don't think so
+  - follow standard rt use flow (as in calf)
+    - new_fluid_settings => ..
+    - new_fluid_synth =>
+      - new_fluid_defsfloader => FLUID_NEW(fluid_sfloader_t)
+      - synth->channel[i] = new_fluid_channel
+      - synth->voice[i] = new_fluid_voice (as many as polyphony needs)
+    - fluid_synth_sfload => fluid_sfloader_load (ie fluid_defsfloader_load) =>
+      - new_fluid_defsfont => FLUID_NEW(fluid_defsfont_t)
+      - fluid_defsfont_load =>
+        - sfload_file =>
+          - FLUID_NEW (SFData)
+          - load_body => chunk, process_info, process_sdta, process_pdta (cf. rifftree from libgig (linuxsampler))
+        - fluid_defsfont_load_sampledata
+        - (internally migrate from SFData (SFSample, ..) to fluid_defsfont_t (fluid_defpreset_t, ..) ?)
+        - fluid_sample_import_sfont, fluid_defsfont_add_sample
+        - fluid_defpreset_import_sfont, fluid_defsfont_add_preset
+      - FLUID_NEW(fluid_sfont_t)
+    - fluid_sfont_t.iteration_next (ie fluid_defsfont_sfont_iteration_next) =>
+      - preset->noteon = fluid_defpreset_preset_noteon
+    - fluid_synth_sfont_select, fluid_synth_bank_select, fluid_synth_program_change, fluid_synth_set_preset
+    - fluid_synth_noteon => fluid_synth_noteon_LOCAL => fluid_preset_noteon (ie fluid_defpreset_preset_noteon) =>
+      - fluid_defpreset_noteon =>
+        - if fluid_preset_zone_inside_range, fluid_preset_zone_get_inst, fluid_inst_get_zone, fluid_inst_zone_get_sample
+        - if fluid_inst_zone_inside_range
+          - fluid_synth_alloc_voice =>
+            - fluid_voice_init =>
+              - voice->chan, voice->key, voice->vel, voice->sample = sample
+              - fluid_rvoice_reset, fluid_rvoice_eventhandler_push
+            - fluid_voice_add_mod ..
+          - fluid_voice_add_mod if any
+          - fluid_synth_start_voice => fluid_voice_start =>
+            - fluid_voice_calculate_runtime_synthesis_parameters => fluid_voice_update_param
+    - select_preset_in_channel => ..
+    - fluid_synth_write_float =>
+      - if synth->cur >= synth->curmax
+        - fluid_synth_render_blocks =>
+          - fluid_rvoice_eventhandler_dispatch_all => (voice to rvoice ???)
+          - fluid_sample_timer_process
+          - fluid_synth_add_ticks
+          - fluid_rvoice_mixer_render =>
+            - fluid_render_loop_singlethread =>
+              - for each fluid_rvoice_mixer_t.active_voices, fluid_mixer_buffers_render_one => fluid_rvoice_write =>
+                - (MAIN SYNTHESIS)
+                - asdr, filter, lfo, modulator
+                - voice->dsp.phase_incr = ...
+                  (NOTE: this compensates the pitch key difference of original sample wave key and midi note key)
+                - fluid_rvoice_dsp_interpolate_none (or linear, 4th_order, 7th_order) =>
+                  - fill up dsp_buf based on original sample and phase_incr for key compensation
+            - fluid_rvoice_mixer_process_fx => ..
+        - fluid_rvoice_mixer_get_bufs => \*left = mixer->buffers.left_buf, right
+
+- swig
+  - llvm uses it for python binding
+  - it's so fun reading example_wrap.c from the tutorial example for python
+  - http://www.swig.org/Doc3.0/SWIGDocumentation.html#Introduction_nn5
+
+- clang
+  - http://clang.llvm.org
+  - go through design documents
+      - http://clang.llvm.org/docs/DriverInternals.html (clang binary to tool chain calls)
+      - http://clang.llvm.org/docs/IntroductionToTheClangAST.html quick intro of AST (visitor sounds familiar from v8 code base)
+      - http://clang.llvm.org/docs/InternalsManual.html ??
+  - codegen (mapping clang AST to LLVM IR)
+      - I don't find much documentation on this, but is this step such obvious ??
+      - class layout, template specialization etc ..?
+  - sanitizers implementation: compile time, runtime ??
+
+
+# Next time
 
 - frequency characteristics of basic wave form
   - square
   - saw
   - triangle
-
-
-# Next time
 
 - instrument mechanics
     - human voice
