@@ -281,11 +281,6 @@ pitch notation |  C-1  C0     C1  C2  C3  C4        C5  C6   C7   C8   C9     C1
       I prefer much thinner layering around that, like SWIG (as used in tensorflow) ?
     - so now, I don't have to use jack keyboard to play with sound effect in coffee shop.
 
-- explore percussive sound and effects on it (or timbre of percussive sound)
-    - bass
-    - snare
-    - symbal
-
 - synthesize basic sound
     - pad
     - string
@@ -665,18 +660,116 @@ Program terminated with signal SIGSEGV, Segmentation fault.
       - class layout, template specialization etc ..?
   - sanitizers implementation: compile time, runtime ??
 
+- human voice
+  - https://en.wikipedia.org/wiki/Human_voice
+  - amplitude: vocal tract, lung airflow
+  - timbre: vocal tract
+  - base pitch: larynx muscle
+
+- phonetics
+  - https://en.wikipedia.org/wiki/Phonetics
+  - https://en.wikipedia.org/wiki/International_Phonetic_Alphabet
+  - https://en.wikipedia.org/wiki/Airstream_mechanism
+  - https://en.wikipedia.org/wiki/Syllable
+  - maybe fun ? https://github.com/espeak-ng/espeak-ng/
+
+
+# 2017-09-14
+
+- Physics of vocal cords
+  - https://en.wikipedia.org/wiki/Vocal_folds#Function
+  - https://en.wikipedia.org/wiki/Bernoulli%27s_principle
+  - https://www.sciencedaily.com/releases/2016/06/160616141628.htm
+
+- Timbre of vowels and consonants
+  - by definition, timbre is the sound characteristics human can differentiates.
+    so, identifing the timbre should help lanauge mastery.
+  - ventriloquist: in terms of this, what's matter is only timbre. they win if
+    they can mock timbre in a whatever way.
+
+- physics of wind instrument
+  - http://newt.phys.unsw.edu.au/jw/pipes.html
+  - https://en.wikipedia.org/wiki/Wind_instrument#Physics_of_sound_production
+  - open pipe, closed pipe
+  - at the open end, moving pressure wave causes the reflection-looking wave which cancels out pressure to zero.
+  - closed end is the part where pressure changes (eg reed), so no zero-out thing there.
+  - flute's mouth side of end (or air reed) is not obviously "open", but that part requires to be zerod out so that's still open end.
+  - then standing wave causes pipe overall to viberate
+  - reed: similar to human voice cords (reed part corresponds to closed end of pipe)
+  - flute: https://en.wikipedia.org/wiki/Fipple
+  - brass: your lips is kinda voice cords
+  - resonant frequency is the frequency of pressure wave which corresponds to
+    the solution of wave equation as in string vibration.
+
+- Timbre of string instruments difference by string instrumentsplaying method and string characteristics
+  - string characteristics (piano, violin)
+  - finger
+  - picking
+  - bow briction
+  - piano (cotten coverred hammer hitting string)
+  - position to hit a string
+  - electric pickup characteristics (bass and guitar)
+  - https://en.wikipedia.org/wiki/String_vibration
+  - https://en.wikipedia.org/wiki/Wave_equation
+    - wave equation to frequency (general solution is p_0(sin(wt+kx)) with w^2 = c^2*k^2)
+      (for example, k = 1 / 2L (L is string or pipe length) for fundamental frequency)
+
+- relation of opposite moving waves and standing wave  
+  - frequency, wave length, amplitude
+  - same actually
+
+- "real" harmonics and their closest 12-tone notes
+
+```
+>>> A4 = 440
+>>> f = lambda n: A4 * (2 ** (n / 12))
+>>> harmonics = [0, 12, 12 + 7, 12 + 12, 12 + 12 + 4, 12 + 12 + 7, 12 + 12 + 10, 12 + 12 + 12]
+>>> import pprint from pprint
+>>> pprint.pprint([(f(0) * (i + 1), f(h)) for i, h in enumerate(harmonics)])
+[(440.0, 440.0),
+ (880.0, 880.0),
+ (1320.0, 1318.5102276514797),
+ (1760.0, 1760.0),
+ (2200.0, 2217.4610478149766),
+ (2640.0, 2637.02045530296),
+ (3080.0, 3135.9634878539946),
+ (3520.0, 3520.0)]
+ ```
+
+- python generator, iterator, comprehension
+  - https://wiki.python.org/moin/Iterator
+  - https://wiki.python.org/moin/Generators
+  - https://docs.python.org/3.7/reference/expressions.html#displays-for-lists-sets-and-dictionaries
+  - in python 3, map or filter buildin function only returns iterator so evaluation will be lazy.
+
 
 # Next time
+
+- Urho3D
+  - lua script binding setup
+  - rendering pipeline
+  - object/scene management
+
+- Clang codegen
+  - xxx
 
 - frequency characteristics of basic wave form
   - square
   - saw
   - triangle
 
-- instrument mechanics
-    - human voice
-    - piano
-    - saxophone
+- characteristics of basic percussive sound (timbre, frequency, envelope)
+  - bass
+  - snare
+  - tam
+  - rim shot
+  - brush
+  - symbal
+  - characteristics: size, form, thinkness, what it's made of
+
+- sound effects
+  - flanger
+  - delay
 
 - basic audio effects
     - flanger
