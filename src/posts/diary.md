@@ -743,6 +743,65 @@ Program terminated with signal SIGSEGV, Segmentation fault.
   - in python 3, map or filter buildin function only returns iterator so evaluation will be lazy.
 
 
+# 2017-09-15
+
+- small gui app to try out openal effect
+  - https://gitlab.com/hiogawa/scratch/tree/master/try-openal  
+  - https://blog.qt.io/blog/2017/01/19/should-you-be-using-qgraphicsview/
+  - qt: still stick to c++ without qml. directly use QGraphicsScene. QGraphicsSceneItem is not QObject. how does qml deal with this ?
+  - openal: ..
+
+- basic audio effects (continued)
+  - pulsator: lfo amplitude change, same freq but different phase for left and right
+  - phaser:
+      - small number of coordinated filters (aka stages) with lfo. opposite lfo phase to left and right
+      - feeling like stereo wah effect
+      - comparison to chorus: chorus's filter is comb (delay) (not centeralized filter),
+                              chorus's lfo usually faster,
+                              left and right, each have more than lfo (ie voices).
+      - implementation, feedback, allpass onepole filter
+      - difference of "dry amount" and "feedback"
+          - "feedback" will join before all pass filter stages
+          - "dry amount" is more like feedforward
+          - actually these amount is something breaking the balance of allpass ness, which is essential for frequency response.
+  - flanger:
+      - chorus's single voice with delay filter with feedback version, and slower lfo.
+      - delay feedback filter boosts up certain area of higher frequency drastically.
+        so if original sound has rich harmonics (eg, violin, white noise, pad), it will sound like jet noise.
+      - clear example: violin, lowest lfo frequency, use analyzer
+
+- comb filter, intuitively
+  - for example, for 1ms delay, 500Hz (= 1s / (1ms * 2)) is the lowest frequency where wave cancels out with itself.
+    on the other hand, its double frequency 1000Hz is where it completely synchronize with itself.
+    Generalizing it, (2n + 1) * 500 Hz will be cutoff and 2n * 500Hz will be boosted up.
+    (so, 1000Hz, 2000Hz part should show 6db (= 20*log_10(_2_)) if there is frequency response graph.)
+  - https://en.wikipedia.org/wiki/All-pass_filter#Digital_Implementation
+  - https://ccrma.stanford.edu/~jos/pasp/Allpass_Filters.html
+
+
+# 2017-09-16
+
+- frequency response vs fourier transform
+  - frequency response is about describing how linear time invariant system behaves for different frequency input.
+  - fourier transform is about describing single series as the combination of frequencies.
+  - good assumption in LTI assures single frequency of input doesn't affect different frequency of output.
+    so, by considering both Laplace transformed version of sine input and sine output,
+    H(s) will represents frequency characteristics of LTI.
+  - https://en.wikipedia.org/wiki/Linear_time-invariant_theory  
+
+- Visualize frequency response of basic filters
+  - s-domain H(s) and z-domain H(z)
+
+- characteristics of basic percussive sound (timbre, frequency, envelope)
+  - bass
+  - snare
+  - tam
+  - rim shot
+  - brush
+  - symbal
+  - characteristics: size, form, thinkness, what it's made of
+
+
 # Next time
 
 - Urho3D
@@ -770,6 +829,3 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 - sound effects
   - flanger
   - delay
-
-- basic audio effects
-    - flanger
