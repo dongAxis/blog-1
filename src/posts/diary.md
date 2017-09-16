@@ -790,7 +790,80 @@ Program terminated with signal SIGSEGV, Segmentation fault.
   - https://en.wikipedia.org/wiki/Linear_time-invariant_theory  
 
 - Visualize frequency response of basic filters
-  - s-domain H(s) and z-domain H(z)
+  - s-domain H(s) and z-domain H(z) (bilinear transformation)
+  - intuitevely (z-transform as approximation of Laplace transform). [image](x).
+  - TODO: frequency warp
+  - first order (aka one pole) and second order (aka biquad)
+
+- qml
+  - qml, v4 http://code.qt.io/cgit/qt/qtdeclarative.git/
+  - architecture http://doc.qt.io/qt-5/qml-glossary.html
+  - qml type, property, method and what ? (instance, element ?)
+  - inheritance ??
+  - object dependency, property dependency, property binding, binding expression
+    - static analysis ?
+  - event system on top of signal/slot ?
+
+- clang codegen for starter to get familiar with code base
+  - follow examples/clang-interpreter (kinda simpler version of cc1_main.cpp, ExecuteCompilerInvocation.cpp)
+  - follow CompilerInstance::ExecuteAction(EmitLLVMOnlyAction)
+  - pickup important class on the way
+
+```
+NOTE:
+- "<" means inheritance
+- "$" means instance
+
+[ Data Structure ]
+CompilerInstance
+'-' CompilerInvocation
+'-' Preprocessor
+'-' ASTContext
+'-' ASTConsumer
+'-' Sema
+
+EmitLLVMOnlyAction < CodeGenAction < ASTFrontendAction < FrontendAction
+'-' CompilerInstance
+'-' BackendConsumer < ASTConsumer
+  '-' CodeGeneratorImpl < CodeGenerator < ASTConsumer
+    '-' CodeGen::CodeGenModule
+
+- ? => BackendConsumer::Initialize => CodeGenerator::Initialize => new CodeGen::CodeGenModule
+
+[ Procedure ]
+- CompilerInstance::ExecuteAction =>
+  - FrontendAction::BeginSourceFile =>
+    - setCompilerInstance
+    - CompilerInstance::createPreprocessor =>
+      - new HeaderSearch
+      - make_shared<Preprocessor>
+    - CompilerInstance::createASTContext => new ASTContext
+    - CreateWrappedASTConsumer => CodeGenAction::CreateASTConsumer =>
+      - new BackendConsumer =>
+        - clang::CreateLLVMCodeGen => new CodeGeneratorImpl => new llvm::Module ..
+    - CompilerInstance::setASTConsumer
+  - FrontendAction::Execute => CodeGenAction::ExecuteAction => ASTFrontendAction::ExecuteAction =>
+    - CompilerInstance::createSema => new Sema($Preprocessor, $ASTContext, $ASTConsumer)
+    - clang::ParseAST($Sema) =>
+      - new Parser
+      - Preprocessor::EnterMainSourceFile => ..
+      - Parser::Initialize
+      - loop
+        - Parser::ParseFirstTopLevelDecl, ParseTopLevelDecl =>
+          - ??
+        - BackendConsumer::HandleTopLevelDecl =>
+          - CodeGeneratorImpl::HandleTopLevelDecl =>
+            - loop DeclGroupRef, CodeGenModule::EmitTopLevelDecl =>
+              - switch by Decl::getKind ..
+      - BackendConsumer::HandleTranslationUnit => CodeGeneratorImpl::HandleTranslationUnit =>
+        - CodeGenModule::Release =>
+          - EmitDeferred .. EmitCXXGlobalInitFunc, EmitCXXThreadLocalInitFunc ..
+          - .. a lot of delicious-looking functions ..
+  - EmitLLVMOnlyAction::EndSourceFile => ??
+```
+
+
+# Next time
 
 - characteristics of basic percussive sound (timbre, frequency, envelope)
   - bass
@@ -800,32 +873,21 @@ Program terminated with signal SIGSEGV, Segmentation fault.
   - brush
   - symbal
   - characteristics: size, form, thinkness, what it's made of
+  - electric drum integration (roland V drum)
+  - samples
+      - http://99sounds.org/percussion-samples/
+      - http://www.loopmasters.com/genres/36-Percussion
+      - https://soundpacks.com/free-sound-packs/ultimate-percussion-samples/
+      - https://cymatics.fm/2016/03/04/ultimate-list-of-free-drumpercussion-samples/
+      - https://www.plogue.com/phpBB3/viewtopic.php?t=7090
+      - https://smmdrums.wordpress.com/category/sfz/
+      - https://smmdrums.wordpress.com/category/raw-files/
 
-
-# Next time
+- bitcoin, blockchain
+  - https://bitcoin.org/en/developer-documentation
+  - https://bitcoin.org/bitcoin.pdf
 
 - Urho3D
   - lua script binding setup
   - rendering pipeline
   - object/scene management
-
-- Clang codegen
-  - xxx
-
-- frequency characteristics of basic wave form
-  - square
-  - saw
-  - triangle
-
-- characteristics of basic percussive sound (timbre, frequency, envelope)
-  - bass
-  - snare
-  - tam
-  - rim shot
-  - brush
-  - symbal
-  - characteristics: size, form, thinkness, what it's made of
-
-- sound effects
-  - flanger
-  - delay
