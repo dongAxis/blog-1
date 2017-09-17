@@ -804,10 +804,11 @@ Program terminated with signal SIGSEGV, Segmentation fault.
     - static analysis ?
   - event system on top of signal/slot ?
 
-- clang codegen for starter to get familiar with code base
+- clang parsing (AST)
   - follow examples/clang-interpreter (kinda simpler version of cc1_main.cpp, ExecuteCompilerInvocation.cpp)
   - follow CompilerInstance::ExecuteAction(EmitLLVMOnlyAction)
   - pickup important class on the way
+  - type checking, template specialization (are these Sema's work ?)
 
 ```
 NOTE:
@@ -828,7 +829,11 @@ EmitLLVMOnlyAction < CodeGenAction < ASTFrontendAction < FrontendAction
   '-' CodeGeneratorImpl < CodeGenerator < ASTConsumer
     '-' CodeGen::CodeGenModule
 
-- ? => BackendConsumer::Initialize => CodeGenerator::Initialize => new CodeGen::CodeGenModule
+Parser < CodeCompletionHandler
+ParsingDeclarator (RAIIObjectsForParser) < Declarator (Sema/DeclSpec)
+
+Lexer < PreprocessorLexer
+
 
 [ Procedure ]
 - CompilerInstance::ExecuteAction =>
@@ -847,31 +852,85 @@ EmitLLVMOnlyAction < CodeGenAction < ASTFrontendAction < FrontendAction
     - clang::ParseAST($Sema) =>
       - new Parser
       - Preprocessor::EnterMainSourceFile => ..
-      - Parser::Initialize
-      - loop
-        - Parser::ParseFirstTopLevelDecl, ParseTopLevelDecl =>
-          - ??
+      - Parser::Initialize =>
+        - Sema::Initialize => ..
+        - ConsumeToken => Preprocessor::Lex => Lexer::Lex => LexTokenInternal =>
+          - switch by next char and return token ..
+          - (eg. macro directive (char "#")) Preprocessor::HandleDirective (PPDirectives.cpp) =>
+            - LexUnexpandedToken
+            - switch by directive (eg tok::pp_include) HandleIncludeDirective => ..
+          - (eg. macro expansion) LexIdentifier => Preprocessor::HandleIdentifier =>
+            - HandleMacroExpandedIdentifier (PPMacroExpansion.cpp) => ..
+      - loop until eof
+        - Parser::ParseFirstTopLevelDecl, ParseTopLevelDecl => ParseExternalDeclaration =>
+          - (switch by token, eg namespace, class, function, ..)
+          - (as an example follow parsing function declaration coupled with its definition)
+            - ParseDeclarationOrFunctionDefinition => ParseDeclOrFunctionDefInternal =>
+              - ParseDeclarationSpecifiers =>
+                - (parse type as function return type)
+                - ParsingDeclSpec::SetTypeSpecType (can be user defined type as identifier or buildin type)
+              - ParseDeclGroup =>
+                - ParsingDeclarator (< Declarator) on stack
+                - ParseDeclarator => ParseDeclaratorInternal =>
+                  - Parser::ParseDirectDeclarator =>
+                    - (read identify token as function name)
+                    - Tok.is(tok::identifier)
+                    - Declarator::SetIdentifier
+                    - ConsumeToken (read up to next token)
+                    - ParseFunctionDeclarator =>
+                      - (read parameters as function arguments prototype)
+                      - ParseFunctionDeclaratorIdentifierList => ..
+                - ParseFunctionDefinition =>
+                  - Sema::ActOnStartOfFunctionDef => ..
+                  - ParseFunctionStatementBody => ParseCompoundStatementBody =>
+                    - loop (while Tok.isNot(tok::r_brace))
+                      - ParseStatementOrDeclaration => ParseStatementOrDeclarationAfterAttributes =>
+                        - (switch by token eg if, case, return ..)
+                        - (for example, going for expression statement when there's no special keyword token)
+                          - ParseExprStatement => ParseExpression =>
+                            - ParseAssignmentExpression, ParseRHSOfBinaryExpression ..
+                  - Sema::ActOnFinishFunctionBody =>
+                    - (semantical check after successful parse,
+                       eg, -Wmissing-prototype, I believe a lot more here but for now ..)
+                - Sema::ConvertDeclToDeclGroup => ..
         - BackendConsumer::HandleTopLevelDecl =>
           - CodeGeneratorImpl::HandleTopLevelDecl =>
-            - loop DeclGroupRef, CodeGenModule::EmitTopLevelDecl =>
+            - loop by DeclGroupRef, CodeGenModule::EmitTopLevelDecl =>
               - switch by Decl::getKind ..
+              - ??
       - BackendConsumer::HandleTranslationUnit => CodeGeneratorImpl::HandleTranslationUnit =>
         - CodeGenModule::Release =>
-          - EmitDeferred .. EmitCXXGlobalInitFunc, EmitCXXThreadLocalInitFunc ..
-          - .. a lot of delicious-looking functions ..
-  - EmitLLVMOnlyAction::EndSourceFile => ??
+          - EmitDeferred, EmitCXXGlobalInitFunc, EmitCXXThreadLocalInitFunc ..
+  - FrontendAction::EndSourceFile =>
+    - CodeGenAction::EndSourceFileAction =>
+      - TheModule = BackendConsumer::takeModule => CodeGeneratorImpl::ReleaseModule
+    - setCompilerInstance(nullptr)
 ```
 
 
-# Next time
+# 2017-09-17
+
+- clang codegen (continued)
+  - class, function, template
+  - (next step: inheritance, thread local, debug info)
+
+```
+??
+```
+
+- assembler
+- linker
+- dynamic linker
+
 
 - characteristics of basic percussive sound (timbre, frequency, envelope)
-  - bass
+  - kick
   - snare
-  - tam
+  - tom
+  - symbal: hihat (closed, open, half-open, foot), crash, ride, splash
   - rim shot
   - brush
-  - symbal
+  - other percussions: bongo, conga, ..
   - characteristics: size, form, thinkness, what it's made of
   - electric drum integration (roland V drum)
   - samples
@@ -882,10 +941,18 @@ EmitLLVMOnlyAction < CodeGenAction < ASTFrontendAction < FrontendAction
       - https://www.plogue.com/phpBB3/viewtopic.php?t=7090
       - https://smmdrums.wordpress.com/category/sfz/
       - https://smmdrums.wordpress.com/category/raw-files/
+  - drum sampler
+      - http://www.hydrogen-music.org/hcms/
+      - https://drumkv1.sourceforge.io/
+      - http://openavproductions.com/fabla/
+      - http://zhevny.com/specimen/
 
 - bitcoin, blockchain
   - https://bitcoin.org/en/developer-documentation
   - https://bitcoin.org/bitcoin.pdf
+
+
+# Next time
 
 - Urho3D
   - lua script binding setup
