@@ -880,7 +880,7 @@ Lexer < PreprocessorLexer
                     - ParseFunctionDeclarator =>
                       - (read parameters as function arguments prototype)
                       - ParseFunctionDeclaratorIdentifierList => ..
-                - ParseFunctionDefinition =>
+                - Decl *TheDecl = ParseFunctionDefinition =>
                   - Sema::ActOnStartOfFunctionDef => ..
                   - ParseFunctionStatementBody => ParseCompoundStatementBody =>
                     - loop (while Tok.isNot(tok::r_brace))
@@ -897,10 +897,29 @@ Lexer < PreprocessorLexer
           - CodeGeneratorImpl::HandleTopLevelDecl =>
             - loop by DeclGroupRef, CodeGenModule::EmitTopLevelDecl =>
               - switch by Decl::getKind ..
-              - ??
+              - (for example, Decl::Function) EmitGlobal =>
+                - (seems function won't be emitted until it's used, SEE BELOW EmitDeferred)
       - BackendConsumer::HandleTranslationUnit => CodeGeneratorImpl::HandleTranslationUnit =>
         - CodeGenModule::Release =>
-          - EmitDeferred, EmitCXXGlobalInitFunc, EmitCXXThreadLocalInitFunc ..
+          - EmitDeferred =>
+            - EmitGlobalDefinition => EmitGlobalFunctionDefinition =>
+              - GlobalValue *GV = GetAddrOfFunction => ??
+              - Fn = cast<llvm::Function>(GV)
+              - setFunctionLinkage => llvm::Function::setLinkage
+              - setGlobalVisibility ..
+              - CodeGenFunction::GenerateCode =>
+                - StartFunction =>
+                  - attributes for sanitizer (eg SanitizeAddress, SanitizeThread ..)
+                  - createBasicBlock("entry" ..)
+                  - CGDebugInfo::EmitFunctionStart ..
+                  - EmitFunctionProlog => (handle function arguments ..)
+                - EmitFunctionBody => EmitCompoundStmtWithoutScope => EmitStmt =>
+                  - (switch by the kind of stmt)
+                  - (for example, assume function call expression) EmitIgnoredExpr => EmitAnyExpr =>
+                    - EmitAggExpr => AggExprEmitter::Visit => StmtVisitor::Visit => .. =>
+                      - AggExprEmitter::VisitCallExpr => CodeGenFunction::EmitCallExpr ..
+                - FinishFunction => ..
+          - EmitCXXGlobalInitFunc, EmitCXXThreadLocalInitFunc ..
   - FrontendAction::EndSourceFile =>
     - CodeGenAction::EndSourceFileAction =>
       - TheModule = BackendConsumer::takeModule => CodeGeneratorImpl::ReleaseModule
@@ -910,18 +929,85 @@ Lexer < PreprocessorLexer
 
 # 2017-09-17
 
-- clang codegen (continued)
-  - class, function, template
-  - (next step: inheritance, thread local, debug info)
+- clang overview (continued)
+  - codegen (aka emitting llvm ir from clang AST)
+  - http://llvm.org/docs/LangRef.html
+  - module, linkage, visibility
+  - "declare" (external symbol), "define"
+  - TODO: class, template, inheritance, thread local, debug info
 
 ```
-??
+[ driver process ]
+- fork exec cc1 and ld ??
+
+[ cc1 process ]
+- main (tools/driver/driver.cpp) => cc1_main =>
+  - new CompilerInstance
+  - clang::ExecuteCompilerInvocation =>
+    - CreateFrontendAction => CreateFrontendBaseAction =>
+      - switch by ProgramAction (eg -emit-obj, -emit-llvm, -ast-dump, etc ..)
+    - CompilerInstance::ExecuteAction => ..
 ```
 
-- assembler
-- linker
-- dynamic linker
+- llvm assembler (llvm backend) from clang cc1
 
+```
+[ Data structure ]
+
+EmitObjAction < CodeGenAction
+
+Target (Support/TargetRegistry.cpp)
+
+X86TargetMachine < LLVMTargetMachine < TargetMachine
+
+X86PassConfig < TargetPassConfig < ImmutablePass < ModulePass < Pass
+
+PassManager < PassManagerBase
+'-' PassManagerImpl
+
+X86TTIImpl < BasicTTIImplBase<X86TTIImpl> < TargetTransformInfoImplCRTPBase < TargetTransformInfoImplBase
+
+
+[ Procuder ]
+
+(target, emission setup)
+- ?? => LLVMInitializeX86Target =>
+  - getTheX86_64Target => static Target TheX86_64Target
+  - RegisterTargetMachine<X86TargetMachine>::RegisterTargetMachine =>
+    - TargetRegistry::RegisterTargetMachine =>
+      - TheX86_64Target.TargetMachineCtorFn = &RegisterTargetMachine<X86TargetMachine>::Allocator
+
+- ?? => LLVMInitializeX86TargetInfo =>
+  - RegisterTarget<Triple::x86_64 ..>::RegisterTarget =>
+    - TargetRegistry::RegisterTarget => (tied up TheX86_64Target into linked list)
+
+- ?? => CodeGenAction::CreateASTConsumer => GetOutputStream(.. Backend_EmitObj) =>
+  - CompilerInstance::createDefaultOutputFile(.. "o")
+
+(pass setup)
+- .. => BackendConsumer::HandleTranslationUnit =>
+  - CodeGeneratorImpl::HandleTranslationUnit => .. SEE ABOVE ..
+  - clang::EmitBackendOutput (BackendUtil.cpp) =>
+    - EmitAssemblyHelper::EmitAssembly =>
+      - CreateTargetMachine =>
+        - llvm::Target *TheTarget = TargetRegistry::lookupTarget => ..
+        - llvm::Target::createTargetMachine => TargetMachineCtorFn (ie RegisterTargetMachine::Allocator) =>
+          - new TargetMachineImpl (ie X86TargetMachine) =>
+            - computeDataLayout => ..
+            - ::LLVMTargetMachine => ::TargetMachine => DL = (DataLayout as string)
+      - llvm::Module::setDataLayout( TargetMachine::createDataLayout (TargetMachine's DL ) )
+      - legacy::PassManager on stack (CodeGenPasses)
+      - legacy::PassManager::add( X86TargetMachine::getTargetIRAnalysis (lambda X86TTIImpl) )  
+      - AddEmitPasses =>
+        - getCodeGenFileType =>
+          - TargetMachine::CGFT_ObjectFile (if -emit-obj aka Backend_EmitObj)
+        - LLVMTargetMachine::addPassesToEmitFile => addPassesToGenerateCode =>
+          - X86TargetMachine::createPassConfig => new X86PassConfig
+          - legacy::PassManager::add(X86PassConfig)
+          - TargetPassConfig::addISelPasses, addMachinePasses => .. add X86PassConfig specific pass ..
+            (TODO: detail will be checked out tomorrow)
+      - legacy::PassManager::run => ..
+```
 
 - characteristics of basic percussive sound (timbre, frequency, envelope)
   - kick
@@ -952,7 +1038,43 @@ Lexer < PreprocessorLexer
   - https://bitcoin.org/bitcoin.pdf
 
 
+# 2017-09-18
+
+- llvm backend architecture (continued)
+  - http://llvm.org/docs/CodeGenerator.html
+  - http://llvm.org/docs/TableGen/index.html
+  - http://llvm.org/docs/WritingAnLLVMPass.html
+  - http://llvm.org/docs/WritingAnLLVMBackend.html
+
+```
+[ Data structure ]
+
+
+[ Procedure ]
+
+(Table generation)
+- TODO
+
+(LLVM IR to MachineFunction, MachineBasicBlock, and MachineInstr)
+- TODO ??::run
+
+(Some x86 specific pass)
+- TODO ??::run
+```
+
+
 # Next time
+
+- c++ exception implementation
+  - stack winding ?
+
+- assembler: llvm x86 backend
+
+- linker: ldd
+
+- execution:
+  - kernel executable loading
+  - dynamic linker
 
 - Urho3D
   - lua script binding setup
