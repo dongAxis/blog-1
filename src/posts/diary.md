@@ -1095,6 +1095,7 @@ Legalizer < MachineFunctionPass
   - X86MCInstLower
 ```
 
+
 # 2017-09-19
 
 - my pc's memory is barely enough to link llc.
@@ -1130,6 +1131,7 @@ Legalizer < MachineFunctionPass
         - Target::createMCCodeEmitter => .. => llvm::createX86MCCodeEmitter => new X86MCCodeEmitter
         - Target::createMCAsmBackend => .. => llvm::createX86_64AsmBackend => new ELFX86_64AsmBackend
         - target::createMCObjectStreamer => llvm::createELFStreamer => new MCELFStreamer
+        - (if CGFT_AssemblyFile, these will switch to createMCInstPrinter and createAsmStreamer)
         - FunctionPass *Printer = Target::createAsmPrinter => .. => new X86AsmPrinter
         - legacy::PassManager::add(Printer)
     - legacy::PassManager::run => PassManagerImpl::run =>
@@ -1145,7 +1147,6 @@ X86DAGToDAGISel < SelectionDAGISel < MachineFunctionPass  < FunctionPass
 '-' SelectionDAGBuilder
 '-' FunctionLoweringInfo
 
-ExpandISelPseudos < MachineFunctionPass
 
 - FPPassManager::runOnModule =>
   - MachineFunctionPass::runOnFunction =>
@@ -1168,25 +1169,67 @@ ExpandISelPseudos < MachineFunctionPass
           - for each Instruction in this block, FastISel::selectInstruction => ??
           - SelectBasicBlock => ??
       - X86TargetLowering::finalizeLowering
-```
 
-TODO: MC LAYER
+(pass example: asm printer (emission))
+
+X86AsmPrinter < AsmPrinter < MachineFunctionPass < FunctionPass
+MCELFStreamer < MCObjectStreamer < MCStreamer
+
+- AsmPrinter::doInitialization =>
+  - X86LinuxNaClTargetObjectFile::Initialize =>
+    - TargetLoweringObjectFile::Initialize =>
+      - MCObjectFileInfo::InitMCObjectFileInfo => initELFMCObjectFileInfo =>
+        - MCContext::getELFSection (eg ".text" ...)
+    - TargetLoweringObjectFileELF::InitializeELF =>
+
+- X86AsmPrinter::runOnMachineFunction =>
+  - AsmPrinter::SetupMachineFunction => ..
+  - AsmPrinter::EmitFunctionBody => ..
+
+- AsmPrinter::doFinalization =>
+  - for each Module::globals, EmitGlobalVariable =>
+    - MCELFStreamer::EmitSymbolAttribute(.. MCSA_ELF_TypeObject) =>
+      - MCAssembler::registerSymbol
+      - MCSymbolELF::setType
+      - ..
+    - MCStreamer::SwitchSection => ..
+    - EmitLinkage => MCELFStreamer::EmitSymbolAttribute(.. MCSA_Global)
+    - EmitAlignment => MCELFStreamer::EmitValueToAlignment => MCObjectStreamer::EmitValueToAlignment =>
+      - insert(new MCAlignFragment(..))
+    - MCELFStreamer::EmitLabel => MCObjectStreamer::EmitLabel => MCStreamer::EmitLabel
+    - EmitGlobalConstant => emitGlobalConstantImpl => MCStreamer::EmitIntValue =>
+      - MCObjectStreamer::EmitBytes =>
+        - MCDwarfLineEntry::Make
+        - MCDataFragment::getContents::append ..
+  - ..
+  - MCStreamer::Finish => MCELFStreamer::FinishImpl =>
+    - MCDwarfFrameEmitter::Emit => .. FrameEmitterImpl::EmitCIE ..
+    - MCObjectStreamer::FinishImpl =>
+      - MCDwarfLineTable::Emit
+      - MCAssembler::Finish =>
+        - layout($MCAsmLayout) => ..
+        - ELFObjectWriter::writeObject =>
+          - writeHeader (yay! finally ELF header)
+          - ..
+```
 
 
 # Next time
 
-- c++ exception implementation
-  - stack winding ?
-
-- assembler: llvm x86 backend
-
-- linker: ldd
+- linker
+  - ldd
+  - static
+  - dynamic (as in JIT ?)
 
 - execution:
   - kernel executable loading
   - dynamic linker
 
+- c++ exception implementation
+  - stack unwinding ?
+
 - Urho3D
   - lua script binding setup
   - rendering pipeline
   - object/scene management
+  - event handling
