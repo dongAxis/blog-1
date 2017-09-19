@@ -971,18 +971,15 @@ X86TTIImpl < BasicTTIImplBase<X86TTIImpl> < TargetTransformInfoImplCRTPBase < Ta
 [ Procuder ]
 
 (target, emission setup)
+- ?? => LLVMInitializeX86TargetInfo =>
+  - RegisterTarget<Triple::x86_64 ..>::RegisterTarget =>
+    - TargetRegistry::RegisterTarget => (tied up TheX86_64Target into linked list)
+
 - ?? => LLVMInitializeX86Target =>
   - getTheX86_64Target => static Target TheX86_64Target
   - RegisterTargetMachine<X86TargetMachine>::RegisterTargetMachine =>
     - TargetRegistry::RegisterTargetMachine =>
       - TheX86_64Target.TargetMachineCtorFn = &RegisterTargetMachine<X86TargetMachine>::Allocator
-
-- ?? => LLVMInitializeX86TargetInfo =>
-  - RegisterTarget<Triple::x86_64 ..>::RegisterTarget =>
-    - TargetRegistry::RegisterTarget => (tied up TheX86_64Target into linked list)
-
-- ?? => CodeGenAction::CreateASTConsumer => GetOutputStream(.. Backend_EmitObj) =>
-  - CompilerInstance::createDefaultOutputFile(.. "o")
 
 (pass setup)
 - .. => BackendConsumer::HandleTranslationUnit =>
@@ -1003,9 +1000,16 @@ X86TTIImpl < BasicTTIImplBase<X86TTIImpl> < TargetTransformInfoImplCRTPBase < Ta
           - TargetMachine::CGFT_ObjectFile (if -emit-obj aka Backend_EmitObj)
         - LLVMTargetMachine::addPassesToEmitFile => addPassesToGenerateCode =>
           - X86TargetMachine::createPassConfig => new X86PassConfig
+          - new MachineModuleInfo
           - legacy::PassManager::add(X86PassConfig)
-          - TargetPassConfig::addISelPasses, addMachinePasses => .. add X86PassConfig specific pass ..
-            (TODO: detail will be checked out tomorrow)
+          - TargetPassConfig::addISelPasses =>
+            - TargetPassConfig::addISelPrepare => (if -print-isel-input, createPrintFunctionPass)
+            - TargetPassConfig::addCoreISelPasses => X86PassConfig::addInstSelector =>
+              - createX86ISelDag => new X86DAGToDAGISel
+          - TargetPassConfig::addMachinePasses =>
+            - addPass(&ExpandISelPseudosID)
+            - X86PassConfig::addPreRegAlloc ..
+            - createRegAllocPass => ..
       - legacy::PassManager::run => ..
 ```
 
@@ -1042,25 +1046,131 @@ X86TTIImpl < BasicTTIImplBase<X86TTIImpl> < TargetTransformInfoImplCRTPBase < Ta
 
 - llvm backend architecture (continued)
   - http://llvm.org/docs/CodeGenerator.html
-  - http://llvm.org/docs/TableGen/index.html
-  - http://llvm.org/docs/WritingAnLLVMPass.html
+  - http://llvm.org/docs/TableGen/BackEnds.html
   - http://llvm.org/docs/WritingAnLLVMBackend.html
+  - http://llvm.org/docs/WritingAnLLVMPass.html
 
 ```
 [ Data structure ]
 
+X86TargetLowering < TargetLowering < (ir to dag ??)
+
+X86SelectionDAGInfo < SelectionDAGTargetInfo (legal dag to x86 dag (pattern matcher))
+
+X86RegisterInfo < X86GenRegisterInfo (X86GenRegisterInfo.inc) < TargetRegisterInfo
+
+X86InstrInfo < X86GenInstrInfo < TargetInstrInfo
+
+X86AsmPrinter < AsmPrinter
+'-' X86MCCodeEmitter < MCCodeEmitter
+
+X86MCInstLower (not inherited from MCInstLower)
+
+
+SelectionDAGBuilder
+Legalizer < MachineFunctionPass
+
 
 [ Procedure ]
 
-(Table generation)
-- TODO
+(TableGen use)
+- X86RegisterInfo.td, X86Schedule.td, ..
 
-(LLVM IR to MachineFunction, MachineBasicBlock, and MachineInstr)
-- TODO ??::run
+(SelectionDAG phases http://llvm.org/docs/CodeGenerator.html#selectiondag-process)
+- SelectionDAG construction from LLVM IR (how is it exactly DAG ?)
+  - SelectionDAGBuilder
+- legalize
+- Select target instruction (pattern match, still SSA)
+- SelectionDAG to MachineInstrs
 
-(Some x86 specific pass)
-- TODO ??::run
+(Register allocation)
+- register spill handling (VirtRegMap)
+
+(MC layer)
+- AsmPrinter (MachineFunction to MCLabel)
+  - X86AsmPrinter
+- MCInstLower (MachineInstr to MCInst)
+  - X86MCInstLower
+- MCCodeEmitter (.o emission)
+  - X86MCInstLower
 ```
+
+# 2017-09-19
+
+- my pc's memory is barely enough to link llc.
+- analyzer pass is executed multiple times before all passes depends on it (eg DominatorTreeWrapperPass)
+- passes before "SelectionDAGISel" (ie X86DAGToDAGISel) and passes after it is fundamentally defferent
+  - one is FunctionPass and other is MachineFunctionPass
+  - so, for for analyzer pass, there can be variant for both type (eg DominatorTreeWrapperPass, MachineDominatorTree)
+- SelectionDAG based lowering only happens when FastISel (X86FastISel) failed to do it.
+  that's why I cannot see graph from -view-xxx for my factorial function example.
+  but, of cource, llvm has -fast-isel=false.
+- how could SelectionDAG not be cyclic ??????
+  - DAG construction happens only within single block. so there's not really cyclic ness
+  - "combine" means combine nodes within single DAG.
+
+```
+(follow "llc test.ll -filtype=obj")
+- main =>
+  - InitializeAllTargets =>
+    - InitializeAllTargetInfos => eg LLVM_TARGET(X86) --> LLVMInitializeX86TargetInfo (SEE ABOVE)
+    - eg LLVM_TARGET(X86) => LLVMInitializeX86Target (SEE ABOVE)
+  - InitializeAllTargetMCs, InitializeAllAsmPrinters, InitializeAllAsmParsers  
+  - PassRegistry::getPassRegistry, initializeCore, initializeCodeGen .. (basic pass setup)
+    - (INITIALIZE_PASS_BEGIN macros ..)
+  - compileModule =>
+    - parseIRFile => parseIR => .. return llvm::Module ..
+    - Target *TheTarget = TargetRegistry::lookupTarget
+    - Target::createTargetMachine => .. new X86TargetMachine (SEE ABOVE)
+    - legacy::PassManager on stack
+    - new MachineModuleInfo => initializeMachineModuleInfoPass
+    - LLVMTargetMachine::addPassesToEmitFile =>
+      - addPassesToGenerateCode => (SEE ABOVE)
+      - addAsmPrinter =>
+        - Target::createMCCodeEmitter => .. => llvm::createX86MCCodeEmitter => new X86MCCodeEmitter
+        - Target::createMCAsmBackend => .. => llvm::createX86_64AsmBackend => new ELFX86_64AsmBackend
+        - target::createMCObjectStreamer => llvm::createELFStreamer => new MCELFStreamer
+        - FunctionPass *Printer = Target::createAsmPrinter => .. => new X86AsmPrinter
+        - legacy::PassManager::add(Printer)
+    - legacy::PassManager::run => PassManagerImpl::run =>
+      - dumpPasses (for example, llc --debug-pass=Structure)
+      - for each Pass (eg MPPassManager) in getContainedManager
+        - MPPassManager::runOnModule => .. recursively FPPassManager::runOnModule ..
+
+
+(Pass example)
+
+X86DAGToDAGISel < SelectionDAGISel < MachineFunctionPass  < FunctionPass
+'-' SelectionDAG
+'-' SelectionDAGBuilder
+'-' FunctionLoweringInfo
+
+ExpandISelPseudos < MachineFunctionPass
+
+- FPPassManager::runOnModule =>
+  - MachineFunctionPass::runOnFunction =>
+    - MachineFunction &MF = MachineModuleInfo::getOrCreateMachineFunction($Funcion) => new MachineFunction
+    - X86DAGToDAGISel::runOnMachineFunction => SelectionDAGISel::runOnMachineFunction =>
+      - Function &Fn = MachineFunction::getFunction
+      - X86SubTarget::getInstrInfo, ::getTargetLowering, ::getRegInfo (lookup target info)
+      - SelectionDAG::init, FunctionLoweringInfo::set, SelectionDAGBuilder::init (setup based on target info)
+      - SelectAllBasicBlocks =>
+        - X86TargetLowering::createFastISel => new X86FastISel
+        - FastISel::lowerArguments => X86FastISel::fastLowerArguments ..
+        - (if FastISel failed)
+          - LowerArguments => ..
+          - CodeGenAndEmitDAG =>
+            - SelectionDAG::Combine, LegalizeTypes, LegalizeVectors, Legalize
+            - DoInstructionSelection => ??
+            - CreateScheduler, Run, EmitSchedule => ??
+            - SelectionDAGBuilder::UpdateSplitBlock => ??
+        - for each BasicBlock in this function,
+          - for each Instruction in this block, FastISel::selectInstruction => ??
+          - SelectBasicBlock => ??
+      - X86TargetLowering::finalizeLowering
+```
+
+TODO: MC LAYER
 
 
 # Next time
