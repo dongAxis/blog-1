@@ -1214,22 +1214,125 @@ MCELFStreamer < MCObjectStreamer < MCStreamer
 ```
 
 
-# Next time
+# 2017-09-20
 
-- linker
-  - ldd
+- static linker
+  - ldd: http://lld.llvm.org/NewLLD.html
   - static
-  - dynamic (as in JIT ?)
+  - difference betw. archive (ar, ranlib) and object file
+      - I though archive can have information about depending shared object, but that's just because cmake makes it look like so.
+        In cmake, you "add_library(xx STATIC ..)" and "target_link_libraries(xx somelib)", but cmake actually adds "-lsomelib" to
+        the final executable or shared library which depends on "xx".
+      - "ranlib" is "ar -s".
+      - .a is just a concatination of .o + symbol table.
+  - so, it doesn't seem there's so non-trivial part (except delicate perfomance requirement..) ?
 
-- execution:
-  - kernel executable loading
-  - dynamic linker
+
+- program execution
+  - kernel executable loading (SYSCALL_DEFINE3(execve, ..) (fs/exec.c))
+  - glibc's ld.so: https://sourceware.org/git/?p=glibc.git;a=summary
+      - I don't understand the build system. seems "\_dl_start (elf/rtld)" is entry via some linker script ?
+      - use kind of statically linked version of libdl.
+      - LD_LIBRARY_PATH lookup ?
+      - dlopen implementation (mmap? relocation?)
+  - TODO: where is the program counter when efl is loaded first ?
+
+```
+$ readelf -aW /lib/ld-2.26.so
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              DYN (Shared object file)
+  ...
+
+$ ldd /lib/ld-2.26.so
+        statically linked
+
+$ /lib/ld-2.26.so
+Usage: ld.so [OPTION]... EXECUTABLE-FILE [ARGS-FOR-PROGRAM...]
+You have invoked `ld.so', the helper program for shared library executables.
+This program usually lives in the file `/lib/ld.so', and special directives ..
+
+$ readelf -lW $(type -p bash)
+
+Elf file type is EXEC (Executable file)
+Entry point 0x41b6d0
+There are 9 program headers, starting at offset 64
+
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000000400040 0x0000000000400040 0x0001f8 0x0001f8 R E 0x8
+  INTERP         0x000238 0x0000000000400238 0x0000000000400238 0x00001c 0x00001c R   0x1
+      [Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]
+  LOAD           0x000000 0x0000000000400000 0x0000000000400000 0x0c5b34 0x0c5b34 R E 0x200000
+  ...
+
+$ readlink -f /lib64/ld-linux-x86-64.so.2 # I'm on archlinux
+/usr/lib/ld-2.26.so
+```
+
+I had some problem uderstand source around glibc/elf, so I made debug build and step execute.
+
+```
+$ # clone glibc
+$ mkdir -p out/Debug/_install
+$ cd out/Debug
+$ ../../configure --prefix=$PWD/_install CFLAGS='-g -O1' # optimization is required to build glibc
+$ make # some failed to build, but elf/ld.so was there
+$ lldb ld.so
+...
+```
+
+Still confused.
+
+Here is kernel execve flow:
+
+```
+- SYSCALL_DEFINE3(execve ..) => .. => do_execveat_common =>
+  - struct linux_binprm *bprm = kzalloc
+  - struct file *file = do_open_execat ..
+  - sched_exec => ..
+  - bprm_mm_init => ..
+  - prepare_binprm => ..
+  - exec_binprm =>
+    - search_binary_handler =>
+      - for each registered struct linux_binfmt (eg elf_format, script_format)
+        - linux_binfmt.load_binary
+          - eg load_elf_binary =>
+            - load_elf_phdrs and find INTERP
+            - struct pt_regs *regs
+            - unsigned long elf_entry = load_elf_interp
+            - create_elf_tables(bprm ..) => bprm->p = ..
+            - start_thread(regs, elf_entry (new_ip), bprm->p (new_sp)) (arch/x86/kernel/process_64.c) =>
+              - start_thread_common =>
+                - regs->ip = new_ip, regs->sp = new_sp ..
+                - force_iret (so, next time we get back to user space, it's all brand new program ??)
+          - eg load_script =>
+            - parse program after "#!", bprm_change_interp, search_binary_handler recursively
+    - trace_sched_process_exec
+    - ptrace_event(PTRACE_EVENT_EXEC ..)
+    - proc_exec_connector
+```
 
 - c++ exception implementation
-  - stack unwinding ?
+  - stack unwinding
+  - http://llvm.org/docs/ExceptionHandling.html
+
+
+# Next time
 
 - Urho3D
   - lua script binding setup
   - rendering pipeline
   - object/scene management
   - event handling
+
+- rust implementation
+  - llvm binding in rust ?
+  - module system (binary module)
+  - type system
+  - llvm in freestanding
