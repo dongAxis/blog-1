@@ -1,6 +1,6 @@
 <!--
 {
-  "title": "Diary",
+  "title": "Diary (2017-09-01 -- 2017-09-20)",
   "date": "2017-09-02T10:20:10+09:00",
   "special": true
 }
@@ -1319,20 +1319,175 @@ Here is kernel execve flow:
 ```
 
 - c++ exception implementation
-  - stack unwinding
   - http://llvm.org/docs/ExceptionHandling.html
+  - http://en.cppreference.com/w/cpp/language/exceptions
+  - scope lifetype object's destructor will be called when exception makes control to the outside of it.
+  - eh_frame, personality, exception table
+  - \__cxa_rethrow, \__gxx_personality_v0, \__cxa_begin_catch, \__cxa_end_catch
+  - landing_pad, invoke
+  - https://gitlab.com/hiogawa/scratch/blob/383187934a47c8ca9b7cb3ed434dcb0843710a37/try-clang-llvm/test5.s
+      - GCC_except_table1, .Lexception0 is so freaky ..
 
-
-# Next time
 
 - Urho3D
-  - lua script binding setup
   - rendering pipeline
+  - animation
   - object/scene management
-  - event handling
+  - event handling (UI, thread, ..)
+  - lua script binding
 
-- rust implementation
-  - llvm binding in rust ?
-  - module system (binary module)
-  - type system
-  - llvm in freestanding
+```
+TODO:
+- renderpaths, batch, queue, sourcebatch, destbatch ??
+  - does order of render commands matter ? (yes, for example, clear command)
+  - this seems the enough render commands for playing with CharacterDemo
+    <command type="clear" color="fog" depth="1.0" stencil="0" />
+    <command type="scenepass" pass="base" vertexlights="true" metadata="base" />
+    <command type="forwardlights" pass="light" />
+- physics progressing frame event ?
+- bin/CoreData/RenderPaths/Forward.xml ?
+- cast shadow
+- multiplayer mode architecture
+- rendering water
+- rendering depth of field
+- animation
+
+
+[ Data structure ]
+
+Context
+'-' subsystems_, eventReceivers_, factories_, ..
+
+CharacterDemo < Sample < Application < Object
+'-' Engine
+  '-' HiresTimer
+
+Character < LogicComponent < Component < Animatable < Serializable < Object
+
+Graphics (OGLGraphics.cpp)
+'-' SDL_Window
+'-' GraphicsImpl
+  '-' SDL_GLContext
+
+Renderer
+'-* Viewport
+  '-' Scene
+  '-' Camera
+  '-' RenderPath
+    '-* RenderCommand (clear, scenepass, forwardlights)
+  '-' View
+    '-' ???
+
+RenderSurface, RenderTarget ..
+
+Octree, Drawable
+
+
+[ Procedure ]
+
+- main (macro expanded from URHO3D_DEFINE_APPLICATION_MAIN and URHO3D_DEFINE_MAIN) =>
+  - RunApplication =>
+    - new Context
+    - new CharacterDemo =>
+      - Sample::Sample =>
+        - Application::Application =>
+          - new Engine =>
+            - new Input => SubscribeToEvent(E_SCREENMODE ..)
+            - Context::RegisterSubsystem (Engine, Input, FileSystem, Audio, Ui, etc ..)
+            - RegisterSceneLibrary => ??
+            - RegisterPhysicsLibrary => ??
+      - Character::RegisterObject => ??
+    - Application::Run =>
+      - Sample::Setup =>
+        - engineParameters_[EP_WINDOW_TITLE] = CharacterDemo::GetTypeName (ie "CharacterDemo")
+      - Engine::Initialize =>
+        - new Graphics (OGLGraphics.cpp) =>
+          - new GraphicsImpl
+          - Context::RequireSDL(SDL_INIT_VIDEO) =>
+            - SDL_Init(0), SDL_InitSubSystem(SDL_INIT_VIDEO)
+          - RegisterGraphicsLibrary => Object::RegisterObject (eg Animation, Shader, Camera, Light ..)
+        - new Renderer => SubscribeToEvent(E_SCREENMODE ..)
+        - Context::RegisterSubsystem (Graphics, Renderer)
+        - Graphics::SetMode =>
+          - SDL_CreateWindow
+          - Restore =>
+            - SDL_GL_CreateContext, SDL_GL_SetSwapInterval
+            - SendEvent(E_SCREENMODE ..) --->
+              - Renderer::HandleScreenMode => Initialize =>
+                - CreateGeometries =>
+                  - new RenderPath and Load "RenderPaths/Forward.xml"
+                  - new Geometry (for dirLightGeometry_, spotLightGeometry_ ..)
+                  - new TextureCube (for faceSelectCubeMap_, indirectionCubeMap_)
+                - CreateInstancingBuffer => ..
+                - SubscribeToEvent(E_RENDERUPDATE ..)
+              - Input::HandleScreenMode => Initialize =>
+                - GainFocus => SDL_ShowCursor(SDL_FALSE) ..
+                - SubscribeToEvent(E_BEGINFRAME ..)
+        - HiresTimer::reset
+      - CharacterDemo::Start =>
+        - Sample::Start =>
+          - CreateConsoleAndDebugHud => Engine::CreateDebugHud => ??
+          - SubscribeToEvent (E_KEYDOWN, E_KEYUP, E_SCENEUPDATE) (TODO: follow what these do within Engine::RunFrame)
+        - CreateScene => ??
+        - CreateCharacter => ??
+        - CreateInstructions => ??
+        - SubscribeToEvents => ??
+      - while !Engine::IsExiting, Engine::RunFrame =>
+        - Time::BeginFrame => SendEvent(E_BEGINFRAME ..) -->
+          - Input::HandleBeginFrame => Update =>
+            - SDL_PollEvent (non block), HandleSDLEvent =>
+              - (marshal SDL event to Urho representation)
+              - SendEvent (eg E_MOUSEMOVE, E_KEYDOWN/UP, E_MOUSEBUTTONDOWN/UP ..)
+        - Update =>
+          - SendEvent E_UPDATE -> E_POSTUPDATE -> E_RENDERUPDATE -> E_POSTUPDATE
+          - E_RENDERUPDATE -->
+            - Renderer::HandleRenderUpdate => Update =>
+              - LoadShaders => ??
+              - QueueViewport
+              - UpdateQueuedViewport =>
+                - Viewport::AllocateView => new View
+                - View::Define => setup View's fields (eg RenderSurface, Scene, Camera, RenderPath ..)
+                - Octree::Update => threaded Drawable update ??
+                - View::Update =>
+                  - GetDrawables =>
+                    - Octree::GetDrawables($ZoneOccluderOctreeQuery) => ..
+                    - CheckVisibilityWork (collect geometries_ and lights_) =>
+                      - iterate drawables
+                        - Drawable::UpdateBatches
+                        - filter out Drawable for some case (e.g. Drawable::GetDrawDistance < GetDistance or black light)
+                        - Drawable::SetMinMaxZ
+                  - GetBatches =>
+                    - ProcessLights => ProcessLightWork, ProcessLight =>
+                      - accumulate LightQueryResult::litGeometries_ from Drawables based on light type
+                      - SetupShadowCameras =>
+                        - construct hypothetical "camera" to simulate ray from light to drawable (shadow caster)
+                          LightQueryResult::shadowCameras_ = ..
+                      - ProcessShadowCasters =>
+                        - accumulate LightQueryResult::shadowCasters_ from drawables
+                    - GetLightBatches =>
+                      - iterate lightQueryResults_ and setup lightQueues_
+                        - GetShadowMapViewport
+                        - iterate shadowCasters,
+                          - AddBatchToQueue(shadowQueue.shadowBatches ..) =>
+                            - Renderer::SetBatchShaders =>
+                              - Pass::GetVertexShaders, GetPixelShaders
+                              - LoadPassShaders
+                            - BatchGroup::Insert  
+                        - iterate litGeometries_, GetLitBatches =>
+                          - iterate Drawable::GetBatches, AddBatchToQueue
+                    - GetBaseBatches =>
+                      - iterate geometries_, its batches and scenePasses_,
+                        - AddBatchToQueue(pass's batch queue)
+                  - Renderer::StorePreparedView
+        - Render =>
+          - Graphics::BeginFrame => ..
+          - Renderer::Render => View::Render =>
+            - UpdateGeometries => ??
+            - AllocateScreenBuffers => ??
+            - PrepareInstancingBuffer => ??
+            - ExecuteRenderPathCommands => ??
+          - UI::Render => ..
+          - Graphics::EndFrame => SDL_GL_SwapWindow
+        - ApplyFrameLimit => ..
+      - Sample::Stop => Engine::DumpResources ..
+```
