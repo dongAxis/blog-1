@@ -149,4 +149,96 @@ for (int i = 0; i < MaxStep; i++)
 }
 
 return float2(-1.0, 0.0);
-    
+
+
+
+//// UVToVolumePosition(float2 uv, float2 size) ////
+
+float2 tmp0 = uv * size;
+float2 xy = frac(tmp0);
+float2 tmp1 = floor(tmp0);
+float z = (tmp1.x + tmp1.y * size.x) / (size.x * size.y);
+return float3(xy, z);
+
+
+//// CloudRayMarch(ray_origin, ray_direction, texture_object, flipbook_size, max_step, step_length) ////
+
+float3 color = float3(0, 0, 0);
+float density = 0;
+
+for (int i = 0; i < max_step; i++) {
+    float3 p = ray_origin + i * ray_direction * step_length;
+
+    if (p.x >= 0 && p.y >= 0 && p.z >= 0 &&
+        p.x <= 1 && p.y <= 1 && p.z <= 1) {
+        float volume_sample = PseudoVolumeTexture(texture_object, texture_objectSampler, p,
+                flipbook_size, flipbook_size.x * flipbook_size.y).r;
+        density += volume_sample;
+    }
+}
+
+return float4(color, density);
+
+//// CloudRayMarch2(ray_origin, ray_direction, texture_object, flipbook_size, max_step, step_length
+////         density_scale, light_direction, light_color, max_step2, step_length2, density_scale2, powder_scale)
+// TODO:
+// - Henyen-Greenstein
+// - jitter
+// - render backface
+
+float3 cloud_color = float3(1, 1, 1);
+float3 acc_color = float3(0, 0, 0);
+float acc_density = 0;
+
+// trace view ray
+for (int i = 0; i < max_step; i++) {
+    float3 p = ray_origin + i * ray_direction * step_length;
+
+    if (p.x >= 0 && p.y >= 0 && p.z >= 0 && p.x <= 1 && p.y <= 1 && p.z <= 1) {
+        float sample0 = PseudoVolumeTexture(texture_object, texture_objectSampler, p,
+                flipbook_size, flipbook_size.x * flipbook_size.y).r;
+
+        // trace point p to sun
+        float sample1 = 0;
+        for (int j = 0; j < max_step2; j++) {
+            float3 q = p + j * light_direction * step_length2;
+            if (q.x >= 0 && q.y >= 0 && q.z >= 0 && q.x <= 1 && q.y <= 1 && q.z <= 1) {
+                sample1 += PseudoVolumeTexture(texture_object, texture_objectSampler, q,
+                        flipbook_size, flipbook_size.x * flipbook_size.y).r;
+            }
+        }
+
+        // lighting of point p
+        float3 p_color = cloud_color * light_color *
+                (1 - exp(- sample0 * density_scale)) * // opacity of point p
+                exp(- sample1 * density_scale2) *      // transmittance from sun to p
+                exp(- acc_density);                    // transmittance from p to view
+
+        // beer powder factor
+        p_color *= (1 - exp(- acc_density * powder_scale));
+
+        // accumulate
+        acc_color += p_color;
+        acc_density += sample0 * density_scale;
+    }
+}
+
+return float4(acc_color, 1 - exp(- acc_density));
+
+
+//// VolumePositionToUV(float3 position, float2 size) ////
+
+float tmp0 = position.z * size.x * size.y;
+float tmp1 = floor(tmp0);
+float alpha = frac(tmp0);
+float2 uv_xy = position.xy / size;
+float2 uv_z1 = float2(fmod(tmp1, size.x), floor(tmp1 / size.x));
+float2 uv_z2 = float2(fmod(tmp1 + 1, size.x), floor((tmp1 + 1)/ size.x));
+
+// return (uv1, uv2, alpha)
+
+
+/// BoxMask(position, d0, d1)
+
+position = abs(position - 0.5) - d0;
+return saturate(1 - length(max(position, 0.0)) / d1);
